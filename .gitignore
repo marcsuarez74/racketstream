@@ -13,6 +13,9 @@ supabase/.branches
 prototypes/sync-test/sideload/
 watch/connect-iq/sideload/
 
+# Docs d'exploitation personnels (vraies IP/URLs, jamais commités)
+docs/local/
+
 # Outil d'audit playwright local
 .playwright-cli/
 docs/superpowers/specs/2026-09-21-store-business-plan.md
