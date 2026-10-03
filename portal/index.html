@@ -88,7 +88,8 @@
     <summary>Créer un canal</summary>
     <div class="card" style="margin-top:10px">
       <label for="newChannel">Nom du canal (ton pseudo Twitch par ex.)</label>
-      <input id="newChannel" maxlength="32" placeholder="paul" autocomplete="off">
+      <input id="newChannel" maxlength="32" placeholder="paul" autocomplete="off" spellcheck="false">
+      <div class="muted">En minuscules, sans espaces — « Marc » et « marc » sont deux canaux différents.</div>
       <button id="create" style="margin-top:12px" class="ghost">CRÉER</button>
       <div id="regOut" class="muted" style="display:none">
         <div style="margin-top:10px">Ta clé personnelle — <b>affichée une seule fois</b> :</div>
@@ -102,10 +103,15 @@
     <summary>Canal et clé</summary>
     <div class="card" style="margin-top:10px">
       <label for="channel">Canal</label>
-      <input id="channel" placeholder="ton canal" autocomplete="off">
+      <input id="channel" placeholder="ton canal" autocomplete="off" spellcheck="false">
       <label for="key">Clé device</label>
       <input id="key" placeholder="ta clé personnelle" autocomplete="off">
-      <div class="muted">Saisis une seule fois — mémorisé sur ce téléphone.</div>
+      <div class="muted">Saisis une seule fois — mémorisé sur ce téléphone. Les canaux sont en minuscules.</div>
+      <button id="showKey" class="ghost" style="margin-top:12px">👁 AFFICHER LA CLÉ MÉMORISÉE</button>
+      <div id="keyOut" class="muted" style="display:none">
+        <div style="margin-top:10px">Clé mémorisée sur cet appareil (canal <b id="keyChannel">?</b>) — recopie-la pour l'utiliser ailleurs :</div>
+        <textarea id="keyCopy" readonly style="width:100%;box-sizing:border-box;background:#060708;color:var(--green);border:1px solid var(--dim);border-radius:8px;padding:10px;font-family:monospace;font-size:13px;margin-top:6px;height:64px"></textarea>
+      </div>
     </div>
   </details>
 
@@ -152,6 +158,36 @@
     if (saved.channel) $("channel").value = saved.channel;
     if (saved.key) $("key").value = saved.key;
   } catch { /* premier lancement */ }
+
+  // --- garde-fou anti-casse : les canaux vivent en minuscules (« Marc » et
+  // « marc » sont deux canaux différents côté backend). On force la casse à
+  // la saisie pour qu'un faux pas ne crée jamais un canal fantôme.
+  for (const id of ["channel", "newChannel"]) {
+    $(id).addEventListener("input", (e) => {
+      const v = e.target.value;
+      if (v !== v.toLowerCase()) e.target.value = v.toLowerCase();
+    });
+  }
+
+  // --- afficher / copier la clé mémorisée sur cet appareil ---
+  $("showKey").addEventListener("click", () => {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(LS) || "{}"); } catch { /* vide */ }
+    if (!saved.key) {
+      status("Aucune clé mémorisée sur cet appareil — elle ne s'affiche qu'une fois, à la création du canal", "err");
+      return;
+    }
+    $("keyChannel").textContent = saved.channel || "?";
+    $("keyCopy").value = saved.key;
+    $("keyOut").style.display = "block";
+    $("keyCopy").select();
+    try {
+      navigator.clipboard.writeText(saved.key);
+      status("Clé copiée ✓ — recopie-la dans « Canal et clé » sur tes autres appareils", "ok");
+    } catch {
+      status("Clé affichée ci-dessous — sélectionne-la et copie-la", "ok");
+    }
+  });
 
   // --- tuiles de type ---
   // Simple = UN joueur par équipe : les partenaires disparaissent entièrement.
