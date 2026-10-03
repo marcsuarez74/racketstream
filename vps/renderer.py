@@ -15,6 +15,7 @@ Contrat (spec 2026-09-21 §3, ajusté 2026-09-24) :
 import argparse
 import json
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -54,6 +55,8 @@ POSITIONS = ("topright", "topleft", "topcenter")
 MARGIN = 16                     # marge du bug dans la frame (aligné ffmpeg overlay)
 
 KEEP = object()                 # sentinelle : Supabase injoignable → garder la frame
+
+NAMES_REFRESH_S = 60.0          # relecture des noms du canal (portail) pendant un stream
 
 # Dimensions du design (cf. overlay/index.html)
 PAD_X, PAD_Y = 18, 9
@@ -277,6 +280,29 @@ def draw_frame(state, names=("MOI", "LUI"), position="topright", size=(FRAME_W, 
 
 # --------------------------------------------------------------------- main
 
+def start_names_refresh(channel, holder, period=NAMES_REFRESH_S, fetch=None, stop=None):
+    """Démarre un thread daemon qui rafraîchit holder[0] toutes les `period` s.
+
+    Les noms vivent côté Supabase (portail) : un changement doit apparaître
+    tout seul pendant un stream, sans relance du composite. Une erreur réseau
+    garde les noms actuels (jamais de crash, jamais de noms vides). Le thread
+    est daemon : il ne bloque pas la sortie du processus.
+    """
+    fetch = fetch or fetch_names
+    stop = stop or threading.Event()
+
+    def _loop():
+        while not stop.wait(period):
+            try:
+                holder[0] = fetch(channel)
+            except Exception:
+                pass   # hors ligne : garder les noms actuels
+
+    t = threading.Thread(target=_loop, daemon=True)
+    t.start()
+    return t
+
+
 def frame_bytes(img):
     return img.tobytes()   # RGBA brut, ordre raster
 
@@ -299,6 +325,11 @@ def main(argv=None):
     else:
         auto = fetch_names(args.channel)
         names = (args.name1 or auto[0], args.name2 or auto[1])
+    names_cell = [names]
+    if not (args.name1 and args.name2):
+        # noms du canal : relus toutes les NAMES_REFRESH_S — un changement dans
+        # le portail apparaît tout seul pendant un stream, sans relance.
+        start_names_refresh(args.channel, names_cell)
 
     if args.png:
         state = pick(args.channel, args.url, ANON_KEY, stale_s=args.stale)
@@ -317,7 +348,7 @@ def main(argv=None):
             state = pick(args.channel, args.url, ANON_KEY, on_error=KEEP, stale_s=args.stale)
             if state is not KEEP:
                 last = state
-        img = draw_frame(last, names=names, position=args.position)
+        img = draw_frame(last, names=tuple(names_cell[0]), position=args.position)
         out.write(frame_bytes(img))
         out.flush()
         tick += 1
