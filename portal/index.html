@@ -216,6 +216,12 @@
   .path .st:nth-child(5) i { animation-delay: -1s; }
   .path .fl { flex-grow: 1; height: 3px; background: repeating-linear-gradient(90deg, #3DD68C 0 8px, transparent 8px 12px); background-size: 24px 3px; animation: flow .7s linear infinite; }
   .path .fl.c { background-image: repeating-linear-gradient(90deg, #22D3EE 0 8px, transparent 8px 12px); }
+  .tw { position: absolute; inset: 0; z-index: 2; background: #000; animation: inUp .4s cubic-bezier(.2, .9, .25, 1) both; }
+  .tw iframe { display: block; width: 100%; height: 100%; border: 0; }
+  .twnote { margin-top: 12px; font-size: 13px; color: #9AA3AE; line-height: 1.45; }
+  .twlab { margin-top: 8px; font-size: 14px; font-weight: 700; color: #C9D1DA; }
+  .cbtn.wide { min-width: 120px; }
+  .copyrow .ci { width: auto; flex-grow: 1; min-width: 0; }
   .set-sec { padding: 30px 16px 0; display: flex; flex-direction: column; gap: 14px; }
   .pane { display: flex; flex-direction: column; gap: 14px; animation: inUp .4s cubic-bezier(.2, .9, .25, 1) both; }
   .pane p { font-size: 15px; color: #C9D1DA; line-height: 1.5; }
@@ -516,6 +522,7 @@
       <p class="lead pad">Ce que voient tes spectateurs : ta vidéo, avec le score par-dessus.</p>
       <div class="pv-sec">
         <div class="pv" id="screen">
+          <div class="tw" id="tw" hidden></div>
           <div class="pv-in" id="pvIn">
       <svg class="zoom" viewBox="0 0 358 201" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
         <defs>
@@ -567,12 +574,13 @@
             <span aria-hidden="true" class="eqs"><i></i><i></i><i></i><i></i></span>
           </div>
         </div>
+        <p class="twnote" id="twNote" hidden>Ton live Twitch, avec environ 10 s de décalage. Le son est coupé : touche le lecteur pour l'activer.</p>
         <div class="path" aria-label="Chemin du live">
           <span class="st"><i></i>Montre</span>
           <span aria-hidden="true" class="fl"></span>
           <span class="st"><i></i>Serveur</span>
           <span aria-hidden="true" class="fl c"></span>
-          <span class="st"><i></i>Ton live</span>
+          <span class="st"><i></i><span id="dest">Ton live</span></span>
         </div>
       </div>
     </section>
@@ -613,6 +621,11 @@
         <div class="copyrow">
           <div class="codebox"><span class="k">Clé</span><span class="kv" id="keyShown"></span></div>
           <button class="cbtn" id="copyKey"><span>Copier</span></button>
+        </div>
+        <label class="twlab" for="twitch">Chaîne Twitch de ce canal, pour voir le live dans Diffusion</label>
+        <div class="copyrow">
+          <input id="twitch" class="ci" placeholder="ex. marcoleroc74" autocomplete="off" autocapitalize="none" spellcheck="false">
+          <button class="cbtn wide" id="saveTwitch"><span>Enregistrer</span></button>
         </div>
         <button class="linkdanger" id="removeChan">Retirer ce canal de l'appareil</button>
       </section>
@@ -729,6 +742,7 @@
     });
     if (tab === "canaux") renderChannels();
     if (tab === "diffusion") fitPreview();
+    syncTwitch();
     window.scrollTo(0, 0);
   }
   addEventListener("hashchange", route);
@@ -1049,6 +1063,59 @@
   }));
   // L'aperçu est dessiné à 358 px de large (maquette téléphone) puis mis à
   // l'échelle de la place disponible : mêmes proportions partout.
+  // Live Twitch dans l'aperçu (essai) : le lecteur officiel est chargé
+  // seulement sur la page Diffusion, et n'est montré que quand la chaîne est
+  // en ligne ; hors live, l'illustration animée reste affichée.
+  let twFor = null;     // chaîne du lecteur en cours
+  let twLib = null;     // chargement du script Twitch
+  function loadTwitchLib() {
+    if (!twLib) twLib = new Promise((ok, ko) => {
+      const sc = document.createElement("script");
+      sc.src = "https://player.twitch.tv/js/embed/v1.js";
+      sc.onload = ok;
+      sc.onerror = () => { twLib = null; ko(); };
+      document.head.appendChild(sc);
+    });
+    return twLib;
+  }
+  function showTwitch(on) {
+    $("tw").hidden = !on;
+    $("twNote").hidden = !on;
+    $("dest").textContent = on ? "Twitch" : "Ton live";
+  }
+  async function syncTwitch() {
+    const c = active();
+    const want = document.body.dataset.view === "diffusion" && c && c.twitch ? c.twitch : null;
+    if (want === twFor) return;
+    twFor = want;
+    $("tw").textContent = "";
+    showTwitch(false);
+    if (!want) return;
+    try { await loadTwitchLib(); } catch { return; /* Twitch injoignable : illustration */ }
+    if (twFor !== want) return;
+    const box = document.createElement("div");
+    box.id = "twp";
+    box.style.cssText = "width:100%;height:100%";
+    $("tw").appendChild(box);
+    const pl = new Twitch.Player("twp", { channel: want, parent: [location.hostname], width: "100%", height: "100%", muted: true, autoplay: true });
+    pl.addEventListener(Twitch.Player.ONLINE, () => { if (twFor === want) showTwitch(true); });
+    pl.addEventListener(Twitch.Player.OFFLINE, () => { if (twFor === want) showTwitch(false); });
+  }
+  $("saveTwitch").addEventListener("click", () => {
+    const c = active();
+    if (!c) return;
+    // Accepte « marcoleroc74 » comme « https://www.twitch.tv/marcoleroc74 ».
+    const v = $("twitch").value.trim().replace(/^.*twitch\.tv\//i, "").replace(/[/?#].*$/, "").toLowerCase();
+    if (v && !/^[a-z0-9_]{3,25}$/.test(v)) { setStatus("chanStatus", "Nom de chaîne Twitch invalide", "err"); return; }
+    c.twitch = v;
+    saveStore();
+    $("twitch").value = v;
+    label($("saveTwitch"), "Enregistré");
+    $("saveTwitch").classList.add("done");
+    setTimeout(() => { label($("saveTwitch"), "Enregistrer"); $("saveTwitch").classList.remove("done"); }, 1800);
+    setStatus("chanStatus", v ? `Chaîne Twitch « ${v} » enregistrée pour ${c.channel}` : "Chaîne Twitch retirée", "ok");
+  });
+
   function fitPreview() {
     const w = $("screen").clientWidth;
     if (w) $("pvIn").style.setProperty("--s", w / 358);
@@ -1097,7 +1164,7 @@
     fresh = null;
     const c = active();
     $("keyCard").hidden = !c;
-    if (c) $("keyShown").textContent = mask(c.key);
+    if (c) { $("keyShown").textContent = mask(c.key); $("twitch").value = c.twitch || ""; }
   }
   // Un clic affiche la clé en entier et la copie.
   $("copyKey").addEventListener("click", async () => {
@@ -1180,6 +1247,7 @@
     setStatus("status", "");
     loadNames();
     connectLive();
+    syncTwitch();
   }
 
   channelChanged();
