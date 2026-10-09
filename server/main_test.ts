@@ -1,0 +1,93 @@
+// Tests bout en bout du serveur : vrai Deno.serve sur port éphémère, base :memory:.
+import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { makeHandler } from "./main.ts";
+import { Hub } from "./hub.ts";
+import { KEY, seeded, syncReq } from "./test_util.ts";
+
+async function withServer(fn: (base: string, hub: Hub) => Promise<void>) {
+  const store = await seeded();
+  const hub = new Hub(2);
+  const server = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, makeHandler(store, { hub }));
+  const base = `http://127.0.0.1:${server.addr.port}`;
+  try { await fn(base, hub); } finally { await server.shutdown(); store.close(); }
+}
+
+// Rejoue une Request de test_util contre le vrai serveur.
+function send(base: string, r: Request): Promise<Response> {
+  const u = new URL(r.url);
+  return fetch(base + u.pathname + u.search, { method: r.method, headers: r.headers, body: r.body });
+}
+
+Deno.test("serveur : sync puis /api/score reflète le score", () => withServer(async (base) => {
+  const res = await send(base, syncReq("M0000001", KEY, 1, [3, 1]));
+  assertEquals(res.status, 200);
+  await res.body?.cancel();
+  const score = await (await fetch(`${base}/api/score?channel=marc`)).json();
+  assertEquals([score.match_id, score.score_me, score.score_opp], ["M0000001", 3, 1]);
+  assertEquals(await (await fetch(`${base}/api/score?channel=ami`)).json(), null);
+}));
+
+Deno.test("serveur : /api/stream pousse l'état initial puis le sync en < 1 s", () => withServer(async (base, hub) => {
+  const ctrl = new AbortController();
+  const res = await fetch(`${base}/api/stream?channel=marc`, { signal: ctrl.signal });
+  assertEquals(res.headers.get("content-type"), "text/event-stream");
+  const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
+  const nextData = async () => {
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) throw new Error("flux fermé");
+      buf += value;
+      const m = buf.match(/^data: (.*)$/m);
+      if (m) return JSON.parse(m[1]);
+    }
+  };
+  assertEquals(await nextData(), null);
+  const t0 = performance.now();
+  const s = await send(base, syncReq("M0000002", KEY, 1, [7, 5]));
+  await s.body?.cancel();
+  const ev = await nextData();
+  assert(performance.now() - t0 < 1000);
+  assertEquals([ev.score_me, ev.score_opp], [7, 5]);
+  assertEquals(hub.size, 1);
+  await reader.cancel();
+  ctrl.abort();
+  // Le désabonnement suit la fermeture côté client.
+  for (let i = 0; i < 50 && hub.size > 0; i++) await new Promise((r) => setTimeout(r, 10));
+  assertEquals(hub.size, 0);
+}));
+
+Deno.test("serveur : plafond SSE → 503, canal invalide → 400", () => withServer(async (base) => {
+  const ctrls = [new AbortController(), new AbortController()];
+  const open = await Promise.all(ctrls.map((c) => fetch(`${base}/api/stream?channel=marc`, { signal: c.signal })));
+  const full = await fetch(`${base}/api/stream?channel=marc`);
+  assertEquals(full.status, 503);
+  await full.body?.cancel();
+  for (const r of open) await r.body?.cancel();
+  for (const c of ctrls) c.abort();
+  const bad = await fetch(`${base}/api/score?channel=../etc`);
+  assertEquals(bad.status, 400);
+  await bad.body?.cancel();
+}));
+
+Deno.test("serveur : preflight OPTIONS 204 avec en-têtes CORS", () => withServer(async (base) => {
+  const res = await fetch(`${base}/functions/v1/names`, { method: "OPTIONS" });
+  assertEquals(res.status, 204);
+  assertEquals(res.headers.get("access-control-allow-origin"), "*");
+  assertEquals(res.headers.get("access-control-allow-headers"), "X-Device-Key, Content-Type");
+  await res.body?.cancel();
+}));
+
+Deno.test("serveur : corps de 100 Ko → 413", () => withServer(async (base) => {
+  const res = await fetch(`${base}/functions/v1/register`, { method: "POST", body: "x".repeat(100 * 1024) });
+  assertEquals(res.status, 413);
+  await res.body?.cancel();
+}));
+
+Deno.test("serveur : chat-announce sans clé configurée → 503, healthz ok", () => withServer(async (base) => {
+  const a = await fetch(`${base}/functions/v1/chat-announce`);
+  assertEquals(a.status, 503);
+  await a.body?.cancel();
+  const h = await fetch(`${base}/healthz`);
+  assertEquals([h.status, await h.text()], [200, "ok"]);
+}));
