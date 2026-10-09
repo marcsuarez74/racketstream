@@ -23,6 +23,8 @@ export async function handleRegisterPost(req: Request, db: RegisterDb): Promise<
   const key = [...bytes].map((x) => x.toString(16).padStart(2, "0")).join("");
   const hash = await sha256Hex(key);
   const ins = await db.createChannel(channel, hash);
+  // Course entre channelTaken et l'insert : la contrainte UNIQUE(channel) tranche.
+  if (ins.error === "taken") return json(409, { error: "canal déjà pris" });
   if (ins.error) return json(500, { error: "db" });
   return json(200, { channel, key });
 }

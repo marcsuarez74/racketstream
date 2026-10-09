@@ -15,6 +15,7 @@ const db: RegisterDb = {
   },
   async createChannel(channel, keyHash) {
     const { error } = await supabase.from("devices").insert({ channel, device_key_hash: keyHash });
+    if (error?.code === "23505") return { error: "taken" };
     return { error: error ? String(error.message) : null };
   },
 };

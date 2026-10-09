@@ -55,3 +55,10 @@ Deno.test("400 si body invalide", async () => {
   const res = await handleRegisterPost(post({ nope: 1 }), makeDb());
   assertEquals(res.status, 400);
 });
+
+Deno.test("409 si le canal est pris entre la vérification et l'insert", async () => {
+  const db = makeDb();
+  db.createChannel = async () => ({ error: "taken" });
+  const res = await handleRegisterPost(post({ channel: "marc" }), db);
+  assertEquals(res.status, 409);
+});

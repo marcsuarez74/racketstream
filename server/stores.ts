@@ -3,7 +3,11 @@
 // Supabase. Toute écriture passe par Store.exclusive / Store.atomic.
 import type { Store } from "./db.ts";
 import type { Db as SyncDb } from "../supabase/functions/sync/handler.ts";
-import { teamName } from "../supabase/functions/score-text/handler.ts";
+import { teamName, type Db as ScoreDb, type Names, type ScoreRow } from "../supabase/functions/score-text/handler.ts";
+import type { AnnounceDb, ChannelCfg } from "../supabase/functions/chat-announce/handler.ts";
+import type { NamesDb } from "../supabase/functions/names/handler.ts";
+import type { RegisterDb } from "../supabase/functions/register/handler.ts";
+import { sha256Hex } from "../supabase/functions/sync/handler.ts";
 
 type Row = Record<string, unknown>;
 
@@ -101,4 +105,133 @@ export async function saveAnnounced(store: Store, channel: string, text: string)
                        ON CONFLICT(channel) DO UPDATE SET last_text = excluded.last_text, updated_at = excluded.updated_at`)
       .run(channel, text, Date.now());
   });
+}
+
+// ---------------------------------------------------------------------------
+// Pick du match à afficher : UNIQUE implémentation (overlay, widget SE,
+// renderer VPS, score-text et chat-announce passent tous par ici).
+// Match dont l'état est « active » le plus récent du canal, sinon le plus
+// récent tout statut. Tri started_at DESC, NULL en dernier.
+
+export interface Picked {
+  match_id: string;
+  status: string;
+  current_set: number;
+  score_me: number;
+  score_opp: number;
+  sets_me: number;
+  sets_opp: number;
+  config: ScoreRow["config"];
+  updated_at: number;
+}
+
+function latest(store: Store, channel: string, activeOnly: boolean): Picked | null {
+  const r = store.sql.prepare(`
+    SELECT m.match_id, s.status, s.current_set, s.score_me, s.score_opp, s.sets_me, s.sets_opp, s.config, s.updated_at
+    FROM matches m JOIN match_state s ON s.match_id = m.match_id
+    WHERE m.channel = ? ${activeOnly ? "AND s.status = 'active'" : ""}
+    ORDER BY m.started_at IS NULL, m.started_at DESC
+    LIMIT 1`).get(channel) as Row | undefined;
+  if (!r) return null;
+  return {
+    match_id: String(r.match_id),
+    status: String(r.status),
+    current_set: Number(r.current_set),
+    score_me: Number(r.score_me),
+    score_opp: Number(r.score_opp),
+    sets_me: Number(r.sets_me),
+    sets_opp: Number(r.sets_opp),
+    config: JSON.parse(String(r.config)),
+    updated_at: Number(r.updated_at),
+  };
+}
+
+export function pickScore(store: Store, channel: string): Picked | null {
+  return latest(store, channel, true) ?? latest(store, channel, false);
+}
+
+function toScoreRow(p: Picked | null): ScoreRow | null {
+  if (!p) return null;
+  return {
+    status: p.status, currentSet: p.current_set, scoreMe: p.score_me, scoreOpp: p.score_opp,
+    setsMe: p.sets_me, setsOpp: p.sets_opp, config: p.config,
+  };
+}
+
+export function getNames(store: Store, channel: string): Names | null {
+  const d = store.sql.prepare("SELECT format, name1, name1b, name2, name2b FROM devices WHERE channel = ?").get(channel) as Row | undefined;
+  if (!d) return null;
+  return {
+    format: String(d.format ?? "simple"),
+    name1: String(d.name1 ?? ""),
+    name1b: String(d.name1b ?? ""),
+    name2: String(d.name2 ?? ""),
+    name2b: String(d.name2b ?? ""),
+  };
+}
+
+export function sqliteScoreDb(store: Store): ScoreDb {
+  return {
+    latestMatch: async (channel, activeOnly) => toScoreRow(latest(store, channel, activeOnly)),
+    getNames: async (channel) => getNames(store, channel),
+  };
+}
+
+export function sqliteAnnounceDb(store: Store): AnnounceDb {
+  return {
+    async channels() {
+      const rows = store.sql.prepare("SELECT channel, se_channel_id, se_jwt, name1, name2 FROM devices").all() as Row[];
+      return rows.map((d) => ({
+        channel: String(d.channel),
+        seChannelId: (d.se_channel_id as string | null) ?? null,
+        seJwt: (d.se_jwt as string | null) ?? null,
+        name1: String(d.name1 ?? "MOI"),
+        name2: String(d.name2 ?? "LUI"),
+      })) as ChannelCfg[];
+    },
+    latestMatch: async (channel, activeOnly) => toScoreRow(latest(store, channel, activeOnly)),
+    lastAnnounced: (channel) => lastAnnounced(store, channel),
+    saveAnnounced: (channel, text) => saveAnnounced(store, channel, text),
+  };
+}
+
+export function sqliteNamesDb(store: Store): NamesDb {
+  return {
+    async getDeviceHash(key) {
+      try {
+        const d = store.sql.prepare("SELECT id FROM devices WHERE device_key_hash = ?").get(await sha256Hex(key)) as Row | undefined;
+        return { deviceId: d ? String(d.id) : null, error: null };
+      } catch (e) { return { deviceId: null, error: errMsg(e) }; }
+    },
+    getNames: async (channel) => getNames(store, channel),
+    async upsertNames(deviceId, f) {
+      try {
+        await store.exclusive(() => {
+          store.sql.prepare("UPDATE devices SET format = ?, name1 = ?, name1b = ?, name2 = ?, name2b = ? WHERE id = ?")
+            .run(f.format, f.name1, f.name1b, f.name2, f.name2b, Number(deviceId));
+        });
+        return { error: null };
+      } catch (e) { return { error: errMsg(e) }; }
+    },
+  };
+}
+
+export function sqliteRegisterDb(store: Store): RegisterDb {
+  return {
+    async channelTaken(channel) {
+      return store.sql.prepare("SELECT 1 FROM devices WHERE channel = ?").get(channel) !== undefined;
+    },
+    async createChannel(channel, keyHash) {
+      try {
+        await store.exclusive(() => {
+          store.sql.prepare("INSERT INTO devices (channel, device_key_hash) VALUES (?, ?)").run(channel, keyHash);
+        });
+        return { error: null };
+      } catch (e) {
+        // UNIQUE(channel) : la contrainte tranche la course channelTaken → insert.
+        if (/UNIQUE constraint failed/.test(errMsg(e))) return { error: "taken" };
+        return { error: errMsg(e) };
+      }
+    },
+  };
 }
