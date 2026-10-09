@@ -25,12 +25,14 @@ module Ui {
     var mText = [];      // [police, hauteur] du plus grand au plus petit
     var mNum = [];
     var mReady = false;
+    var mSmall = false;  // petit écran (fr55…) : mises en page compactes (PagesS)
 
     function init(dc as Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
         var side = w < h ? w : h;
         mK = side / 454.0;
+        mSmall = mK < 0.6;
         mOx = (w - side) / 2;
         mOy = (h - side) / 2;
         mText = fontTable(dc, [Graphics.FONT_LARGE, Graphics.FONT_MEDIUM, Graphics.FONT_SMALL, Graphics.FONT_TINY, Graphics.FONT_XTINY]);
@@ -101,6 +103,45 @@ module Ui {
         dc.drawText(x(px), y(py), nf(size, st), st, justify(align));
     }
 
+    // Texte qui doit tenir dans maxw (repère maquette) : police réduite d'un
+    // cran tant que ça déborde ; en dernier recours, coupé avant « · ».
+    function fit(dc as Dc, str, px, py, size, color as Number, align, maxw) as Void {
+        var st = str.toString();
+        var mw = s(maxw);
+        var f = tf(size);
+        var i = 0;
+        while (i < mText.size() && mText[i][0] != f) { i += 1; }
+        while (dc.getTextWidthInPixels(st, f) > mw && i < mText.size() - 1) {
+            i += 1;
+            f = mText[i][0];
+        }
+        if (dc.getTextWidthInPixels(st, f) > mw) {
+            var k = st.find(" · ");
+            if (k != null) { st = st.substring(0, k); }
+        }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x(px), y(py), f, st, justify(align));
+    }
+
+    // « libellé valeur » centré sur une ligne, deux couleurs.
+    function pair(dc as Dc, label as String, value, py, size, lc as Number, vc as Number) as Void {
+        var f = tf(size);
+        var vs = value.toString();
+        var gap = s(14);
+        var wl = dc.getTextWidthInPixels(label, f);
+        var x0 = x(227) - (wl + gap + dc.getTextWidthInPixels(vs, f)) / 2;
+        var j = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
+        dc.setColor(lc, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x0, y(py), f, label, j);
+        dc.setColor(vc, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x0 + wl + gap, y(py), f, vs, j);
+    }
+
+    // Largeur d'un texte, en unités maquette.
+    function wu(dc as Dc, str as String, size) as Number {
+        return (dc.getTextWidthInPixels(str, tf(size)) / mK).toNumber();
+    }
+
     function circle(dc as Dc, px, py, r, color as Number) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x(px), y(py), s(r));
@@ -169,12 +210,12 @@ module Ui {
     function list(dc as Dc, title as String, items as Array, idx as Number, color as Number, sub) as Void {
         var cnt = items.size();
         t(dc, title, 227, 70, 30, C_LABEL, null);
-        if (cnt > 2) { t(dc, items[(idx + cnt - 1) % cnt], 227, 150, 34, C_FAINT, null); }
+        if (cnt > 2) { fit(dc, items[(idx + cnt - 1) % cnt], 227, 150, 34, C_FAINT, null, 340); }
         rrect(dc, 40, 190, 374, 74, 12, C_BOX);
         rect(dc, 40, 198, 7, 58, color);
-        t(dc, items[idx], 227, 227, 48, 0xFFFFFF, null);
-        if (sub != null) { t(dc, sub, 227, 290, 24, C_LABEL, null); }
-        if (cnt > 1) { t(dc, items[(idx + 1) % cnt], 227, sub != null ? 345 : 310, 34, C_FAINT, null); }
+        fit(dc, items[idx], 232, 227, 48, 0xFFFFFF, null, 350);
+        if (sub != null) { fit(dc, sub, 227, 290, 24, C_LABEL, null, 400); }
+        if (cnt > 1) { fit(dc, items[(idx + 1) % cnt], 227, sub != null ? 345 : 310, 34, C_FAINT, null, 330); }
     }
 
     function toast(dc as Dc, str as String) as Void {

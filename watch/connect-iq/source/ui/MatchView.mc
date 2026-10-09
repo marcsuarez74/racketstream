@@ -436,14 +436,14 @@ class MatchView extends WatchUi.View {
             Ui.list(dc, "ACTIVITÉ", ["Reprendre", "Enregistrer", "Supprimer"], mListIdx,
                 mListIdx == 2 ? Ui.C_RED : color, "Chrono " + Ui.fmt(mAct.elapsedSec()));
         } else if (scr == Scr.CONFIRM) {
-            Ui.t(dc, "Supprimer", 227, 170, 48, 0xFFFFFF, null);
-            Ui.t(dc, "l'activité ?", 227, 220, 48, 0xFFFFFF, null);
+            Ui.t(dc, "Supprimer", 227, 160, 48, 0xFFFFFF, null);
+            Ui.t(dc, "l'activité ?", 227, 225, 48, 0xFFFFFF, null);
             Ui.t(dc, "START  oui", 227, 300, 30, Ui.C_RED, null);
             Ui.t(dc, "BACK  non", 227, 345, 30, Ui.C_LABEL, null);
         } else if (scr == Scr.SAVING) {
             var a = (System.getTimer() % 1257) / 200.0;
             Ui.arc(dc, 227, 190, 46, a, a + 4.4, Ui.C_BLUE, 10);
-            Ui.t(dc, "Enregistrement...", 227, 290, 40, 0xFFFFFF, null);
+            Ui.fit(dc, "Enregistrement...", 227, 290, 40, 0xFFFFFF, null, 400);
         } else if (scr == Scr.SUMMARY) {
             Pages.summary(dc, self);
         } else if (scr == Scr.DONE) {

@@ -11,6 +11,7 @@ module Pages {
     // ---- prêt / reprise ----
 
     function ready(dc as Dc, v) as Void {
+        if (Ui.mSmall) { PagesS.ready(dc, v); return; }
         var sp = v.mSport;
         var hr = v.mAct.heartRate();
         Ui.t(dc, Sports.name(sp).toUpper(), 227, 110, 52, Sports.color(sp), null);
@@ -46,8 +47,13 @@ module Pages {
         }
         Ui.pageDots(dc, 4, p);
         if (v.mPaused) {
-            Ui.rrect(dc, 150, 8, 154, 34, 8, 0xF5C542);
-            Ui.t(dc, "PAUSE", 227, 26, 26, 0x111111, null);
+            if (Ui.mSmall) {
+                Ui.rrect(dc, 140, 36, 174, 56, 10, 0xF5C542);
+                Ui.t(dc, "PAUSE", 227, 64, 22, 0x111111, null);
+            } else {
+                Ui.rrect(dc, 150, 8, 154, 34, 8, 0xF5C542);
+                Ui.t(dc, "PAUSE", 227, 26, 26, 0x111111, null);
+            }
         }
     }
 
@@ -59,6 +65,7 @@ module Pages {
     }
 
     function score(dc as Dc, v) as Void {
+        if (Ui.mSmall) { PagesS.score(dc, v); return; }
         var e = v.mEngine;
         var sp = v.mSport;
         var col = Sports.color(sp);
@@ -99,6 +106,7 @@ module Pages {
     }
 
     function setOver(dc as Dc, v) as Void {
+        if (Ui.mSmall) { PagesS.setOver(dc, v); return; }
         var e = v.mEngine;
         var rows = e.setRows(v.mT0);
         var last = rows.size() > 0 ? rows[rows.size() - 1] : [0, 0, -1, 0, 0, 0];
@@ -112,6 +120,7 @@ module Pages {
     }
 
     function cardio(dc as Dc, v) as Void {
+        if (Ui.mSmall) { PagesS.cardio(dc, v); return; }
         var hr = v.mAct.heartRate();
         var st = v.mAct.getStats();
         var zc = Ui.zones();
@@ -139,6 +148,7 @@ module Pages {
     }
 
     function effort(dc as Dc, v) as Void {
+        if (Ui.mSmall) { PagesS.effort(dc, v); return; }
         var st = v.mAct.getStats();
         Ui.line(dc, 60, 190, 394, 190, Ui.C_LINE, 2);
         Ui.line(dc, 40, 300, 414, 300, Ui.C_LINE, 2);
@@ -154,6 +164,7 @@ module Pages {
     }
 
     function matchStats(dc as Dc, v) as Void {
+        if (Ui.mSmall) { PagesS.matchStats(dc, v); return; }
         var p = MatchStats.points(v.mEngine.getEvents());
         var won = p[0];
         var n = p[1];
@@ -173,6 +184,7 @@ module Pages {
     // ---- fin de match ----
 
     function matchEnd(dc as Dc, v) as Void {
+        if (Ui.mSmall) { PagesS.matchEnd(dc, v); return; }
         var e = v.mEngine;
         var win = e.getSetsMe() > e.getSetsOpp();
         var col = Sports.color(v.mSport);
@@ -191,6 +203,7 @@ module Pages {
     // ---- récap de séance (5 pages) ----
 
     function summary(dc as Dc, v) as Void {
+        if (Ui.mSmall) { PagesS.summary(dc, v); return; }
         var pg = v.mSumPage;
         var e = v.mEngine;
         var sp = v.mSport;
@@ -305,6 +318,7 @@ module Pages {
     }
 
     function done(dc as Dc) as Void {
+        if (Ui.mSmall) { PagesS.done(dc); return; }
         Ui.circle(dc, 227, 170, 56, 0x17804B);
         Ui.line(dc, 201, 170, 221, 190, WHITE, 10);
         Ui.line(dc, 221, 190, 255, 150, WHITE, 10);
