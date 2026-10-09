@@ -9,24 +9,29 @@ const supabase = createClient(
 );
 
 const db: Db = {
+  // Backend Supabase (en cours d'abandon, phase 8) : la colonne matches.device_id
+  // porte l'ownerId (devices.id) sous forme de texte.
   async getDeviceHash(expected: string) {
-    const { data, error } = await supabase.from("devices").select("channel").eq("device_key_hash", expected).maybeSingle();
-    return { channel: (data as { channel?: string } | null)?.channel ?? null, error: error ? error.message : null };
+    const { data, error } = await supabase.from("devices").select("id, channel").eq("device_key_hash", expected).maybeSingle();
+    const d = data as { id?: number; channel?: string } | null;
+    return { ownerId: d?.id ?? null, channel: d?.channel ?? null, error: error ? error.message : null };
   },
-  async getMatchDevice(matchId) {
+  async getMatchOwner(matchId) {
     const { data, error } = await supabase.from("matches").select("device_id").eq("match_id", matchId).maybeSingle();
-    return { deviceId: (data as { device_id?: string } | null)?.device_id ?? null, error: error ? error.message : null };
+    const raw = (data as { device_id?: string } | null)?.device_id;
+    // Ancien format (UUID d'install) → NaN : traité comme « autre propriétaire ».
+    return { ownerId: raw == null ? null : Number(raw), error: error ? error.message : null };
   },
-  async upsertMatch(matchId, deviceId, config, startedAt, status, channel) {
+  async upsertMatch(matchId, ownerId, _deviceId, config, startedAt, status, channel) {
     const { error } = await supabase.from("matches").upsert(
-      { match_id: matchId, device_id: deviceId, config, started_at: startedAt, status, channel },
+      { match_id: matchId, device_id: String(ownerId), config, started_at: startedAt, status, channel },
       { onConflict: "match_id", defaultToNull: false },
     );
     return { error: error ? error.message : null };
   },
-  async finishOtherActiveMatches(deviceId, matchId) {
+  async finishOtherActiveMatches(ownerId, matchId) {
     const { error } = await supabase.from("matches").update({ status: "finished" })
-      .eq("device_id", deviceId).eq("status", "active").neq("match_id", matchId);
+      .eq("device_id", String(ownerId)).eq("status", "active").neq("match_id", matchId);
     return { error: error ? error.message : null };
   },
   async upsertEvents(matchId, events) {

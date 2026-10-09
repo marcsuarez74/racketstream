@@ -3,23 +3,23 @@ import { handleSync, sha256Hex, type Db, type Validated } from "./handler.ts";
 
 const URL_MATCH = "https://fn.test/functions/v1/sync/matches/B7K2QM9X/events";
 
-function makeDb(opts: { devices?: { hash: string; channel: string }[]; ownerDeviceId?: string | null; announce?: { seChannelId: string | null; last?: string } } = {}): Db {
+function makeDb(opts: { devices?: { hash: string; channel: string }[]; ownerId?: number | null; announce?: { seChannelId: string | null; last?: string } } = {}): Db {
   const events = new Map<string, Record<string, unknown>>();
   const devices = opts.devices ?? [];
-  let matchDevice: string | null = opts.ownerDeviceId ?? null;
+  let matchOwner: number | null = opts.ownerId ?? null;
   let matchChannel: string | null = null;
   let matchStartedAt: number | null = null;
   const state = { finishedOthers: [] as string[] };
   const announce = { saved: [] as string[], last: opts.announce?.last ?? null };
   return {
     async getDeviceHash(expected) {
-      const d = devices.find((x) => x.hash === expected);
-      return { channel: d?.channel ?? null, error: null };
+      const i = devices.findIndex((x) => x.hash === expected);
+      return { ownerId: i < 0 ? null : i + 1, channel: i < 0 ? null : devices[i].channel, error: null };
     },
-    async getMatchDevice(matchId) { return { deviceId: matchDevice, error: null }; },
-    async upsertMatch(_m, deviceId, _c, startedAt, _st, channel) { matchDevice = deviceId; matchChannel = channel; matchStartedAt = startedAt; return { error: null }; },
-    async finishOtherActiveMatches(deviceId, matchId) {
-      state.finishedOthers.push(deviceId + ':' + matchId);
+    async getMatchOwner(_matchId) { return { ownerId: matchOwner, error: null }; },
+    async upsertMatch(_m, ownerId, _d, _c, startedAt, _st, channel) { matchOwner = ownerId; matchChannel = channel; matchStartedAt = startedAt; return { error: null }; },
+    async finishOtherActiveMatches(ownerId, matchId) {
+      state.finishedOthers.push(ownerId + ':' + matchId);
       return { error: null };
     },
     channelUsed() { return matchChannel; },
@@ -156,19 +156,38 @@ Deno.test("création d'un match clôture les actifs précédents du même device
   const db = makeDb(oneDevice(await sha256Hex(KEY))) as Db & { finishedOthers: string[] };
   const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
   assertEquals(res.status, 200);
-  assertEquals(db.finishedOthers, ["install-uuid-1:B7K2QM9X"]);
+  assertEquals(db.finishedOthers, ["1:B7K2QM9X"]);
 });
 
 Deno.test("re-POST d'un match existant ne clôture rien", async () => {
-  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerDeviceId: "install-uuid-1" }) as Db & { finishedOthers: string[] };
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerId: 1 }) as Db & { finishedOthers: string[] };
   await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
   assertEquals(db.finishedOthers.length, 0);
 });
 
-Deno.test("403 si le match appartient à un autre device", async () => {
-  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerDeviceId: "autre-install" });
-  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
+Deno.test("403 si le match appartient à une autre clé", async () => {
+  const db = makeDb({ devices: [{ hash: await sha256Hex(KEY), channel: "marc" }, { hash: await sha256Hex(KEY_AMI), channel: "ami" }], ownerId: 1 });
+  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY_AMI }, GOOD_BODY), db);
   assertEquals(res.status, 403);
+});
+
+Deno.test("le deviceId du corps ne fait pas foi : même clé, deviceId différent → 200", async () => {
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerId: 1 });
+  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, { ...GOOD_BODY, deviceId: "autre-install" }), db);
+  assertEquals(res.status, 200);
+});
+
+Deno.test("erreur d'écriture dans la transaction → 500 et rollback demandé", async () => {
+  const db = makeDb(oneDevice(await sha256Hex(KEY)));
+  let rolledBack = false;
+  db.upsertState = async () => ({ error: "boom" });
+  db.atomic = async <T>(fn: () => Promise<T>) => {
+    try { return await fn(); } catch (e) { rolledBack = true; throw e; }
+  };
+  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
+  assertEquals(res.status, 500);
+  assertEquals((await res.json()).error, "boom");
+  assertEquals(rolledBack, true);
 });
 
 Deno.test("annonce le score dans le chat au moment du sync (event-driven)", async () => {

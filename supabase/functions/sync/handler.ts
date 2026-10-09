@@ -9,20 +9,33 @@ import { maybeAnnounce, type Announcer, type AnnounceState } from "../_shared/an
 
 export interface Db {
   // Auth multi-device : le handler hash la clé du header et cherche la ligne
-  // correspondante dans `devices`. Le canal (overlay/bot) appartient au device.
-  getDeviceHash(expected: string): Promise<{ channel: string | null; error: string | null }>;
-  getMatchDevice(matchId: string): Promise<{ deviceId: string | null; error: string | null }>;
-  upsertMatch(matchId: string, deviceId: string, config: Record<string, unknown>, startedAt: number | null, status: string, channel: string): Promise<{ error: string | null }>;
-  // Invariant « un seul match actif par device » : à la création d'un match, on
+  // correspondante dans `devices`. Le canal (overlay/bot) appartient au device ;
+  // `ownerId` (devices.id) identifie la clé, c'est lui qui possède les matchs.
+  getDeviceHash(expected: string): Promise<{ ownerId: number | null; channel: string | null; error: string | null }>;
+  // Propriétaire du match (devices.id de la clé qui l'a créé), null si nouveau.
+  // Le deviceId du corps n'est pas une preuve : n'importe quelle clé valide
+  // peut l'envoyer. Seule la clé fait foi.
+  getMatchOwner(matchId: string): Promise<{ ownerId: number | null; error: string | null }>;
+  upsertMatch(matchId: string, ownerId: number, deviceId: string, config: Record<string, unknown>, startedAt: number | null, status: string, channel: string): Promise<{ error: string | null }>;
+  // Invariant « un seul match actif par clé » : à la création d'un match, on
   // clôture les précédents jamais terminés (sinon ils concurrencent le pick
   // « actif le plus récent » de l'overlay et du bot chat).
-  finishOtherActiveMatches(deviceId: string, matchId: string): Promise<{ error: string | null }>;
+  finishOtherActiveMatches(ownerId: number, matchId: string): Promise<{ error: string | null }>;
   upsertEvents(matchId: string, events: Record<string, unknown>[]): Promise<{ error: string | null }>;
   upsertState(matchId: string, snapshot: Record<string, unknown>, config: Record<string, unknown>): Promise<{ error: string | null }>;
+  // Optionnel : exécute fn dans une transaction (rollback si fn lève). Absent
+  // = exécution directe (backend Supabase, Db de test).
+  atomic?<T>(fn: () => Promise<T>): Promise<T>;
   // Annonce chat (StreamElements) : config du canal + dédoublonnage.
   getAnnounceCfg(channel: string): Promise<{ seChannelId: string | null; seJwt?: string | null; name1: string; name2: string } | null>;
   lastAnnounced(channel: string): Promise<string | null>;
   saveAnnounced(channel: string, text: string): Promise<void>;
+}
+
+// Erreur levée dans la transaction pour provoquer le rollback et porter la
+// réponse HTTP.
+class SyncAbort extends Error {
+  constructor(readonly status: number, readonly code: string) { super(code); }
 }
 
 export function json(status: number, payload: unknown): Response {
@@ -108,26 +121,37 @@ export async function handleSync(req: Request, db: Db, sender?: Announcer): Prom
   const dev = await db.getDeviceHash(expected);
   if (dev.error) return json(500, { error: dev.error });
   if (!dev.channel) return json(401, { error: "key" });
-  const owner = await db.getMatchDevice(matchId);
-  if (owner.error) return json(500, { error: owner.error });
-  if (owner.deviceId !== null && owner.deviceId !== v.deviceId) return json(403, { error: "owner" });
-  if (owner.deviceId === null) {
-    const cl = await db.finishOtherActiveMatches(v.deviceId, matchId);
-    if (cl.error) return json(500, { error: cl.error });
+  if (dev.ownerId === null) return json(500, { error: "device" });
+  const ownerId = dev.ownerId;
+  const channel = dev.channel;
+  const write = async () => {
+    const owner = await db.getMatchOwner(matchId);
+    if (owner.error) throw new SyncAbort(500, owner.error);
+    if (owner.ownerId !== null && owner.ownerId !== ownerId) throw new SyncAbort(403, "owner");
+    if (owner.ownerId === null) {
+      const cl = await db.finishOtherActiveMatches(ownerId, matchId);
+      if (cl.error) throw new SyncAbort(500, cl.error);
+    }
+    const status = v.snapshot.status === "match_finished" ? "finished" : "active";
+    const up = await db.upsertMatch(matchId, ownerId, v.deviceId, v.config, v.startedAt, status, channel);
+    if (up.error) throw new SyncAbort(500, up.error);
+    const ev = await db.upsertEvents(matchId, v.events);
+    if (ev.error) throw new SyncAbort(500, ev.error);
+    const st = await db.upsertState(matchId, v.snapshot, v.config);
+    if (st.error) throw new SyncAbort(500, st.error);
+  };
+  try {
+    await (db.atomic ? db.atomic(write) : write());
+  } catch (e) {
+    if (e instanceof SyncAbort) return json(e.status, { error: e.code });
+    return json(500, { error: "db" });
   }
-  const status = v.snapshot.status === "match_finished" ? "finished" : "active";
-  const up = await db.upsertMatch(matchId, v.deviceId, v.config, v.startedAt, status, dev.channel);
-  if (up.error) return json(500, { error: up.error });
-  const ev = await db.upsertEvents(matchId, v.events);
-  if (ev.error) return json(500, { error: ev.error });
-  const st = await db.upsertState(matchId, v.snapshot, v.config);
-  if (st.error) return json(500, { error: st.error });
   if (sender) {
     // Annonce chat event-driven : jamais bloquante pour la sync.
     try {
-      const cfg = await db.getAnnounceCfg(dev.channel);
+      const cfg = await db.getAnnounceCfg(channel);
       const state: AnnounceState = { lastAnnounced: db.lastAnnounced, saveAnnounced: db.saveAnnounced };
-      await maybeAnnounce(dev.channel, cfg, {
+      await maybeAnnounce(channel, cfg, {
         status: String(v.snapshot.status),
         currentSet: Number(v.snapshot.currentSet),
         scoreMe: Number(v.snapshot.scoreMe),
