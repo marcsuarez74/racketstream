@@ -25,5 +25,5 @@ Branche `phase-9-activite`. Maquette de référence : « activité Garmin » (é
 ## Reste à faire
 
 1. Contrôle visuel des écrans dans le simulateur, surtout sur fr55 (208 px : risques de chevauchement).
-2. Backend et affichages : colonne `sport`, rendu padel (jeux / tie-break) dans l'overlay, le widget SE et le renderer VPS, plus l'annonce chat. La logique de pick est à répercuter partout.
+2. Backend et affichages : l'annonce chat déclenchée par la sync gère déjà le padel. Reste à stocker `snapshot.padel` (aujourd'hui `match_state` ne garde que les colonnes à plat, donc `!score` et les affichages ne voient que les points bruts 0..3), puis le rendu padel dans l'overlay, le widget SE et le renderer VPS. La logique de pick est à répercuter partout.
 3. FitContributor (champs score dans le FIT), autres familles de montres, décision sur le fr55.
