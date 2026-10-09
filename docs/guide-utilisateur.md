@@ -119,7 +119,12 @@ Un simple lien web à mettre en browser source (OBS) ou à incruster via ton out
 https://racket-stream-portal.marc-suarez.fr/overlay/?channel=TON_CANAL&name1=TOI&name2=ADVERSAIRE
 ```
 
-Il suit **automatiquement** ton match actif — rien à toucher entre les matchs. Paramètres : `scale` (taille), `bg=0` (fond transparent).
+Il suit **automatiquement** ton match actif — rien à toucher entre les matchs :
+- un **nouveau match** s'affiche à 0-0 dès son lancement sur la montre ;
+- en **fin de séance** (Enregistrer) ou en cas d'**abandon**, le bandeau disparaît aussitôt ;
+- si l'app est coupée net (batterie, plantage), il disparaît seul au bout de 10 minutes.
+
+Paramètres : `scale` (taille), `bg=0` (fond transparent).
 
 ### Le chat Twitch
 - `!score` → le bot affiche le score immédiatement
