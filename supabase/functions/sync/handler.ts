@@ -83,7 +83,7 @@ function isEvent(e: unknown): boolean {
 }
 
 export type Validated =
-  | { ok: true; deviceId: string; config: Record<string, unknown>; snapshot: Record<string, unknown>; events: Record<string, unknown>[]; startedAt: number | null }
+  | { ok: true; deviceId: string; config: Record<string, unknown>; snapshot: Record<string, unknown>; events: Record<string, unknown>[]; startedAt: number | null; stop: boolean }
   | { ok: false; status: number; message: string };
 
 function parseStartedAt(raw: unknown): number | null {
@@ -103,7 +103,8 @@ export function validateBody(body: unknown): Validated {
   }
   if (!isConfig(b.config)) return { ok: false, status: 400, message: "config" };
   if (!isSnapshot(b.snapshot)) return { ok: false, status: 400, message: "snapshot" };
-  if (!Array.isArray(b.events) || b.events.length < 1 || b.events.length > 10) {
+  // 0 event : ouverture d'un nouveau match (0-0) ou arrêt (stop: true).
+  if (!Array.isArray(b.events) || b.events.length > 10) {
     return { ok: false, status: 400, message: "events" };
   }
   for (const e of b.events) { if (!isEvent(e)) return { ok: false, status: 400, message: "event" }; };
@@ -111,7 +112,7 @@ export function validateBody(body: unknown): Validated {
   // documentée du runtime Monkey C) : startedAt (epoch ms) arrive souvent
   // en "1790000716000" → on accepte les deux formes.
   const startedAt = parseStartedAt(b.startedAt);
-  return { ok: true, deviceId: b.deviceId, config: b.config as Record<string, unknown>, snapshot: b.snapshot as Record<string, unknown>, events: b.events as Record<string, unknown>[], startedAt };
+  return { ok: true, deviceId: b.deviceId, config: b.config as Record<string, unknown>, snapshot: b.snapshot as Record<string, unknown>, events: b.events as Record<string, unknown>[], startedAt, stop: b.stop === true };
 }
 
 export async function handleSync(req: Request, db: Db, sender?: Announcer): Promise<Response> {
@@ -141,11 +142,14 @@ export async function handleSync(req: Request, db: Db, sender?: Announcer): Prom
       const cl = await db.finishOtherActiveMatches(ownerId, matchId);
       if (cl.error) throw new SyncAbort(500, cl.error);
     }
-    const status = v.snapshot.status === "match_finished" ? "finished" : "active";
+    // archived : match arrêté sur la montre → l'overlay se vide aussitôt.
+    const status = v.stop ? "archived" : v.snapshot.status === "match_finished" ? "finished" : "active";
     const up = await db.upsertMatch(matchId, ownerId, v.deviceId, v.config, v.startedAt, status, channel);
     if (up.error) throw new SyncAbort(500, up.error);
-    const ev = await db.upsertEvents(matchId, v.events);
-    if (ev.error) throw new SyncAbort(500, ev.error);
+    if (v.events.length > 0) {
+      const ev = await db.upsertEvents(matchId, v.events);
+      if (ev.error) throw new SyncAbort(500, ev.error);
+    }
     const st = await db.upsertState(matchId, v.snapshot, v.config);
     if (st.error) throw new SyncAbort(500, st.error);
   };
@@ -155,7 +159,7 @@ export async function handleSync(req: Request, db: Db, sender?: Announcer): Prom
     if (e instanceof SyncAbort) return json(e.status, { error: e.code });
     return json(500, { error: "db" });
   }
-  if (sender) {
+  if (sender && v.events.length > 0 && !v.stop) {
     // Annonce chat event-driven : jamais bloquante pour la sync.
     try {
       const cfg = await db.getAnnounceCfg(channel);
@@ -172,6 +176,8 @@ export async function handleSync(req: Request, db: Db, sender?: Announcer): Prom
       }, state, sender);
     } catch { /* l'annonce ne doit jamais casser la sync */ }
   }
+  // Sans event, rien à acquitter (la montre ignore l'absence d'ACK).
+  if (v.events.length === 0) return json(200, { matchId });
   const last = Math.max(...v.events.map((e) => e.sequence as number));
   return json(200, { matchId, lastAcceptedSequence: last });
 }

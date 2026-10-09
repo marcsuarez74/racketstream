@@ -127,12 +127,14 @@ export interface Picked {
 
 function latest(store: Store, channel: string, activeOnly: boolean): Picked | null {
   const r = store.sql.prepare(`
-    SELECT m.match_id, s.status, s.current_set, s.score_me, s.score_opp, s.sets_me, s.sets_opp, s.config, s.updated_at
+    SELECT m.match_id, m.status AS match_status, s.status, s.current_set, s.score_me, s.score_opp, s.sets_me, s.sets_opp, s.config, s.updated_at
     FROM matches m JOIN match_state s ON s.match_id = m.match_id
-    WHERE m.channel = ? ${activeOnly ? "AND s.status = 'active'" : ""}
+    WHERE m.channel = ? ${activeOnly ? "AND s.status = 'active' AND m.status = 'active'" : ""}
     ORDER BY m.started_at IS NULL, m.started_at DESC
     LIMIT 1`).get(channel) as Row | undefined;
-  if (!r) return null;
+  // Match arrêté depuis la montre (fin de séance, abandon) : plus rien à
+  // afficher, ni lui ni un match plus ancien.
+  if (!r || r.match_status === "archived") return null;
   return {
     match_id: String(r.match_id),
     status: String(r.status),

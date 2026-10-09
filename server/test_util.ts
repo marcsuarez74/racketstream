@@ -14,6 +14,19 @@ export async function seeded(): Promise<Store> {
   return store;
 }
 
+// Envoi sans event : ouverture d'un match à 0-0, ou arrêt (stop) depuis la montre.
+export function bareReq(matchId: string, key: string, stop: boolean, startedAt = 1_790_000_000_000): Request {
+  return new Request(`http://x/functions/v1/sync/matches/${matchId}/events`, {
+    method: "POST",
+    headers: { "X-Device-Key": key, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      deviceId: "install-1", config: CONFIG, startedAt, stop,
+      snapshot: { status: "active", currentSet: 1, scoreMe: 0, scoreOpp: 0, setsMe: 0, setsOpp: 0, lastSequence: 0 },
+      events: [],
+    }),
+  });
+}
+
 export function syncReq(matchId: string, key: string, seq: number, score: [number, number], status = "active", startedAt = 1_790_000_000_000): Request {
   return new Request(`http://x/functions/v1/sync/matches/${matchId}/events`, {
     method: "POST",

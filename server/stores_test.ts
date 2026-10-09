@@ -4,7 +4,7 @@ import { pickScore, sqliteNamesDb, sqliteRegisterDb, sqliteSyncDb } from "./stor
 import { handleNamesGet, handleNamesPost } from "../supabase/functions/names/handler.ts";
 import { handleRegisterPost } from "../supabase/functions/register/handler.ts";
 import { handleSync, sha256Hex } from "../supabase/functions/sync/handler.ts";
-import { KEY, KEY_AMI, seeded, syncReq } from "./test_util.ts";
+import { bareReq, KEY, KEY_AMI, seeded, syncReq } from "./test_util.ts";
 
 function count(store: Store, sql: string, ...p: (string | number)[]): number {
   return Number((store.sql.prepare(sql).get(...p) as Record<string, unknown>).n);
@@ -126,5 +126,31 @@ Deno.test("register : canal créé puis 409 ; violation d'unicité → taken", a
   assertEquals((await handleRegisterPost(mk(), db)).status, 200);
   assertEquals((await handleRegisterPost(mk(), db)).status, 409);
   assertEquals(await db.createChannel("marc", "autre-hash"), { error: "taken" });
+  store.close();
+});
+
+Deno.test("pick : nouveau match ouvert à 0-0 → remplace aussitôt l'ancien score", async () => {
+  const store = await seeded();
+  const db = sqliteSyncDb(store);
+  await handleSync(syncReq("ANCIEN02", KEY, 1, [11, 0], "active", 1_000), db);
+  const res = await handleSync(bareReq("NOUVEAU2", KEY, false, 2_000), db);
+  assertEquals(res.status, 200);
+  assertEquals((await res.json()).lastAcceptedSequence, undefined);
+  const p = pickScore(store, "marc");
+  assertEquals([p?.match_id, p?.score_me, p?.status], ["NOUVEAU2", 0, "active"]);
+  assertEquals(count(store, "SELECT COUNT(*) AS n FROM events WHERE match_id = ?", "NOUVEAU2"), 0);
+  store.close();
+});
+
+Deno.test("pick : match arrêté sur la montre → plus rien à afficher, même pas un ancien", async () => {
+  const store = await seeded();
+  const db = sqliteSyncDb(store);
+  await handleSync(syncReq("VIEUX003", KEY, 1, [21, 3], "match_finished", 1_000), db);
+  await handleSync(syncReq("ARRET003", KEY, 1, [11, 0], "active", 2_000), db);
+  const res = await handleSync(bareReq("ARRET003", KEY, true, 2_000), db);
+  assertEquals(res.status, 200);
+  assertEquals(pickScore(store, "marc"), null);
+  // Ses points restent en base (historique).
+  assertEquals(count(store, "SELECT COUNT(*) AS n FROM events WHERE match_id = ?", "ARRET003"), 1);
   store.close();
 });

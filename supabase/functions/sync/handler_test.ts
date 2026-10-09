@@ -109,11 +109,23 @@ Deno.test("2e device acceptée avec son propre canal", async () => {
   assertEquals((db as Db & { channelUsed(): string | null }).channelUsed(), "ami");
 });
 
-Deno.test("400 si body invalide (events vide)", async () => {
+Deno.test("400 si body invalide (events absent)", async () => {
   const db = makeDb(oneDevice(await sha256Hex(KEY)));
-  const bad = { ...GOOD_BODY, events: [] };
+  const { events: _e, ...bad } = GOOD_BODY;
   const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, bad), db);
   assertEquals(res.status, 400);
+});
+
+Deno.test("events vide (ouverture/arrêt) : 200 sans ACK ni annonce chat", async () => {
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), announce: { seChannelId: "se-1" } });
+  const { sender, sent } = makeSender();
+  for (const stop of [false, true]) {
+    const body = { ...GOOD_BODY, events: [], stop };
+    const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, body), db, sender);
+    assertEquals(res.status, 200);
+    assertEquals(await res.json(), { matchId: "B7K2QM9X" });
+  }
+  assertEquals(sent, []);
 });
 
 Deno.test("200 + ACK lastAcceptedSequence", async () => {
