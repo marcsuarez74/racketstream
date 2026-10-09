@@ -167,8 +167,9 @@ class PadelEngine {
 
     function appendEvent(type as Number, arg as Number) as Void {
         mLastSequence += 1;
-        mEvents.add([type, arg, mLastSequence, System.getTimer(), mS[ME], mS[OPP]]);
-        replay();
+        var e = [type, arg, mLastSequence, System.getTimer(), mS[ME], mS[OPP]];
+        mEvents.add(e);
+        applyEvent(mS, e);            // incrémental : un replay complet par point dépasse le watchdog fr55
     }
 
     function replay() as Void {
