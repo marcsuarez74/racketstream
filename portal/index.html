@@ -21,7 +21,7 @@
      l'ordinateur sont regroupées dans la media query en fin de feuille. */
   :root {
     --slx: -22px; --popx0: 22px; --popx1: -4px; --popx2: -14px;
-    --swx: 560%; --dx: 58px; --tiny: -16px; --g0: .45; --g1: .8;
+    --swx: 560%; --dx: calc(29px / .9063); --tiny: -16px; --g0: .45; --g1: .8;
     --cut: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
   }
   * { box-sizing: border-box; }
@@ -111,7 +111,9 @@
   .blk { position: relative; height: 128px; padding: 0 22px 20px 22px; display: flex; align-items: center; gap: 12px; color: #04140C; background: linear-gradient(105deg, #2FCB7F 0%, #3DD68C 45%, #7BEBB6 100%); clip-path: polygon(0 0, 100% 0, 100% 76%, 0 100%); overflow: hidden; transition: filter .4s; }
   .blk.b { padding: 24px 22px 0 22px; color: #031426; background: linear-gradient(105deg, #2E86E6 0%, #4DABF7 50%, #8ACBFF 100%); clip-path: polygon(0 24%, 100% 0, 100% 100%, 0 100%); }
   body:not(.is-live) .blk { filter: grayscale(.85) brightness(.5); }
-  .stripes { position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(4, 20, 12, 0.07) 0 3px, transparent 3px 29px); animation: drift 1.4s linear infinite; }
+  /* La couche est plus large d'un pas et glisse d'exactement un pas
+     (période des rayures / sin 115°) : la boucle tombe pile, sans saut. */
+  .stripes { position: absolute; top: 0; bottom: 0; right: 0; left: calc(-1 * var(--dx)); background: repeating-linear-gradient(115deg, rgba(4, 20, 12, 0.07) 0 3px, transparent 3px 29px); animation: drift .78s linear infinite; }
   .blk.b .stripes { background: repeating-linear-gradient(115deg, rgba(3, 20, 38, 0.07) 0 3px, transparent 3px 29px); }
   body:not(.is-live) .stripes { animation-play-state: paused; }
   .sweep { position: absolute; top: 0; bottom: 0; left: 0; width: 70px; background: rgba(255, 255, 255, 0.7); transform: translateX(-140%) skewX(-24deg); }
@@ -216,7 +218,10 @@
   .path .st:nth-child(5) i { animation-delay: -1s; }
   .path .fl { flex-grow: 1; height: 3px; background: repeating-linear-gradient(90deg, #3DD68C 0 8px, transparent 8px 12px); background-size: 24px 3px; animation: flow .7s linear infinite; }
   .path .fl.c { background-image: repeating-linear-gradient(90deg, #22D3EE 0 8px, transparent 8px 12px); }
-  .tw { position: absolute; inset: 0; z-index: 2; background: #000; animation: inUp .4s cubic-bezier(.2, .9, .25, 1) both; }
+  /* Invisible (et non caché) tant que le live n'est pas confirmé : le
+     lecteur se charge déjà, l'affichage est immédiat. */
+  .tw { position: absolute; inset: 0; z-index: 2; background: #000; opacity: 0; pointer-events: none; transition: opacity .4s; }
+  .tw.on { opacity: 1; pointer-events: auto; }
   .tw iframe { display: block; width: 100%; height: 100%; border: 0; }
   .twnote { margin-top: 12px; font-size: 13px; color: #9AA3AE; line-height: 1.45; }
   .twlab { margin-top: 8px; font-size: 14px; font-weight: 700; color: #C9D1DA; }
@@ -278,7 +283,7 @@
   @keyframes popB { 0% { opacity: 0; transform: translateX(var(--popx0)) scale(.5); } 15% { opacity: 1; transform: translateX(0) scale(1.2); } 30% { transform: scale(1); } 75% { opacity: 1; transform: translateX(var(--popx1)); } 100% { opacity: 0; transform: translateX(var(--popx2)); } }
   @keyframes inL { from { transform: translateX(-105%); } to { transform: none; } }
   @keyframes inR { from { transform: translateX(105%); } to { transform: none; } }
-  @keyframes drift { to { background-position: var(--dx) 0; } }
+  @keyframes drift { from { transform: translateX(0); } to { transform: translateX(var(--dx)); } }
   @keyframes tinA { from { transform: translateY(var(--tiny)) skewX(-18deg) scaleY(1.8); opacity: 0; } to { transform: skewX(-18deg); opacity: 1; } }
   @keyframes tinB { from { transform: translateY(var(--tiny)) skewX(-18deg) scaleY(1.8); opacity: 0; } to { transform: skewX(-18deg); opacity: 1; } }
   @keyframes glow { 0%, 100% { opacity: var(--g0); transform: scale(1); } 50% { opacity: var(--g1); transform: scale(1.08); } }
@@ -314,7 +319,7 @@
 
   /* ================= ORDINATEUR ================= */
   @media (min-width: 1024px) {
-    :root { --slx: -30px; --popx0: 30px; --popx1: -6px; --popx2: -20px; --swx: 900%; --dx: 78px; --tiny: -18px; --g0: .4; --g1: .75; }
+    :root { --slx: -30px; --popx0: 30px; --popx1: -6px; --popx2: -20px; --swx: 900%; --dx: calc(39px / .9063); --tiny: -18px; --g0: .4; --g1: .75; }
     .app { max-width: none; padding-bottom: 0; }
     .glow.g1 { left: -160px; top: 80px; width: 560px; height: 560px; background: radial-gradient(circle, rgba(61, 214, 140, 0.3), transparent 65%); filter: blur(14px); }
     .glow.g2 { left: 420px; right: auto; top: 320px; width: 520px; height: 520px; background: radial-gradient(circle, rgba(77, 171, 247, 0.26), transparent 65%); filter: blur(14px); }
@@ -522,7 +527,7 @@
       <p class="lead pad">Ce que voient tes spectateurs : ta vidéo, avec le score par-dessus.</p>
       <div class="pv-sec">
         <div class="pv" id="screen">
-          <div class="tw" id="tw" hidden></div>
+          <div class="tw" id="tw"></div>
           <div class="pv-in" id="pvIn">
       <svg class="zoom" viewBox="0 0 358 201" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
         <defs>
@@ -1068,6 +1073,8 @@
   // en ligne ; hors live, l'illustration animée reste affichée.
   let twFor = null;     // chaîne du lecteur en cours
   let twLib = null;     // chargement du script Twitch
+  let twPl = null;      // lecteur Twitch
+  let twBad = 0;        // vérifications successives sans image
   function loadTwitchLib() {
     if (!twLib) twLib = new Promise((ok, ko) => {
       const sc = document.createElement("script");
@@ -1079,15 +1086,33 @@
     return twLib;
   }
   function showTwitch(on) {
-    $("tw").hidden = !on;
+    $("tw").classList.toggle("on", on);
     $("twNote").hidden = !on;
     $("dest").textContent = on ? "Twitch" : "Ton live";
   }
+  // Les événements ONLINE/OFFLINE de Twitch arrivent avec retard (la chaîne
+  // reste « en ligne » un moment après la fin du live, lecteur sur l'écran
+  // « offline ») : on vérifie plutôt que le flux existe vraiment. Deux
+  // vérifications ratées d'affilée (10 s) ramènent l'illustration.
+  function checkTwitch() {
+    if (!twPl) return;
+    let ok = false;
+    try {
+      // Une chaîne hors ligne n'a que la qualité « auto » ; en live, Twitch
+      // propose les qualités du flux (1080p60, 720p…).
+      ok = !twPl.getEnded() && (twPl.getQualities() || []).length > 1;
+    } catch { /* lecteur pas prêt */ }
+    twBad = ok ? 0 : twBad + 1;
+    if (ok) showTwitch(true); else if (twBad >= 2) showTwitch(false);
+  }
+  setInterval(checkTwitch, 5000);
   async function syncTwitch() {
     const c = active();
     const want = document.body.dataset.view === "diffusion" && c && c.twitch ? c.twitch : null;
     if (want === twFor) return;
     twFor = want;
+    twPl = null;
+    twBad = 0;
     $("tw").textContent = "";
     showTwitch(false);
     if (!want) return;
@@ -1098,8 +1123,10 @@
     box.style.cssText = "width:100%;height:100%";
     $("tw").appendChild(box);
     const pl = new Twitch.Player("twp", { channel: want, parent: [location.hostname], width: "100%", height: "100%", muted: true, autoplay: true });
-    pl.addEventListener(Twitch.Player.ONLINE, () => { if (twFor === want) showTwitch(true); });
-    pl.addEventListener(Twitch.Player.OFFLINE, () => { if (twFor === want) showTwitch(false); });
+    twPl = pl;
+    pl.addEventListener(Twitch.Player.ONLINE, () => { if (twPl === pl) setTimeout(checkTwitch, 1000); });
+    pl.addEventListener(Twitch.Player.OFFLINE, () => { if (twPl === pl) showTwitch(false); });
+    pl.addEventListener(Twitch.Player.ENDED, () => { if (twPl === pl) showTwitch(false); });
   }
   $("saveTwitch").addEventListener("click", () => {
     const c = active();
