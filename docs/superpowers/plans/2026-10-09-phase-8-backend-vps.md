@@ -214,6 +214,8 @@ Le VPS est **partagé** (autres sites Caddy, Docker, MediaMTX). Règles de cette
 - [ ] Redémarrer le renderer sur le VPS. **Confirmer avec l'utilisateur au préalable : pas de live en cours.**
 - [x] `portal/index.html` : `SUPABASE` devient `API = "https://racket-stream.marc-suarez.fr"`. Les chemins sont inchangés.
 - [x] Portail sorti de GitHub Pages (décision utilisateur du 09/10) : servi par Caddy sur **`https://racket-stream-portal.marc-suarez.fr`** (`file_server`, `/var/www/racketstream-portal`), publié par `scripts/deploy-portal.sh`.
+- [x] Overlay OBS servi au même endroit : **`https://racket-stream-portal.marc-suarez.fr/overlay/?channel=…`** (même script). GitHub Pages n'est plus utilisé.
+- [ ] **[USER ACTION]** Mettre à jour le lien du portail sur la fiche store Garmin, et l'URL de la source navigateur dans OBS.
 - [ ] Tests manuels du portail :
   - créer un canal de test : la clé est affichée ;
   - enregistrer des noms ;

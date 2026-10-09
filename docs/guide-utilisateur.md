@@ -96,7 +96,7 @@ Lance un match et marque un point : un **liseré vert** apparaît autour de l'é
 Un simple lien web à mettre en browser source (OBS) ou à incruster via ton outil de stream :
 
 ```
-https://marcsuarez74.github.io/racketstream/overlay/?channel=TON_CANAL&name1=TOI&name2=ADVERSAIRE
+https://racket-stream-portal.marc-suarez.fr/overlay/?channel=TON_CANAL&name1=TOI&name2=ADVERSAIRE
 ```
 
 Il suit **automatiquement** ton match actif — rien à toucher entre les matchs. Paramètres : `scale` (taille), `bg=0` (fond transparent).
