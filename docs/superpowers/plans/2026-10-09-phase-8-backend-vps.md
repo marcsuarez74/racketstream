@@ -108,7 +108,7 @@ Montre ──POST /functions/v1/sync/matches/:id/events──► Caddy (TLS) ─
 
 ## Tâche 4 — Serveur HTTP, SSE et CORS
 
-- [ ] Routes de `server/main.ts` :
+- [x] Routes de `server/main.ts` :
 
   | Route | Comportement |
   |---|---|
@@ -158,6 +158,7 @@ Le VPS est **partagé** (autres sites Caddy, Docker, MediaMTX). Règles de cette
   - `Restart=on-failure` ;
   - permissions Deno minimales, comme en tâche 4.
 - [ ] Sauvegardes : `racketstream-backup.timer`, une fois par jour à 04:00. Il lance `sqlite3 racketstream.db ".backup …"` vers `/var/lib/racketstream/backups/` et garde 14 jours. Le disque est à 78 %, mais la base pèse quelques Mo.
+- [ ] Copie vers le Mac (demande utilisateur) : `scripts/backup-vps-to-mac.sh` récupère la dernière sauvegarde du jour (`ssh racketstream-vps sudo cat …/backups/<dernier>.db`) vers `~/Backups/racketstream/`, en gardant 30 copies, puis vérifie `PRAGMA integrity_check`. Lancement manuel, ou quotidien via un agent `launchd` (`~/Library/LaunchAgents/`), qui se rattrape au réveil du Mac.
 - [ ] `scripts/deploy-vps.sh` :
   1. rsync de `server/` et `supabase/functions/` (les handlers sont importés) vers `/opt/racketstream` ;
   2. `systemctl restart racketstream-api` (ne concerne que ce service) ;
@@ -168,7 +169,11 @@ Le VPS est **partagé** (autres sites Caddy, Docker, MediaMTX). Règles de cette
   3. `caddy validate` puis `systemctl reload caddy` ;
   4. vérifier que les autres sites répondent toujours (budget 200, rituel 200, what-shall-we-play 307).
 - [ ] Vérification depuis le Mac : `curl https://racket-stream.marc-suarez.fr/healthz` renvoie `ok`.
-- [ ] **[USER ACTION]** Écrire `SE_JWT` et `CHAT_ANNOUNCE_KEY` dans `/etc/racketstream/api.env` (`sudoedit`). Claude ne lit pas ce fichier.
+- [ ] **[USER ACTION]** Renseigner les deux secrets du serveur, que Claude ne lit pas :
+  1. `ssh racketstream-vps`, puis `sudoedit /etc/racketstream/api.env` ;
+  2. ajouter `SE_JWT=<jeton>` (StreamElements → Account → Channels → Show secrets → JWT Token ; jeton de secours, utilisé si le canal n'a pas son propre `se_jwt`) ;
+  3. ajouter `CHAT_ANNOUNCE_KEY=<clé>` (la valeur de `?key=` de l'appel `chat-announce` ; reprendre l'actuelle ou en générer une avec `openssl rand -hex 16`) ;
+  4. `sudo systemctl restart racketstream-api`.
 - [ ] Commit `feat(server): déploiement systemd + Caddy sur le VPS`
 
 ## Tâche 6 — Import des données Supabase
@@ -235,6 +240,8 @@ Le VPS est **partagé** (autres sites Caddy, Docker, MediaMTX). Règles de cette
 - [ ] **[USER ACTION]** Dépôt sur le Connect IQ Store.
 
 ## Tâche 11 — Coexistence puis arrêt de Supabase
+
+> État au 09/10/2026 : l'app est en **beta** sur le store et aucun live n'est en cours. La coexistence est donc courte : peu d'installations à faire migrer.
 
 - [ ] Pendant la transition, les anciennes versions store continuent d'écrire sur Supabase. Les canaux créés côté Supabase après l'import (tâche 6) seraient alors absents du VPS. Pour l'éviter :
   - bandeau dans le portail GitHub Pages (déjà basculé sur le VPS) : les nouveaux canaux sont créés sur le VPS ;
