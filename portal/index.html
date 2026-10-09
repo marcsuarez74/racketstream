@@ -52,12 +52,24 @@
   .brand { font-size: 22px; font-weight: 900; font-style: italic; font-stretch: 78%; letter-spacing: -0.01em; color: #FFFFFF; text-decoration: none; }
   .brand:hover { color: #FFFFFF; }
   .dnav { display: none; }
-  .chanpill { margin-left: auto; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 18px 0 16px; background: #1A1F26; color: #FFFFFF; text-decoration: none; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); white-space: nowrap; min-width: 0; }
+  .chanwrap { position: relative; margin-left: auto; min-width: 0; }
+  .chanpill { border: 0; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 18px 0 16px; background: #1A1F26; color: #FFFFFF; text-decoration: none; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); white-space: nowrap; min-width: 0; }
   .chanpill:hover { color: #FFFFFF; }
   .chanpill .dot { width: 8px; height: 8px; border-radius: 50%; background: #6B737D; flex: none; }
   body.is-live .chanpill .dot { background: #3DD68C; animation: pulse 1.6s ease-in-out infinite; }
   .chanpill .nm { font-size: 16px; font-weight: 800; font-style: italic; font-stretch: 85%; overflow: hidden; text-overflow: ellipsis; }
-  .chanpill svg { flex: none; }
+  .chanpill svg { flex: none; transition: transform .25s; }
+  .chanpill[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .chanmenu { position: absolute; z-index: 20; right: 0; top: calc(100% + 8px); min-width: 220px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; gap: 4px; padding: 8px; background: #1A1F26; border-top: 3px solid #3DD68C; box-shadow: 0 18px 40px rgba(0, 0, 0, .6); animation: inUp .25s cubic-bezier(.2, .9, .25, 1) both; }
+  .chanmenu button, .chanmenu a { min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 0; background: transparent; color: #FFFFFF; text-align: left; text-decoration: none; font-size: 20px; font-weight: 900; font-style: italic; font-stretch: 72%; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+  .chanmenu button:hover, .chanmenu a:hover { background: #222933; color: #FFFFFF; }
+  .chanmenu button i { width: 6px; align-self: stretch; margin: 10px 0; transform: skewX(-12deg); background: #333333; flex: none; }
+  .chanmenu button[aria-checked="true"] { background: linear-gradient(100deg, #0F2A1D, #10302E); }
+  .chanmenu button[aria-checked="true"] i { background: linear-gradient(180deg, #3DD68C, #22D3EE); }
+  .chanmenu button span { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chanmenu button em { font-size: 13px; font-weight: 900; color: #3DD68C; font-stretch: 100%; }
+  .chanmenu a { margin-top: 4px; border-top: 1px solid #2A313B; clip-path: none; font-size: 15px; font-weight: 800; font-stretch: 90%; color: #22D3EE; }
+  .chanmenu a:hover { color: #22D3EE; }
   .vh { display: flex; align-items: center; gap: 10px; padding: calc(18px + env(safe-area-inset-top)) 16px 10px; }
   .vh.col { flex-direction: column; align-items: stretch; gap: 6px; padding-bottom: 0; }
   .h1 { font-size: 40px; font-weight: 900; font-style: italic; font-stretch: 68%; line-height: 1; }
@@ -317,7 +329,7 @@
     .chanpill { padding: 0 20px 0 18px; }
     .chanpill .nm { font-size: 17px; }
     .mnav { display: none; }
-    .vh .chanpill { display: none; }
+    .vh .chanwrap { display: none; }
     .vh, .vh.col { padding: 0; }
     .h1 { font-size: 56px; }
     .lead { font-size: 16px; }
@@ -417,7 +429,7 @@
     <a href="#match" class="tnMatch" data-tab="match" data-score-label><span class="ring0" aria-hidden="true"></span><span class="sc" data-score>0–0</span><span class="lb">Match</span></a>
     <a href="#canaux" class="tn" data-tab="canaux">Canaux</a>
   </nav>
-  <a class="chanpill" href="#canaux" id="chanM"><span class="dot"></span><span class="nm">Ajouter un canal</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA3AE" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
+  <div class="chanwrap"><button class="chanpill" id="chanM" aria-haspopup="true" aria-expanded="false"><span class="dot"></span><span class="nm">Ajouter un canal</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA3AE" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="chanmenu" role="menu" hidden></div></div>
 </header>
 
 <main>
@@ -499,7 +511,7 @@
     <section aria-label="Aperçu du live">
       <header class="vh">
         <h1 class="h1">Diffusion</h1>
-        <a class="chanpill" href="#canaux" id="chanD"><span class="dot"></span><span class="nm">Ajouter un canal</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA3AE" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></a>
+        <div class="chanwrap"><button class="chanpill" id="chanD" aria-haspopup="true" aria-expanded="false"><span class="dot"></span><span class="nm">Ajouter un canal</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA3AE" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="chanmenu" role="menu" hidden></div></div>
       </header>
       <p class="lead pad">Ce que voient tes spectateurs : ta vidéo, avec le score par-dessus.</p>
       <div class="pv-sec">
@@ -728,8 +740,59 @@
       $(id).querySelector(".nm").textContent = c ? c.channel : "Ajouter un canal";
       $(id).setAttribute("aria-label", c ? `Canal ${c.channel}, changer de canal` : "Aucun canal, en ajouter un");
     }
+    closeMenus();
     $("noChan").hidden = !!c;
   }
+
+  // Menu du canal (en haut à droite) : changer de canal d'un toucher, ou
+  // aller gérer les canaux. Sans canal, il mène directement à la page Canaux.
+  function closeMenus() {
+    document.querySelectorAll(".chanmenu").forEach((m) => { m.hidden = true; });
+    document.querySelectorAll(".chanpill").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  }
+  function openMenu(btn) {
+    const menu = btn.nextElementSibling;
+    menu.textContent = "";
+    store.channels.forEach((c) => {
+      const on = c.channel === store.active;
+      const it = document.createElement("button");
+      it.setAttribute("role", "menuitemradio");
+      it.setAttribute("aria-checked", String(on));
+      it.innerHTML = "<i></i><span></span><em></em>";
+      it.querySelector("span").textContent = c.channel;
+      it.querySelector("em").textContent = on ? "Actif" : "";
+      it.addEventListener("click", () => {
+        closeMenus();
+        if (on) return;
+        store.active = c.channel;
+        saveStore();
+        channelChanged();
+        if (document.body.dataset.view === "canaux") paintChannels();
+      });
+      menu.appendChild(it);
+    });
+    const manage = document.createElement("a");
+    manage.href = "#canaux";
+    manage.setAttribute("role", "menuitem");
+    manage.textContent = "Gérer les canaux";
+    manage.addEventListener("click", closeMenus);
+    menu.appendChild(manage);
+    menu.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+    menu.querySelector("button, a").focus();
+  }
+  for (const id of ["chanM", "chanD"]) {
+    $(id).addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!store.channels.length) { location.hash = "#canaux"; return; }
+      const open = $(id).getAttribute("aria-expanded") === "true";
+      closeMenus();
+      if (!open) openMenu($(id));
+    });
+  }
+  document.addEventListener("click", (e) => { if (!e.target.closest(".chanmenu")) closeMenus(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenus(); });
+  addEventListener("hashchange", closeMenus);
 
   // ================= MATCH =================
   let format = "simple";
