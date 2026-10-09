@@ -60,6 +60,11 @@ class SyncService {
         if (url == null || url.equals("")) {
             var pUrl = Properties.getValue("backendUrl");
             if (pUrl != null) { url = pUrl.toString(); }
+            // Migration phase 8 : Supabase est arrêté ; une ancienne valeur
+            // conservée par GCM après mise à jour pointe vers le VPS.
+            if (url != null && url.find("supabase.co") != null) {
+                url = "https://racket-stream.marc-suarez.fr/functions/v1/sync";
+            }
         }
         if (key == null || key.equals("")) {
             var pKey = Properties.getValue("deviceKey");

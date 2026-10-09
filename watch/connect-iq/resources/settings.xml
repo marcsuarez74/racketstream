@@ -6,9 +6,9 @@
         <!-- Syntaxe Garmin (réponse support 21/09) : la valeur par défaut =
              le CONTENU TEXTE de l'élément property (pas d'attribut default=).
              Sans défaut valide, Properties.getValue renvoie null sur matériel.
-             backendUrl : défaut = backend partagé (URL publique) ; store build
+             backendUrl : défaut = backend VPS (URL publique) ; store build
              = 1 seul champ à remplir (deviceKey) en GCM. -->
-        <property id="backendUrl" type="string">https://bzdbnptnubkkagmmxhyi.supabase.co/functions/v1/sync</property>
+        <property id="backendUrl" type="string">https://racket-stream.marc-suarez.fr/functions/v1/sync</property>
         <property id="deviceKey" type="string"></property>
     </properties>
     <settings>

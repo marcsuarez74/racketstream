@@ -45,7 +45,7 @@ Pas besoin de compte ailleurs : le backend est **fourni et gratuit**.
 
 ### Étape 4 — Configurer Garmin Connect
 1. GCM → ta montre → **Activités & Apps** → RacketStream → **Réglages**
-2. **Backend URL** : pré-remplie — elle doit se terminer par `/functions/v1/sync` (ne la modifie pas sans raison)
+2. **Backend URL** : pré-remplie avec `https://racket-stream.marc-suarez.fr/functions/v1/sync` (ne la modifie pas sans raison)
 3. Colle ta **clé** dans **Device Key** (recopie-la intégralement, sans espace avant/après)
 4. **Redémarre ta montre** (obligatoire — Garmin Connect n'envoie les réglages à l'app qu'au redémarrage)
 

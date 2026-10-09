@@ -7,7 +7,7 @@
 #         FRIEND=1 scripts/build-release.sh        (build ami : fr55 seulement)
 #         STORE=1 scripts/build-release.sh         (build store beta : URL cuite,
 #                                                   DEVICE_KEY vide → GCM)
-# Prérequis : .secrets/phase-4a.env (SUPABASE_URL ; DEVICE_KEY requis sauf
+# Prérequis : .secrets/phase-4a.env (API_URL ; DEVICE_KEY requis sauf
 #             STORE=1, ou .secrets/phase-4a-friend.env en mode FRIEND=1),
 #             SDK Connect IQ installé, clé ~/keys/developer_key_personal.der
 #             (surchargeable : DEV_KEY_PATH=... scripts/build-release.sh)
@@ -17,7 +17,7 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 STORE_MODE=0
 if [ "${STORE:-0}" = "1" ]; then STORE_MODE=1; fi
 if [ "$STORE_MODE" = "1" ]; then
-    SECRETS="$REPO/.secrets/phase-4a.env"  # pour SUPABASE_URL uniquement
+    SECRETS="$REPO/.secrets/phase-4a.env"  # pour API_URL uniquement
     SUFFIX="-store"
     DEVICES="epix2pro51mm fr55"
     DEVICE_KEY=""                           # jamais de clé dans un build store
@@ -40,11 +40,11 @@ source "$SECRETS"
 # vide et cuirait la clé device dans le build store (bug du 21/09, repéré
 # par la présence de la clé dans la string table du .prg store).
 if [ "$STORE_MODE" = "1" ]; then DEVICE_KEY=""; fi
-: "${SUPABASE_URL:?SUPABASE_URL manquant dans .secrets/phase-4a.env}"
+: "${API_URL:?API_URL manquant dans $SECRETS (ex. https://racket-stream.marc-suarez.fr)}"
 if [ "$STORE_MODE" = "0" ]; then
     : "${DEVICE_KEY:?DEVICE_KEY manquant dans .secrets/phase-4a.env}"
 fi
-BACKEND_URL="$SUPABASE_URL/functions/v1/sync"
+BACKEND_URL="$API_URL/functions/v1/sync"
 KEY_PATH="${DEV_KEY_PATH:-$HOME/keys/developer_key_personal.der}"
 SDK="$(cat "$HOME/Library/Application Support/Garmin/ConnectIQ/current-sdk.cfg")"
 
