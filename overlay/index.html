@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RacketStream overlay</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&display=swap" rel="stylesheet">
@@ -98,25 +97,27 @@
 </div>
 <script>
   // RacketStream overlay — lecture seule, zéro manipulation (plan phase 5).
-  // Choix du match : le plus récent ACTIF du canal ; sinon le plus récent
-  // (final reste affiché). Bascule automatique à chaque INSERT de match.
-  const SUPABASE_URL = "https://bzdbnptnubkkagmmxhyi.supabase.co";
-  const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6ZGJucHRudWJra2FnbW14aHlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3Nzk5MDAsImV4cCI6MjEwNTM1NTkwMH0._g_LV07W42GlOijx-XptJBJwBrfSgbcAm8StEWxqge0";
+  // Score poussé par l'API VPS (SSE /api/stream) ; /api/score en filet de
+  // sécurité. Le choix du match (actif le plus récent, sinon le plus récent)
+  // est fait côté serveur (pickScore), une seule implémentation.
   const q = new URLSearchParams(location.search);
+  const API = (q.get("api") || "https://racket-stream.marc-suarez.fr").replace(/\/+$/, "");
   const CHANNEL = q.get("channel") || "marc";
   const SCALE = parseFloat(q.get("scale") || "1");
   const SHOW_PANELS = q.get("bg") !== "0";
+  // Anti-fantôme (aligné sur le renderer VPS) : un match quitté reste « active »
+  // en base ; sans sync depuis STALE_MS on masque l'overlay.
+  const STALE_MS = 600 * 1000;
   // Noms : paramètres URL d'abord (rétro-compat), sinon réglages du canal
   // (portail) — c'est ce qui permet de changer d'adversaire sans toucher à OBS.
   const NAME1 = q.get("name1");
   const NAME2 = q.get("name2");
 
-  const sb = supabase.createClient(SUPABASE_URL, ANON_KEY);
   document.getElementById("n1").textContent = NAME1 || "MOI";
   document.getElementById("n2").textContent = NAME2 || "LUI";
   const teamName = (a, b) => b ? `${a}/${b}` : a;
   if (NAME1 == null || NAME2 == null) {
-    fetch(`${SUPABASE_URL}/functions/v1/names?channel=${encodeURIComponent(CHANNEL)}`)
+    fetch(`${API}/functions/v1/names?channel=${encodeURIComponent(CHANNEL)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((n) => {
         if (!n) return;
@@ -170,30 +171,31 @@
     document.getElementById("setlab").textContent = "SET " + row.current_set;
   }
 
-  async function pick() {
-    // Actif le plus récent, sinon le plus récent tout statut. On requête
-    // `matches` (parent) pour que le ORDER BY porte sur matches.started_at.
-    for (const onlyActive of [true, false]) {
-      let req = sb.from("matches")
-        .select("started_at, match_state!inner(status, current_set, score_me, score_opp, sets_me, sets_opp, config)")
-        .eq("channel", CHANNEL)
-        .order("started_at", { ascending: false, nullsFirst: false })
-        .limit(1);
-      if (onlyActive) req = req.eq("match_state.status", "active");
-      const { data } = await req;
-      if (data && data.length) { render(data[0].match_state); return; }
-    }
+  let last = null;
+  function show(row) {
+    last = row;
+    const ghost = row && row.status === "active" && Date.now() - row.updated_at > STALE_MS;
+    if (row && !ghost) { render(row); return; }
     document.getElementById("bug").style.display = "none";
     document.getElementById("empty").style.display = "block";
   }
 
-  sb.channel("badscore-ov-" + CHANNEL)
-    .on("postgres_changes", { event: "*", schema: "public", table: "match_state" }, pick)
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "matches" }, pick)
-    .subscribe();
+  async function poll() {
+    try {
+      const r = await fetch(`${API}/api/score?channel=${encodeURIComponent(CHANNEL)}`, { cache: "no-store" });
+      if (r.ok) show(await r.json());
+    } catch { /* hors ligne : on garde l'affichage */ }
+  }
 
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) pick(); });
-  pick();
+  // EventSource se reconnecte seul ; il envoie l'état courant à l'ouverture.
+  const es = new EventSource(`${API}/api/stream?channel=${encodeURIComponent(CHANNEL)}`);
+  es.onmessage = (e) => { try { show(JSON.parse(e.data)); } catch { /* message invalide */ } };
+
+  setInterval(poll, 10000);
+  // Réévalue l'anti-fantôme même sans nouveau message.
+  setInterval(() => { if (last) show(last); }, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+  poll();
 </script>
 </body>
 </html>
