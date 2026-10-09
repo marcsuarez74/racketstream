@@ -1,8 +1,10 @@
 """RacketStream renderer VPS — incruste le scorebug dans la vidéo streamée.
 
-Lit l'état du match sur l'API VPS (/api/score, lecture publique — pick fait
-côté serveur, le même que l'overlay), dessine le scorebug (design phase 5, inchangé) en RGBA 1280x720
-à 2 fps sur stdout : ffmpeg-relay l'incruste dans la vidéo et publie vers Twitch.
+Reçoit l'état du match poussé par l'API VPS (/api/stream, SSE — le serveur
+envoie chaque point dès la sync ; repli /api/score si le flux tombe ; pick fait
+côté serveur, le même que l'overlay), dessine le scorebug (design phase 5,
+inchangé) en RGBA 1280x720 à --fps images/s sur stdout : ffmpeg-relay
+l'incruste dans la vidéo et publie vers Twitch (même --fps des deux côtés).
 
 Contrat (spec 2026-09-21 §3, ajusté 2026-09-24) :
   - aucun match ACTIF FRAIS → frame entièrement TRANSPARENTE
@@ -35,7 +37,7 @@ FONT_PATH = BASE_DIR / "fonts" / "Archivo[wdth,wght].ttf"
 API_URL = "https://racket-stream.marc-suarez.fr"
 
 FRAME_W, FRAME_H = 1280, 720
-FPS = 2
+FPS = 2                         # défaut ; doit valoir le -r de ffmpeg-relay
 
 # Palette phase 5 — identique à overlay/index.html (rgba → alpha 0-255)
 BG = (10, 12, 14, 168)          # rgba(10,12,14,0.66)
@@ -77,6 +79,10 @@ def load_font(size, weight=600):
 
 def make_url(base, channel):
     return f"{base}/api/score?channel={urllib.parse.quote(channel, safe='')}"
+
+
+def stream_url(base, channel):
+    return f"{base}/api/stream?channel={urllib.parse.quote(channel, safe='')}"
 
 
 def fetch_json(url):
@@ -121,13 +127,71 @@ def pick(channel, base, fetch=fetch_json, on_error=None, stale_s=600):
         row = fetch(make_url(base, channel))
     except Exception:
         return on_error
+    return evaluate(row, stale_s)
+
+
+def evaluate(row, stale_s=600):
+    """Ligne de l'API (/api/score ou message /api/stream) → état normalisé si
+    le match est ACTIF et FRAIS, sinon None. Réévaluée à chaque image : un
+    match qui ne synchronise plus devient fantôme sans nouveau message."""
     if isinstance(row, dict) and row.get("status") == "active":
         try:
             if _age_s(row.get("updated_at")) <= stale_s:
                 return normalize(row)
-        except (TypeError, ValueError, OverflowError, OSError):
+        except (TypeError, ValueError, OverflowError, KeyError, OSError):
             pass   # updated_at absent/corrompu → traité comme fantôme
     return None
+
+
+def sse_rows(lines):
+    """Messages JSON d'un flux SSE (lignes `data: …` ; pings `: …` ignorés)."""
+    for raw in lines:
+        line = raw.decode("utf-8", "replace") if isinstance(raw, bytes) else raw
+        line = line.rstrip("\r\n")
+        if line.startswith("data:"):
+            try:
+                yield json.loads(line[5:].strip())
+            except ValueError:
+                continue   # message corrompu : on attend le suivant
+
+
+def open_stream(url, timeout=60):
+    """Réponse HTTP itérable ligne par ligne. Le serveur pingue toutes les 25 s :
+    au-delà de `timeout` sans rien recevoir, la connexion est jugée morte."""
+    req = urllib.request.Request(url, headers={"Accept": "text/event-stream"})
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
+def start_score_feed(channel, base, holder, opener=open_stream, fetch=fetch_json,
+                     retry_s=2.0, stop=None):
+    """Thread daemon : holder[0] = dernière ligne reçue (None avant la première).
+
+    Abonné à /api/stream, le renderer apprend un point dès que la montre l'a
+    synchronisé (plus d'attente de polling). Flux coupé ou refusé : repli sur
+    un /api/score puis reconnexion après retry_s — en panne réseau totale, on
+    GARDE la dernière ligne (contrat KEEP).
+    """
+    stop = stop or threading.Event()
+
+    def _loop():
+        while not stop.is_set():
+            try:
+                with opener(stream_url(base, channel)) as resp:
+                    for row in sse_rows(resp):
+                        holder[0] = row
+                        if stop.is_set():
+                            return
+            except Exception:
+                pass
+            try:
+                holder[0] = fetch(make_url(base, channel))
+            except Exception:
+                pass   # injoignable : garder la dernière ligne
+            stop.wait(retry_s)
+
+    t = threading.Thread(target=_loop, daemon=True)
+    t.start()
+    return t
 
 
 def fetch_names(channel, base=API_URL):
@@ -299,9 +363,12 @@ def frame_bytes(img):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="RacketStream scorebug renderer (RGBA 2 fps sur stdout)")
+    ap = argparse.ArgumentParser(description="RacketStream scorebug renderer (RGBA brut sur stdout)")
     ap.add_argument("--channel", required=True)
-    ap.add_argument("--interval", type=float, default=2.0, help="période de polling de l'API (s)")
+    ap.add_argument("--interval", type=float, default=2.0,
+                    help="délai (s) avant reconnexion du flux, avec relecture de /api/score")
+    ap.add_argument("--fps", type=float, default=FPS,
+                    help="images/s écrites (= le -r de l'entrée rawvideo dans ffmpeg-relay)")
     ap.add_argument("--stale", type=int, default=600,
                     help="durée max (s) sans sync avant de considérer le match fantôme")
     ap.add_argument("--position", default="topright", choices=POSITIONS)
@@ -328,24 +395,23 @@ def main(argv=None):
         print(f"PNG écrit: {args.png} (state={'aucun' if state is None else 'match'})")
         return
 
+    row_cell = [None]
+    start_score_feed(args.channel, args.url, row_cell, retry_s=args.interval)
+
     out = sys.stdout.buffer
-    frame_period = 1.0 / FPS
-    poll_every = max(1, int(round(args.interval * FPS)))   # ticks entre deux polls
-    tick = 0
-    last = None
+    frame_period = 1.0 / args.fps
+    key, frame = None, None
     while True:
         t0 = time.monotonic()
-        if tick % poll_every == 0:
-            state = pick(args.channel, args.url, on_error=KEEP, stale_s=args.stale)
-            if state is not KEEP:
-                last = state
-        img = draw_frame(last, names=tuple(names_cell[0]), position=args.position)
-        out.write(frame_bytes(img))
+        state = evaluate(row_cell[0], args.stale)
+        cur = (repr(state), tuple(names_cell[0]))
+        if cur != key:   # redessin seulement si le score ou les noms changent
+            key = cur
+            frame = frame_bytes(draw_frame(state, names=cur[1], position=args.position))
+        out.write(frame)
         out.flush()
-        tick += 1
         elapsed = time.monotonic() - t0
         time.sleep(max(0.0, frame_period - elapsed))
-
 
 if __name__ == "__main__":
     main()

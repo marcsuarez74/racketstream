@@ -49,7 +49,8 @@ Les secrets vivent uniquement dans `/etc/racketstream/env` (chmod 640, jamais da
 ```
 VPS_KEY=<64 caractères hex — la clé d'ingest, générée avec openssl rand -hex 32>
 TWITCH_KEY=<ta clé stream Twitch>
-RENDER_INTERVAL=1          # période de polling Supabase (s)
+RENDER_INTERVAL=1          # délai de reconnexion du flux temps réel (s)
+RENDER_FPS=5               # images/s du bandeau (renderer ET ffmpeg -r)
 RENDER_STALE_S=600         # sans sync depuis X s, le match est « fantôme » : l'overlay disparaît
 # RENDER_CHANNEL=<CHANNEL> # si plusieurs canaux — ⚠️ piège n°13 : un mauvais
 #   canal ici ne provoque AUCUNE erreur, l'overlay reste simplement transparent
@@ -124,6 +125,7 @@ KEY=$(openssl rand -hex 32)                          # ← la clé d'ingest, gar
 sudo tee /etc/racketstream/env >/dev/null <<EOF
 VPS_KEY=$KEY
 RENDER_INTERVAL=1
+RENDER_FPS=5
 EOF
 sudo chown root:stream /etc/racketstream/env
 sudo chmod 640 /etc/racketstream/env                 # ⚠️ 640 : sans ça, le composite ne peut pas lire
@@ -206,9 +208,9 @@ CHANNEL="${RENDER_CHANNEL:-<CHANNEL>}"
 cleanup() { kill 0 2>/dev/null; sleep 1; kill -9 0 2>/dev/null; }
 trap cleanup TERM INT
 while true; do
-python3 /opt/racketstream/renderer.py --channel "$CHANNEL" --interval "${RENDER_INTERVAL:-2}" --stale "${RENDER_STALE_S:-600}" 2>>/tmp/racketstream-renderer.log | ffmpeg -hide_banner -loglevel warning \
+python3 /opt/racketstream/renderer.py --channel "$CHANNEL" --interval "${RENDER_INTERVAL:-2}" --fps "${RENDER_FPS:-2}" --stale "${RENDER_STALE_S:-600}" 2>>/tmp/racketstream-renderer.log | ffmpeg -hide_banner -loglevel warning \
   -rtsp_transport tcp -timeout 5000000 -i "rtsp://127.0.0.1:8554/live/$VPS_KEY" \
-  -f rawvideo -pix_fmt rgba -s 1280x720 -r 2 -i - \
+  -f rawvideo -pix_fmt rgba -s 1280x720 -r "${RENDER_FPS:-2}" -i - \
   -filter_complex "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,setsar=1,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv420p[v0];[v0][1:v]overlay=0:0:format=auto[out]" \
   -map "[out]" -map 0:a \
   -c:v libx264 -preset veryfast -tune zerolatency -b:v 4500k -maxrate 4500k -bufsize 4500k \
@@ -353,7 +355,7 @@ La clé ne doit **jamais** être collée dans un commit, un chat ou une capture.
 | Étape | Délai |
 |---|---|
 | Point → montre → cloud (sync BLE) | ~2-5 s |
-| Renderer (poll 1 s) | ~0,5-1 s |
+| Renderer (flux SSE poussé par le serveur, 5 i/s) | ≤ 0,2 s |
 | Composite + encode | ~0,5-1 s (bufsize 4500k = 1 s de tampon max) |
 | Twitch ingest → viewer | 10-20 s (incompressible) |
 | **Total point → viewer** | **~15-25 s** |
