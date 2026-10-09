@@ -100,6 +100,27 @@ class ScoreEngine {
         replay();
     }
 
+    // « Annuler le dernier point » (phase 9, maquette) : retire d'abord les
+    // fins de set/match automatiques puis le point (ou le « set suivant » /
+    // changement manuel) qui les a provoquées. Lève le verrou MATCH_FINISHED
+    // de undo() : l'écran de fin de match propose l'annulation.
+    function undoPoint() as Void {
+        while (mEvents.size() > 0) {
+            var t = mEvents[mEvents.size() - 1][0];
+            if (t != ScoreEvent.TYPE_MATCH_FINISHED && t != ScoreEvent.TYPE_SET_FINISHED) { break; }
+            mEvents = mEvents.slice(0, mEvents.size() - 1);
+        }
+        if (mEvents.size() > 0) {
+            mEvents = mEvents.slice(0, mEvents.size() - 1);
+        }
+        replay();
+    }
+
+    // Sets terminés (cf. MatchStats.rallySetRows), t0 = début du match.
+    function setRows(t0 as Number) as Array {
+        return MatchStats.rallySetRows(mEvents, t0);
+    }
+
     // ---- journal + replay ----
 
     // Journal positionnel compact (§7.2) : [type, arg, seq, ts, prevMe, prevOpp].

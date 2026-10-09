@@ -49,7 +49,7 @@ class SyncService {
 
     // Déclencheur : après chaque saveMatch (MatchView.syncScreen / startMatch)
     // et au lancement (flush §9.4). Configuration absente → inactif (graceful).
-    function trigger(engine as ScoreEngine or Null) as Void {
+    function trigger(engine) as Void {
         mEngineRef = engine;
         if (engine == null) { return; }
         // Config cuisée au build (BackendConfig, fiable sur matériel) sinon
@@ -89,7 +89,7 @@ class SyncService {
         _send(url, key, engine, batch);
     }
 
-    function _send(url as String, key as String, engine as ScoreEngine, batch as Array) as Void {
+    function _send(url as String, key as String, engine, batch as Array) as Void {
         mInFlight = true;
         mStatus = SYNC_ST_SEND;
         mInFlightMatchId = engine.getMatchId();

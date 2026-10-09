@@ -6,6 +6,9 @@ class MatchConfig {
     var mWinBy;         // écart minimal requis en fin de set
     var mCap;           // plafond optionnel (0 = sans plafond)
     var mSetsToWin;     // sets gagnants pour le match (best-of-3 => 2)
+    var mSport = 0;     // Sports.* (phase 9) — 0 = badminton (configs 0.2.x)
+    var mDeuce = 0;     // padel : mode d'égalité (PadelRules.DEUCE_*), 0 = sport à points
+    var mSuperTB = false;   // padel : 3e set remplacé par un super tie-break à 10
 
     function initialize(targetScore, winBy, cap, setsToWin) {
         mTargetScore = targetScore;

@@ -35,12 +35,12 @@ class MatchView extends WatchUi.View {
 
     function initialize() {
         View.initialize();
-        mSetupIndex = MatchStore.loadPresetIndex();   // format mémorisé (§5)
+        mSetupIndex = MatchStore.loadPrefs()[1];   // format mémorisé (§5)
         mSync = new SyncService(DeviceId.getOrCreate());   // inconditionnel : aucun trigger null même sans match restauré
         var saved = MatchStore.loadMatch();
         if (saved != null) {
             // Match en cours persisté : reprise directe (§5 Démarrage)
-            mMatchPresetIndex = saved["pi"];          // format du match restauré
+            mMatchPresetIndex = saved["fi"];          // format du match restauré
             mSetupIndex = mMatchPresetIndex;          // présélection Setup cohérente
             if (mMatchPresetIndex < 0 || mMatchPresetIndex > 2) {   // clamp anti-corruption (M-1)
                 mMatchPresetIndex = 2;
@@ -174,9 +174,9 @@ class MatchView extends WatchUi.View {
     function startMatch() as Void {
         mMatchId = MatchIds.generate();
         mMatchPresetIndex = mSetupIndex;
-        MatchStore.savePresetIndex(mSetupIndex);
+        
         mEngine = new ScoreEngine(MatchPresets.get(mSetupIndex), mMatchId);
-        MatchStore.saveMatch(mEngine, mMatchPresetIndex);   // kill avant 1er point → reprise 0-0
+        MatchStore.saveMatch(mEngine, 0, mMatchPresetIndex, 0);   // kill avant 1er point → reprise 0-0
         mSync.trigger(mEngine);             // flush du premier batch (§9.4)
         mScreen = MatchScreen.SCORE;
         WatchUi.requestUpdate();
@@ -185,14 +185,14 @@ class MatchView extends WatchUi.View {
     // Filet de sauvegarde (App.onStop, §7.2) — chaque mutation sauvegarde déjà.
     function persist() as Void {
         if (mEngine != null) {
-            MatchStore.saveMatch(mEngine, mMatchPresetIndex);
+            MatchStore.saveMatch(mEngine, 0, mMatchPresetIndex, 0);
         }
     }
 
     // Après chaque mutation moteur : aligner l'écran sur la phase dérivée.
     function syncScreen() as Void {
         if (mEngine == null) { return; }   // pas de match : rien à dériver ni à sauvegarder
-        MatchStore.saveMatch(mEngine, mMatchPresetIndex);   // setValue synchrone, §7.2
+        MatchStore.saveMatch(mEngine, 0, mMatchPresetIndex, 0);   // setValue synchrone, §7.2
         mSync.trigger(mEngine);             // drain après chaque mutation (§7 sync)
         var p = mEngine.getPhase();
         if (p == ScorePhase.MATCH_FINISHED) {

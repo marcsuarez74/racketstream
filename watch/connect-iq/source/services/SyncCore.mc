@@ -30,22 +30,44 @@ class SyncCore {
 
     // Payload complet du POST (spec sync §13). La montre (source de vérité)
     // fournit le snapshot : le backend ne recalcule jamais le score (ADR-007).
-    function buildBody(engine as ScoreEngine, deviceId as String, batch as Array) as Dictionary {
+    // Phase 9 : config.sport (+ mode d'égalité au padel) et snapshot.padel
+    // (jeux, tie-break, service, sets) — champs ignorés par les backends 0.2.x.
+    function buildBody(engine, deviceId as String, batch as Array) as Dictionary {
         var cfg = engine.getConfig();
         var evts = [];
         for (var i = 0; i < batch.size(); i += 1) { evts.add(serializeEvent(batch[i])); }
+        var config = { "targetScore" => cfg.mTargetScore, "winBy" => cfg.mWinBy, "cap" => cfg.mCap, "setsToWin" => cfg.mSetsToWin,
+            "sport" => Sports.key(cfg.mSport) };
+        var snapshot = {
+            "status" => statusString(engine.getPhase()),
+            "currentSet" => engine.getSetNumber(),
+            "scoreMe" => engine.getScoreMe(),
+            "scoreOpp" => engine.getScoreOpp(),
+            "setsMe" => engine.getSetsMe(),
+            "setsOpp" => engine.getSetsOpp(),
+            "lastSequence" => engine.getLastSequence()
+        };
+        if (cfg.mSport == Sports.PADEL) {
+            config["deuce"] = cfg.mDeuce;
+            config["superTB"] = cfg.mSuperTB;
+            var rows = engine.setRows(0);
+            var sets = [];
+            for (var j = 0; j < rows.size(); j += 1) {
+                var r = rows[j] as Array;
+                sets.add([r[0], r[1], r[5]]);
+            }
+            snapshot["padel"] = {
+                "gamesMe" => engine.getGamesMe(),
+                "gamesOpp" => engine.getGamesOpp(),
+                "tieBreak" => engine.getTieBreak(),
+                "server" => engine.getServer(),
+                "sets" => sets
+            };
+        }
         return {
             "deviceId" => deviceId,
-            "config" => { "targetScore" => cfg.mTargetScore, "winBy" => cfg.mWinBy, "cap" => cfg.mCap, "setsToWin" => cfg.mSetsToWin },
-            "snapshot" => {
-                "status" => statusString(engine.getPhase()),
-                "currentSet" => engine.getSetNumber(),
-                "scoreMe" => engine.getScoreMe(),
-                "scoreOpp" => engine.getScoreOpp(),
-                "setsMe" => engine.getSetsMe(),
-                "setsOpp" => engine.getSetsOpp(),
-                "lastSequence" => engine.getLastSequence()
-            },
+            "config" => config,
+            "snapshot" => snapshot,
             "startedAt" => engine.getStartedAtMs(),
             "events" => evts
         };

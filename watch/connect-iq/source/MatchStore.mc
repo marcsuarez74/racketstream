@@ -11,22 +11,35 @@ module MatchStore {
     const CHUNK = 30;         // events par lot (~1,5 Ko < 8 Ko)
     const KEEP = 175;         // events conservés après purge (§7.2 : borné 200, purge par lots)
 
-    // ---- préférence format (§5 : mémorisé pour les matchs suivants) ----
+    // ---- préférences (§5 : sport et format mémorisés, un format par sport) ----
 
-    function savePresetIndex(i as Number) as Void {
-        Storage.setValue(PREFS_KEY, i);
+    const PREFS2_KEY = "racket_prefs_v2";   // [sport, format badminton, padel, squash]
+
+    function loadPrefs() as Array {
+        var v = Storage.getValue(PREFS2_KEY);
+        if (v instanceof Array && (v as Array).size() == 1 + Sports.COUNT) {
+            var p = v as Array;
+            var sp = p[0];
+            if (!(sp instanceof Number) || sp < 0 || sp >= Sports.COUNT) { sp = Sports.BADMINTON; }
+            var out = [sp];
+            for (var i = 0; i < Sports.COUNT; i += 1) { out.add(Sports.clampFormat(i, p[1 + i])); }
+            return out;
+        }
+        // Migration 0.2.x : ancien preset badminton (0 = 11 pts, 1 = 15, 2 = 21).
+        var old = Storage.getValue(PREFS_KEY);
+        return [Sports.BADMINTON, (old == 1) ? 1 : 0, 0, 0];
     }
 
-    function loadPresetIndex() as Number {
-        var v = Storage.getValue(PREFS_KEY);
-        if (v == null || v < 0 || v > 2) { return 2; }   // défaut : 21 POINTS (clamp anti-corruption)
-        return v;
+    function savePrefs(prefs as Array) as Void {
+        Storage.setValue(PREFS2_KEY, prefs);
     }
 
     // ---- match ----
 
-    // Sauvegarde synchrone : purge éventuelle, lots d'events, meta.
-    function saveMatch(engine as ScoreEngine, presetIndex as Number) as Void {
+    // Sauvegarde synchrone : purge éventuelle, lots d'events, meta. Le
+    // moteur est un ScoreEngine ou un PadelEngine (même contrat). t0 =
+    // getTimer du lancement du match (durées des sets).
+    function saveMatch(engine, sport as Number, format as Number, t0 as Number) as Void {
         engine.trimEvents(KEEP);           // no-op si journal ≤ KEEP (§7.2)
         var events = engine.getEvents();
         var chunk = 0;
@@ -58,10 +71,14 @@ module MatchStore {
                 && prevMeta["mid"].toString().equals(engine.getMatchId())) {
             pf = prevMeta["pf"];
         }
+        var cfg = engine.getConfig();
         var meta = {
-            "v" => 1,
+            "v" => 2,
             "mid" => engine.getMatchId(),
-            "pi" => presetIndex,
+            "sp" => sport,
+            "fi" => format,
+            "cfg" => [cfg.mTargetScore, cfg.mWinBy, cfg.mCap, cfg.mSetsToWin, cfg.mDeuce, cfg.mSuperTB ? 1 : 0],
+            "t0" => t0,
             "pf" => pf,                    // pendingFrom : 1re séquence non acquittée (§7 sync)
             "ls" => engine.getLastSequence(),
             "ts" => engine.getStartedAtMs(),
@@ -71,7 +88,9 @@ module MatchStore {
     }
 
     // Retourne null si aucun match persisté, sinon
-    // { "mid", "pi", "ls", "base", "events" } — events = Array de 6-slots.
+    // { "mid", "sp", "fi", "cfg" (MatchConfig), "t0", "ls", "ts", "base",
+    // "events" } — events = Array de 6-slots. Meta v1 (0.2.x, badminton
+    // seul, "pi" = preset 11/15/21) migrée à la lecture.
     function loadMatch() as Dictionary or Null {
         var meta = Storage.getValue(META_KEY) as Dictionary;
         if (meta == null) { return null; }
@@ -87,9 +106,29 @@ module MatchStore {
             }
             chunk += 1;
         }
+        var sp = meta["sp"];
+        var fi = meta["fi"];
+        var config = null;
+        var c = meta["cfg"];
+        if (sp instanceof Number && sp >= 0 && sp < Sports.COUNT && c instanceof Array && (c as Array).size() == 6) {
+            config = new MatchConfig(c[0], c[1], c[2], c[3]);
+            config.mDeuce = c[4];
+            config.mSuperTB = (c[5] == 1);
+            config.mSport = sp;
+            fi = Sports.clampFormat(sp, fi);
+        } else {
+            var pi = meta["pi"];
+            if (!(pi instanceof Number) || pi < 0 || pi > 2) { pi = 2; }   // clamp anti-corruption (M-1)
+            sp = Sports.BADMINTON;
+            config = MatchPresets.get(pi);
+            fi = (pi == 1) ? 1 : 0;        // 21 → 3 × 21, 15 → 3 × 15 ; 11 garde sa config
+        }
         return {
             "mid" => meta["mid"],
-            "pi" => meta["pi"],
+            "sp" => sp,
+            "fi" => fi,
+            "cfg" => config,
+            "t0" => meta["t0"],
             "ls" => meta["ls"],
             "ts" => meta["ts"],
             "base" => meta["base"],
