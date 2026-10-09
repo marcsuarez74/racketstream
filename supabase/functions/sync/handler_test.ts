@@ -42,10 +42,10 @@ function makeDb(opts: { devices?: { hash: string; channel: string }[]; ownerDevi
   } as Db & { channelUsed(): string | null; announceSaved: string[] };
 }
 
-function makeSender(fail = false): { sender: { send(seChannelId: string, message: string): Promise<void> }; sent: string[] } {
+function makeSender(fail = false): { sender: { send(seChannelId: string, seJwt: string | null, message: string): Promise<void> }; sent: string[] } {
   const sent: string[] = [];
   const sender = {
-    async send(_seChannelId: string, message: string) {
+    async send(_seChannelId: string, _seJwt: string | null, message: string) {
       if (fail) throw new Error("SE down");
       sent.push(message);
     },

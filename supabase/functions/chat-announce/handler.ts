@@ -11,6 +11,7 @@ export type { ScoreRow };
 export interface ChannelCfg {
   channel: string;
   seChannelId: string | null;
+  seJwt?: string | null;
   name1: string;
   name2: string;
 }

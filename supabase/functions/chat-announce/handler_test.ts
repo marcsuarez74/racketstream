@@ -2,7 +2,8 @@
 // parcourt les canaux, calcule le texte du score courant et poste dans le
 // chat StreamElements quand le texte change depuis la dernière annonce.
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { handleChatAnnounce, type AnnounceDb, type ChannelCfg, type ChatSender, type ScoreRow } from "./handler.ts";
+import { handleChatAnnounce, type AnnounceDb, type ChannelCfg, type ScoreRow } from "./handler.ts";
+import type { Announcer as ChatSender } from "../_shared/announce.ts";
 
 function row(over: Partial<ScoreRow> = {}): ScoreRow {
   return {
@@ -36,7 +37,7 @@ function makeDb(chans: ChannelCfg[], last: Record<string, string | null>, match:
 function makeSender(fail = false): { sender: ChatSender; calls: Array<{ id: string; msg: string }> } {
   const calls: Array<{ id: string; msg: string }> = [];
   const sender: ChatSender = {
-    async send(id, msg) {
+    async send(id, _seJwt, msg) {
       if (fail) throw new Error("SE down");
       calls.push({ id, msg });
     },
@@ -86,6 +87,19 @@ Deno.test("skip si le canal n'a pas de canal StreamElements configuré", async (
   const { sender, calls } = makeSender();
   await run("https://fn.test/chat-announce", db, sender);
   assertEquals(calls, []);
+});
+
+Deno.test("JWT par canal transmise au sender (fallback global = null)", async () => {
+  const db = makeDb([
+    { channel: "paul", seChannelId: "6abff252", seJwt: "jwt-paul", name1: "MOI", name2: "LUI" },
+    { channel: "marc", seChannelId: "123456", name1: "MOI", name2: "LUI" },
+  ], {}, row());
+  const jwts: Array<string | null | undefined> = [];
+  const sender: ChatSender = {
+    async send(_id, jwt, _msg) { jwts.push(jwt); },
+  };
+  await run("https://fn.test/chat-announce", db, sender);
+  assertEquals(jwts, ["jwt-paul", null]);
 });
 
 Deno.test("annonce aussi la fin de match (suffixe Terminé)", async () => {

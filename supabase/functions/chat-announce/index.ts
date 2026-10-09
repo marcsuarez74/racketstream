@@ -54,11 +54,12 @@ const scoreDb: ScoreDb = {
 const db: AnnounceDb = {
   async channels() {
     const { data, error } = await supabase.from("devices")
-      .select("channel, se_channel_id, name1, name2");
+      .select("channel, se_channel_id, se_jwt, name1, name2");
     if (error || !data) return [];
     return data.map((d) => ({
       channel: String(d.channel),
       seChannelId: (d.se_channel_id as string | null) ?? null,
+      seJwt: (d.se_jwt as string | null) ?? null,
       name1: String(d.name1 ?? "MOI"),
       name2: String(d.name2 ?? "LUI"),
     })) as ChannelCfg[];

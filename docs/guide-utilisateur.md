@@ -83,6 +83,7 @@ Lance un match et marque un point : un **liseré vert** apparaît autour de l'é
 - **401** → ta clé est refusée : recopie-la depuis le portail (sans espace), re-valide les réglages, redémarre la montre
 - **404** → Backend URL incomplète : elle doit se terminer par `/functions/v1/sync`
 - **t/o** → pas de réseau : téléphone appairé en Bluetooth et GCM actif (non « tué » par l'économiseur de batterie)
+- **-104** → aucun relais : la montre n'est **pas appairée à GCM** (ou téléphone injoignable). La montre n'a pas d'accès Internet propre — elle passe obligatoirement par Garmin Connect Mobile. La sync est impossible tant que le couplage n'est pas fait : installe GCM sur le téléphone et appaire la montre ; les points en attente partiront ensuite tout seuls (le score n'est jamais perdu)
 - Tout autre code → réessaie plus tard, la reprise est automatique
 
 > ℹ️ **La sync fonctionne par lots** : la montre envoie les points par groupes (≤ 5, toutes les 5 s minimum) — une contrainte du Bluetooth. Si tu marque plusieurs points en rafale, l'overlay les suit par paliers de 5 à 10 s. Dans un vrai match (un échange toutes les 10-30 s), chaque point arrive en 1 à 3 s.
@@ -109,7 +110,7 @@ Il suit **automatiquement** ton match actif — rien à toucher entre les matchs
 ## 6. Dépannage (FAQ)
 
 **Le liseré reste rouge.**
-→ Lis le code affiché (401 / 404 / t/o — voir « Le liseré de sync » ci-dessus). Le plus fréquent : **401** = clé mal recopiée ou réglages non re-synchronisés → re-valide les réglages dans GCM **puis redémarre la montre**. La reprise est automatique (backoff jusqu'à 2 min).
+→ Lis le code affiché (401 / 404 / t/o / -104 — voir « Le liseré de sync » ci-dessus). Le plus fréquent : **401** = clé mal recopiée ou réglages non re-synchronisés → re-valide les réglages dans GCM **puis redémarre la montre**. La reprise est automatique (backoff jusqu'à 2 min).
 
 **L'overlay ne change pas alors que j'ai marqué.**
 → Latence normale de sync par lots (5-10 s en rafale). Si ça dure > 2 min, vérifie le liseré de sync et le canal dans l'URL de l'overlay.

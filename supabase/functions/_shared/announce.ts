@@ -5,6 +5,9 @@ import { formatScore, type ScoreRow } from "../score-text/handler.ts";
 
 export interface AnnounceCfg {
   seChannelId: string | null;
+  // JWT API StreamElements propre au canal ; absent/null = JWT globale
+  // (secret de fonction SE_JWT, ancien comportement mono-canal).
+  seJwt?: string | null;
   name1: string;
   name2: string;
 }
@@ -15,7 +18,7 @@ export interface AnnounceState {
 }
 
 export interface Announcer {
-  send(seChannelId: string, message: string): Promise<void>;
+  send(seChannelId: string, seJwt: string | null, message: string): Promise<void>;
 }
 
 export function isSaneScore(row: ScoreRow): boolean {
@@ -38,7 +41,7 @@ export async function maybeAnnounce(
   const text = formatScore(row, cfg.name1, cfg.name2);
   if (text === await state.lastAnnounced(channel)) return false;
   try {
-    await sender.send(cfg.seChannelId, text);
+    await sender.send(cfg.seChannelId, cfg.seJwt ?? null, text);
     await state.saveAnnounced(channel, text);
     return true;
   } catch {
@@ -46,11 +49,11 @@ export async function maybeAnnounce(
   }
 }
 
-// Sender StreamElements partagé (JWT en secret de fonction SE_JWT).
+// Sender StreamElements partagé (JWT du canal, sinon secret de fonction SE_JWT).
 export function makeSeSender(): Announcer {
   return {
-    async send(seChannelId, message) {
-      const jwt = Deno.env.get("SE_JWT");
+    async send(seChannelId, seJwt, message) {
+      const jwt = seJwt ?? Deno.env.get("SE_JWT");
       if (!jwt) throw new Error("SE_JWT missing");
       // Endpoint validé en live : /kappa/v2/bot/{channelId}/say — le bot
       // StreamElements écrit le message dans le chat Twitch du compte

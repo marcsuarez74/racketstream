@@ -20,7 +20,7 @@ export interface Db {
   upsertEvents(matchId: string, events: Record<string, unknown>[]): Promise<{ error: string | null }>;
   upsertState(matchId: string, snapshot: Record<string, unknown>, config: Record<string, unknown>): Promise<{ error: string | null }>;
   // Annonce chat (StreamElements) : config du canal + dédoublonnage.
-  getAnnounceCfg(channel: string): Promise<{ seChannelId: string | null; name1: string; name2: string } | null>;
+  getAnnounceCfg(channel: string): Promise<{ seChannelId: string | null; seJwt?: string | null; name1: string; name2: string } | null>;
   lastAnnounced(channel: string): Promise<string | null>;
   saveAnnounced(channel: string, text: string): Promise<void>;
 }
