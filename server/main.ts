@@ -193,7 +193,15 @@ if (import.meta.main) {
     hostname: env("RS_HOST") ?? "127.0.0.1",
     port: Number(env("RS_PORT") ?? 8790),
   }, handler);
-  const stop = async () => { await server.shutdown(); store.close(); Deno.exit(0); };
+  // shutdown() attend la fin des réponses en cours, or les flux SSE (renderer,
+  // overlays) ne finissent jamais : sans plafond, systemd attendait 90 s
+  // (API injoignable → sync 502 côté montre). On sort au bout de 2 s.
+  const stop = async () => {
+    setTimeout(() => { store.close(); Deno.exit(0); }, 2_000);
+    await server.shutdown();
+    store.close();
+    Deno.exit(0);
+  };
   Deno.addSignalListener("SIGTERM", stop);
   Deno.addSignalListener("SIGINT", stop);
 }
