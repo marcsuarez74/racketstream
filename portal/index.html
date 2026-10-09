@@ -146,7 +146,7 @@
   // Portail des noms — zéro framework, une seule requête au backend.
   // GET  /names?channel=…  (public)  → pré-remplissage
   // POST /names  (X-Device-Key)      → enregistrement
-  const SUPABASE = "https://bzdbnptnubkkagmmxhyi.supabase.co";
+  const API = "https://racket-stream.marc-suarez.fr";
   const $ = (id) => document.getElementById(id);
   const LS = "badscore-portal";
 
@@ -208,7 +208,7 @@
     const channel = $("channel").value.trim();
     if (!channel) return;
     try {
-      const res = await fetch(`${SUPABASE}/functions/v1/names?channel=${encodeURIComponent(channel)}`);
+      const res = await fetch(`${API}/functions/v1/names?channel=${encodeURIComponent(channel)}`);
       if (!res.ok) return;
       const n = await res.json();
       $("name1").value = n.name1 || "";
@@ -229,7 +229,7 @@
     $("create").disabled = true;
     status("Création…");
     try {
-      const res = await fetch(`${SUPABASE}/functions/v1/register`, {
+      const res = await fetch(`${API}/functions/v1/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channel }),
@@ -277,7 +277,7 @@
     $("validate").disabled = true;
     status("Enregistrement…");
     try {
-      const res = await fetch(`${SUPABASE}/functions/v1/names`, {
+      const res = await fetch(`${API}/functions/v1/names`, {
         method: "POST",
         headers: { "X-Device-Key": key, "Content-Type": "application/json" },
         body: JSON.stringify(body),

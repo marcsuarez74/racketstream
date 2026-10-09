@@ -1,14 +1,14 @@
 """RacketStream renderer VPS — incruste le scorebug dans la vidéo streamée.
 
-Lit l'état du match sur Supabase (REST, lecture anon publique — même pick que
-l'overlay), dessine le scorebug (design phase 5, inchangé) en RGBA 1280x720
+Lit l'état du match sur l'API VPS (/api/score, lecture publique — pick fait
+côté serveur, le même que l'overlay), dessine le scorebug (design phase 5, inchangé) en RGBA 1280x720
 à 2 fps sur stdout : ffmpeg-relay l'incruste dans la vidéo et publie vers Twitch.
 
 Contrat (spec 2026-09-21 §3, ajusté 2026-09-24) :
   - aucun match ACTIF FRAIS → frame entièrement TRANSPARENTE
     (un match quitté reste « active » dans la base : sans sync depuis
     stale_s il est un « fantôme » et ne doit plus s'afficher)
-  - Supabase injoignable → garde la dernière frame connue (on_error=KEEP)
+  - API injoignable → garde la dernière frame connue (on_error=KEEP)
   - changement d'état → redessine au prochain tick
 """
 
@@ -30,13 +30,9 @@ from PIL import Image, ImageDraw, ImageFont
 BASE_DIR = Path(__file__).resolve().parent
 FONT_PATH = BASE_DIR / "fonts" / "Archivo[wdth,wght].ttf"
 
-SUPABASE_URL = "https://bzdbnptnubkkagmmxhyi.supabase.co"
-# Clé anon publique RLS (identique à l'overlay GH Pages et au widget SE).
-ANON_KEY = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-    "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6ZGJucHRudWJra2FnbW14aHlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3Nzk5MDAsImV4cCI6MjEwNTM1NTkwMH0."
-    "_g_LV07W42GlOijx-XptJBJwBrfSgbcAm8StEWxqge0"
-)
+# API publique (lecture seule). Sur le VPS : --url http://127.0.0.1:8790
+# (sans passer par Caddy).
+API_URL = "https://racket-stream.marc-suarez.fr"
 
 FRAME_W, FRAME_H = 1280, 720
 FPS = 2
@@ -54,7 +50,7 @@ TEAM2 = (229, 72, 77, 255)      # #E5484D
 POSITIONS = ("topright", "topleft", "topcenter")
 MARGIN = 16                     # marge du bug dans la frame (aligné ffmpeg overlay)
 
-KEEP = object()                 # sentinelle : Supabase injoignable → garder la frame
+KEEP = object()                 # sentinelle : API injoignable → garder la frame
 
 NAMES_REFRESH_S = 60.0          # relecture des noms du canal (portail) pendant un stream
 
@@ -79,70 +75,65 @@ def load_font(size, weight=600):
 
 # --------------------------------------------------------------------- pick
 
-def make_url(base, anon, channel):
-    params = [
-        ("select",
-         "started_at,match_state!inner(status,updated_at,current_set,score_me,score_opp,sets_me,sets_opp,config)"),
-        ("channel", f"eq.{channel}"),
-        ("match_state.status", "eq.active"),
-        ("order", "started_at.desc.nullslast"),
-        ("limit", "1"),
-    ]
-    return f"{base}/rest/v1/matches?{urllib.parse.urlencode(params, quote_via=urllib.parse.quote, safe='!.,()')}"
+def make_url(base, channel):
+    return f"{base}/api/score?channel={urllib.parse.quote(channel, safe='')}"
 
 
 def fetch_json(url):
-    req = urllib.request.Request(url, headers={
-        "apikey": ANON_KEY,
-        "Authorization": f"Bearer {ANON_KEY}",
-        "Accept": "application/json",
-    })
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=10) as r:
         return json.loads(r.read().decode("utf-8"))
 
 
-def normalize(rows):
-    ms = rows[0]["match_state"]
-    cfg = ms.get("config") or {}
+def normalize(row):
+    cfg = row.get("config") or {}
     return {
-        "score_me": ms["score_me"],
-        "score_opp": ms["score_opp"],
-        "sets_me": ms["sets_me"],
-        "sets_opp": ms["sets_opp"],
-        "current_set": ms["current_set"],
+        "score_me": row["score_me"],
+        "score_opp": row["score_opp"],
+        "sets_me": row["sets_me"],
+        "sets_opp": row["sets_opp"],
+        "current_set": row["current_set"],
         "sets_to_win": int(cfg.get("setsToWin") or 2),
     }
 
 
-def pick(channel, base, anon, fetch=fetch_json, on_error=None, stale_s=600):
+def _age_s(raw):
+    """Âge en secondes d'un updated_at : epoch ms (API VPS) ou ISO 8601."""
+    if isinstance(raw, (int, float)) and not isinstance(raw, bool):
+        updated = datetime.fromtimestamp(raw / 1000, timezone.utc)
+    else:
+        updated = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - updated).total_seconds()
+
+
+def pick(channel, base, fetch=fetch_json, on_error=None, stale_s=600):
     """Match ACTIF le plus récent, mais seulement s'il est FRAIS (sync ≤ stale_s).
 
-    Un match quitté reste « active » dans la base (la montre purge localement
-    sans prévenir) : sans sync depuis stale_s, c'est un « fantôme » — l'overlay
-    doit disparaître. On_error (None ou KEEP) si le réseau échoue.
+    /api/score renvoie l'actif le plus récent, sinon le plus récent tout statut :
+    on n'affiche que s'il est actif. Un match quitté reste « active » dans la
+    base (la montre purge localement sans prévenir) : sans sync depuis stale_s,
+    c'est un « fantôme » — l'overlay doit disparaître. On_error (None ou KEEP)
+    si le réseau échoue.
     """
     try:
-        rows = fetch(make_url(base, anon, channel))
+        row = fetch(make_url(base, channel))
     except Exception:
         return on_error
-    if rows:
-        raw = rows[0]["match_state"].get("updated_at")
+    if isinstance(row, dict) and row.get("status") == "active":
         try:
-            updated = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-            if updated.tzinfo is None:
-                updated = updated.replace(tzinfo=timezone.utc)
-            age_s = (datetime.now(timezone.utc) - updated).total_seconds()
-            if age_s <= stale_s:
-                return normalize(rows)
-        except (TypeError, ValueError):
+            if _age_s(row.get("updated_at")) <= stale_s:
+                return normalize(row)
+        except (TypeError, ValueError, OverflowError, OSError):
             pass   # updated_at absent/corrompu → traité comme fantôme
     return None
 
 
-def fetch_names(channel):
-    """Noms du canal via l'Edge Function names (défauts MOI/LUI sinon)."""
+def fetch_names(channel, base=API_URL):
+    """Noms du canal via la route names de l'API (défauts MOI/LUI sinon)."""
     try:
-        url = f"{SUPABASE_URL}/functions/v1/names?channel={urllib.parse.quote(channel)}"
+        url = f"{base}/functions/v1/names?channel={urllib.parse.quote(channel)}"
         with urllib.request.urlopen(url, timeout=10) as r:
             n = json.loads(r.read().decode("utf-8"))
         team = lambda a, b: f"{a}/{b}" if b else a
@@ -283,7 +274,7 @@ def draw_frame(state, names=("MOI", "LUI"), position="topright", size=(FRAME_W, 
 def start_names_refresh(channel, holder, period=NAMES_REFRESH_S, fetch=None, stop=None):
     """Démarre un thread daemon qui rafraîchit holder[0] toutes les `period` s.
 
-    Les noms vivent côté Supabase (portail) : un changement doit apparaître
+    Les noms vivent côté API (portail) : un changement doit apparaître
     tout seul pendant un stream, sans relance du composite. Une erreur réseau
     garde les noms actuels (jamais de crash, jamais de noms vides). Le thread
     est daemon : il ne bloque pas la sortie du processus.
@@ -310,29 +301,29 @@ def frame_bytes(img):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="RacketStream scorebug renderer (RGBA 2 fps sur stdout)")
     ap.add_argument("--channel", required=True)
-    ap.add_argument("--interval", type=float, default=2.0, help="période de polling Supabase (s)")
+    ap.add_argument("--interval", type=float, default=2.0, help="période de polling de l'API (s)")
     ap.add_argument("--stale", type=int, default=600,
                     help="durée max (s) sans sync avant de considérer le match fantôme")
     ap.add_argument("--position", default="topright", choices=POSITIONS)
     ap.add_argument("--name1", help="forcer le nom du camp 1 (sinon réglages du canal)")
     ap.add_argument("--name2", help="forcer le nom du camp 2")
-    ap.add_argument("--url", default=SUPABASE_URL)
+    ap.add_argument("--url", default=API_URL, help="base de l'API (VPS : http://127.0.0.1:8790)")
     ap.add_argument("--png", help="écrire un PNG d'aperçu et quitter (validation visuelle)")
     args = ap.parse_args(argv)
 
     if args.name1 and args.name2:
         names = (args.name1, args.name2)
     else:
-        auto = fetch_names(args.channel)
+        auto = fetch_names(args.channel, args.url)
         names = (args.name1 or auto[0], args.name2 or auto[1])
     names_cell = [names]
     if not (args.name1 and args.name2):
         # noms du canal : relus toutes les NAMES_REFRESH_S — un changement dans
         # le portail apparaît tout seul pendant un stream, sans relance.
-        start_names_refresh(args.channel, names_cell)
+        start_names_refresh(args.channel, names_cell, fetch=lambda ch: fetch_names(ch, args.url))
 
     if args.png:
-        state = pick(args.channel, args.url, ANON_KEY, stale_s=args.stale)
+        state = pick(args.channel, args.url, stale_s=args.stale)
         draw_frame(state, names=names, position=args.position).save(args.png)
         print(f"PNG écrit: {args.png} (state={'aucun' if state is None else 'match'})")
         return
@@ -345,7 +336,7 @@ def main(argv=None):
     while True:
         t0 = time.monotonic()
         if tick % poll_every == 0:
-            state = pick(args.channel, args.url, ANON_KEY, on_error=KEEP, stale_s=args.stale)
+            state = pick(args.channel, args.url, on_error=KEEP, stale_s=args.stale)
             if state is not KEEP:
                 last = state
         img = draw_frame(last, names=tuple(names_cell[0]), position=args.position)
