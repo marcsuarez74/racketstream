@@ -31,6 +31,11 @@ class SyncService {
     var mInFlightMatchId = "";  // matchId de la requête en vol (ACK lié au bon match)
     var mTimer;                 // watchdog 30 s OU drain — un seul rôle à la fois
     var mStatus = SYNC_ST_OFF;  // état visible (indicateur écran score)
+    var mOpenedId = "";         // match connu du serveur (0-0 envoyé ou point acquitté)
+    var mStopEngine = null;     // match arrêté : vider ses points puis envoyer « stop »
+    var mStopFrom = 1;          // 1re séquence non acquittée du match arrêté
+    var mStoppedId = "";        // dernier match pour lequel l'arrêt a été demandé
+    var mInFlightStop = false;  // la requête en vol est l'arrêt
 
     function initialize(deviceId as String) {
         mCore = new SyncCore();
@@ -52,6 +57,22 @@ class SyncService {
     // et au lancement (flush §9.4). Configuration absente → inactif (graceful).
     function trigger(engine) as Void {
         mEngineRef = engine;
+        _pump();
+    }
+
+    // Fin de séance ou abandon : les points en attente partent d'abord, puis
+    // « stop » → le serveur archive le match et l'overlay se vide aussitôt.
+    function stop(engine) as Void {
+        if (engine == null || engine.getMatchId().equals(mStoppedId)) { return; }
+        mStoppedId = engine.getMatchId();
+        mStopEngine = engine;
+        mStopFrom = MatchStore.getPendingFrom();
+        mEngineRef = null;
+        _pump();
+    }
+
+    function _pump() as Void {
+        var engine = mStopEngine != null ? mStopEngine : mEngineRef;
         if (engine == null) { return; }
         // Config cuisée au build (BackendConfig, fiable sur matériel) sinon
         // Properties (chemin nominal store via GCM). Lecture défensive :
@@ -91,13 +112,21 @@ class SyncService {
             if (!mInFlight) { mTimer.stop(); _scheduleDrain(); }
             return;
         }
+        if (mStopEngine != null) {
+            var pending = mCore.batchSlice(mStopEngine.getEvents(), mStopFrom, 5);
+            _send(url, key, mStopEngine, pending, pending.size() == 0);
+            return;
+        }
         var batch = mCore.batchSlice(engine.getEvents(), MatchStore.getPendingFrom(), 5);
-        if (batch.size() == 0) { return; }
-        _send(url, key, engine, batch);
+        // Sans point en attente, un match inconnu du serveur est quand même
+        // envoyé (0-0) : l'overlay quitte l'ancien score dès le nouveau match.
+        if (batch.size() == 0 && mOpenedId.equals(engine.getMatchId())) { return; }
+        _send(url, key, engine, batch, false);
     }
 
-    function _send(url as String, key as String, engine, batch as Array) as Void {
+    function _send(url as String, key as String, engine, batch as Array, isStop as Boolean) as Void {
         mInFlight = true;
+        mInFlightStop = isStop;
         mStatus = SYNC_ST_SEND;
         mInFlightMatchId = engine.getMatchId();
         mLastAttemptMs = System.getTimer();
@@ -107,6 +136,7 @@ class SyncService {
         // du point sur la montre (sentAt - ts) et le trajet (rtt). Ignoré sinon.
         body["sentAt"] = mLastAttemptMs;
         if (mLastRttMs > 0) { body["rtt"] = mLastRttMs; }
+        if (isStop) { body["stop"] = true; }
         var options = {
             :method => Communications.HTTP_REQUEST_METHOD_POST,
             :headers => { "X-Device-Key" => key, "Content-Type" => Communications.REQUEST_CONTENT_TYPE_JSON },
@@ -115,8 +145,8 @@ class SyncService {
         mTimer.stop();
         mTimer.start(method(:_onTimeout), 30000, false);
         Communications.makeWebRequest(fullUrl, body, options, method(:_onResponse));
-        var last = batch[batch.size() - 1] as Array;
-        System.println("[sync] envoi seq<=" + last[2] + " via " + fullUrl);
+        var seq = batch.size() > 0 ? (batch[batch.size() - 1] as Array)[2] : 0;
+        System.println("[sync] envoi seq<=" + seq + (isStop ? " stop" : "") + " via " + fullUrl);
     }
 
     function _onResponse(responseCode as Number, data as Dictionary or String or Null) as Void {
@@ -128,8 +158,12 @@ class SyncService {
             mBackoffUntilMs = 0l;
             mStatus = SYNC_ST_OK;
             mLastError = 0;
+            mOpenedId = mInFlightMatchId;
+            var stopping = mStopEngine != null && mStopEngine.getMatchId().equals(mInFlightMatchId);
+            if (stopping && mInFlightStop) { mStopEngine = null; }
             if (data != null && data instanceof Dictionary) {
                 var ack = (data as Dictionary)["lastAcceptedSequence"];
+                if (ack != null && stopping) { mStopFrom = ack + 1; }
                 if (ack != null && mEngineRef != null && mEngineRef.getMatchId().equals(mInFlightMatchId)) {
                     MatchStore.ackUntil(ack);
                     System.println("[sync] ack " + ack);
@@ -140,6 +174,9 @@ class SyncService {
             mLastError = responseCode;
             mBackoffUntilMs = System.getTimer() + mCore.nextBackoffMs(mErrors);
             mStatus = SYNC_ST_ERR;
+            // Arrêt impossible (hors ligne) : abandon après 3 échecs, le
+            // serveur le masquera de toute façon au bout de 10 min.
+            if (mStopEngine != null && mErrors >= 3) { mStopEngine = null; }
             System.println("[sync] erreur " + responseCode + " -> backoff");
         }
         WatchUi.requestUpdate();             // efface le liseré d'envoi dès la réponse
@@ -156,10 +193,7 @@ class SyncService {
 
     // File non vide → re-tenter au prochain créneau (≥ 2 s / backoff).
     function _scheduleDrain() as Void {
-        var engine = mEngineRef;
-        if (engine == null) { return; }
-        var batch = mCore.batchSlice(engine.getEvents(), MatchStore.getPendingFrom(), 5);
-        if (batch.size() == 0) { return; }
+        if (!_hasWork()) { return; }
         var now = System.getTimer();
         var next = mLastAttemptMs + 2000l;
         if (mBackoffUntilMs > next) { next = mBackoffUntilMs; }
@@ -169,6 +203,15 @@ class SyncService {
     }
 
     function _drain() as Void {
-        trigger(mEngineRef);
+        _pump();
+    }
+
+    // Reste-t-il à envoyer : arrêt, ouverture d'un match (0-0) ou points ?
+    function _hasWork() as Boolean {
+        if (mStopEngine != null) { return true; }
+        var engine = mEngineRef;
+        if (engine == null) { return false; }
+        if (!mOpenedId.equals(engine.getMatchId())) { return true; }
+        return mCore.batchSlice(engine.getEvents(), MatchStore.getPendingFrom(), 5).size() > 0;
     }
 }

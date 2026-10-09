@@ -310,6 +310,7 @@ class MatchView extends WatchUi.View {
     }
 
     function finishSave() as Void {
+        mSync.stop(mEngine);          // fin de séance : l'overlay se vide
         setPaused(true);
         mEndSec = mAct.elapsedSec();
         mEndKcal = mAct.calories();
@@ -327,6 +328,7 @@ class MatchView extends WatchUi.View {
     }
 
     function clearMatch() as Void {
+        mSync.stop(mEngine);          // abandon (sans effet si déjà arrêté)
         MatchStore.clearMatch();
         mEngine = null;
         mSync.trigger(null);
