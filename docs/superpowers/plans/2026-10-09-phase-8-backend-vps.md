@@ -49,7 +49,7 @@ Montre ──POST /functions/v1/sync/matches/:id/events──► Caddy (TLS) ─
 | `server/*_test.ts` | Tests des stores (`:memory:`), du routeur et du SSE |
 | `server/tools/import-supabase.ts` | Import ponctuel `devices` / `matches` / `events` / `match_state` / `chat_announce` |
 | `server/deploy/racketstream-api.service`, `racketstream-backup.{service,timer}` | Unités systemd |
-| `scripts/deploy-vps.sh` | rsync vers `/opt/racketstream`, restart du service, smoke test |
+| `scripts/deploy-vps.sh` | rsync vers `/opt/racketstream-api`, restart du service, smoke test |
 | `supabase/functions/sync/handler.ts` | `owner_id`, transaction optionnelle via `db.atomic` |
 | `supabase/functions/register/handler.ts` | 409 sur violation d'unicité |
 | `supabase/functions/chat-announce/handler.ts` | 503 si pas de clé configurée, côté serveur VPS uniquement |
@@ -147,20 +147,17 @@ Le VPS est **partagé** (autres sites Caddy, Docker, MediaMTX). Règles de cette
 - ne pas toucher à MediaMTX ;
 - ne rien afficher de `/etc/racketstream/`.
 
-- [ ] Installer Deno **2.9.7** (version épinglée, même que la version locale) dans `/usr/local/bin/deno`, à partir du zip officiel avec vérification de la somme SHA-256.
-- [ ] Préparer le système :
-  - utilisateur système `racketstream` (sans shell) ;
-  - code dans `/opt/racketstream` (root:root, lecture seule pour le service) ;
-  - données dans `/var/lib/racketstream` (racketstream, 0750).
-- [ ] Unité `racketstream-api.service` :
-  - `User=racketstream`, `EnvironmentFile=/etc/racketstream/api.env`, `DENO_DIR=/var/lib/racketstream/deno` ;
-  - durcissement : `ProtectSystem=strict`, `ReadWritePaths=/var/lib/racketstream`, `NoNewPrivileges`, `PrivateTmp`, `MemoryMax=256M` ;
-  - `Restart=on-failure` ;
-  - permissions Deno minimales, comme en tâche 4.
-- [ ] Sauvegardes : `racketstream-backup.timer`, une fois par jour à 04:00. Il lance `sqlite3 racketstream.db ".backup …"` vers `/var/lib/racketstream/backups/` et garde 14 jours. Le disque est à 78 %, mais la base pèse quelques Mo.
+- [x] Installer Deno **2.9.7** dans `/usr/local/bin/deno` (zip officiel, SHA-256 vérifiée).
+- [x] Préparer le système :
+  - compte dédié **`rs-api`** (système, `nologin`, sans sudo). Le compte `racketstream` existant fait tourner MediaMTX et le relais ffmpeg et il est sudoer : on ne l'utilise pas ;
+  - code dans `/opt/racketstream-api` (root:root, lecture seule pour le service ; `/opt/racketstream` reste au renderer) ;
+  - données dans `/var/lib/racketstream-api` (`StateDirectory`, 0750) ;
+  - `/etc/racketstream/api.env` en root:rs-api 0640.
+- [x] Unités `server/deploy/racketstream-api.service`, `racketstream-backup.{service,timer}`, installées par `scripts/deploy-vps.sh`.
+- [ ] Sauvegardes : `racketstream-backup.timer`, une fois par jour à 04:00. Il lance `sqlite3 racketstream.db ".backup …"` vers `/var/lib/racketstream-api/backups/` et garde 14 jours. Le disque est à 78 %, mais la base pèse quelques Mo.
 - [ ] Copie vers le Mac (demande utilisateur) : `scripts/backup-vps-to-mac.sh` récupère la dernière sauvegarde du jour (`ssh racketstream-vps sudo cat …/backups/<dernier>.db`) vers `~/Backups/racketstream/`, en gardant 30 copies, puis vérifie `PRAGMA integrity_check`. Lancement manuel, ou quotidien via un agent `launchd` (`~/Library/LaunchAgents/`), qui se rattrape au réveil du Mac.
 - [ ] `scripts/deploy-vps.sh` :
-  1. rsync de `server/` et `supabase/functions/` (les handlers sont importés) vers `/opt/racketstream` ;
+  1. rsync de `server/` et `supabase/functions/` (les handlers sont importés) vers `/opt/racketstream-api` ;
   2. `systemctl restart racketstream-api` (ne concerne que ce service) ;
   3. `curl -fsS http://127.0.0.1:8790/healthz`.
 - [ ] Caddy :
@@ -169,11 +166,13 @@ Le VPS est **partagé** (autres sites Caddy, Docker, MediaMTX). Règles de cette
   3. `caddy validate` puis `systemctl reload caddy` ;
   4. vérifier que les autres sites répondent toujours (budget 200, rituel 200, what-shall-we-play 307).
 - [ ] Vérification depuis le Mac : `curl https://racket-stream.marc-suarez.fr/healthz` renvoie `ok`.
-- [ ] **[USER ACTION]** Renseigner les deux secrets du serveur, que Claude ne lit pas :
+- [x] **[USER ACTION]** Renseigner les deux secrets du serveur, que Claude ne lit pas :
   1. `ssh racketstream-vps`, puis `sudoedit /etc/racketstream/api.env` ;
   2. ajouter `SE_JWT=<jeton>` (StreamElements → Account → Channels → Show secrets → JWT Token ; jeton de secours, utilisé si le canal n'a pas son propre `se_jwt`) ;
   3. ajouter `CHAT_ANNOUNCE_KEY=<clé>` (la valeur de `?key=` de l'appel `chat-announce` ; reprendre l'actuelle ou en générer une avec `openssl rand -hex 16`) ;
   4. `sudo systemctl restart racketstream-api`.
+
+  Ghostty : le VPS ne connaît pas `xterm-ghostty` → `TERM=xterm-256color`, ou `sudo sh -c 'cat >> …/api.env'` puis Ctrl+D.
 - [ ] Commit `feat(server): déploiement systemd + Caddy sur le VPS`
 
 ## Tâche 6 — Import des données Supabase

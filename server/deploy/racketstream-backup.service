@@ -1,0 +1,17 @@
+# Sauvegarde à chaud de la base (sqlite3 .backup, cohérente même en WAL),
+# 14 jours conservés. Récupérée ensuite sur le Mac par scripts/backup-vps-to-mac.sh.
+[Unit]
+Description=Sauvegarde de la base RacketStream
+
+[Service]
+Type=oneshot
+User=rs-api
+Group=rs-api
+ExecStart=/bin/sh -c 'mkdir -p /var/lib/racketstream-api/backups && \
+  sqlite3 /var/lib/racketstream-api/racketstream.db ".backup /var/lib/racketstream-api/backups/racketstream-$(date +%%Y%%m%%d).db" && \
+  find /var/lib/racketstream-api/backups -name "racketstream-*.db" -mtime +14 -delete'
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/racketstream-api
+ProtectHome=true
+PrivateTmp=true
