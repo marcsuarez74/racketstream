@@ -6,7 +6,7 @@
 
 ## 1. RacketStream, c'est quoi ?
 
-RacketStream transforme ta montre Garmin en **tableau de score pour sports de raquette** (badminton aujourd'hui — padel, tennis et squash en route) : un bouton par point, et le score part **tout seul** sur internet. Tes viewers suivent le match en direct :
+RacketStream transforme ta montre Garmin en **tableau de score pour sports de raquette** (badminton, padel et squash) : un bouton par point, et le score part **tout seul** sur internet. Tes viewers suivent le match en direct :
 
 - dans la **vidéo** (bandeau de score façon retransmission TV),
 - dans le **chat** (`!score` ou annonce automatique à chaque point).
@@ -54,22 +54,42 @@ Lance un match et marque un point : un **liseré vert** apparaît autour de l'é
 
 ---
 
-## 4. Pendant un match — les boutons
+## 4. Utiliser l'app sur la montre
+
+### Démarrer une séance
+1. **Choisis le sport** (UP/DOWN puis START) : Badminton, Padel ou Squash
+2. **Choisis le format** (UP/DOWN puis START) :
+   - Badminton : 3 × 21, 3 × 15, Set unique 21
+   - Padel : Star Point, Point en or, Avantages, Super tie-break
+   - Squash : PAR 11 en 3 jeux, PAR 11 en 2 jeux, PAR 15 en 3 jeux
+3. Écran **Prêt** : attends que la FC s'affiche, puis START. La séance démarre, comme une activité Garmin (chrono, cardio, calories)
+
+L'app retient ton dernier sport et ton dernier format. BACK sur l'écran du sport ferme l'app.
+
+### Pendant le match
 
 | Bouton | Action |
 |---|---|
-| **START** | point pour toi |
+| **START** | point pour toi (en fin de set : passer au set suivant) |
 | **BACK** | point pour l'adversaire |
 | **UP** | annuler le dernier point |
-| **DOWN** | demander la fin du set → **« TERMINER SET ? »** (DOWN = oui, BACK = non) |
-| **UP (appui long)** | menu : Reprendre / Format / Reset / Quitter |
-| **QUITTER** (dans le menu) | **abandonne le match** : le score est supprimé de la montre (prochain lancement = choix du format) et l'app se ferme |
+| **DOWN** | page suivante : score → cardio → effort → stats du match |
+| **MENU** (UP appui long) | Reprendre / Pause / Changer de set (badminton, squash) / Terminer |
+
+En **pause** : START relance le chrono, BACK ouvre le menu de l'activité (**Reprendre**, **Enregistrer**, **Supprimer**). Supprimer demande une confirmation (START = oui, BACK = non).
+
+### Fin du match
+Un écran **VICTOIRE** ou **DÉFAITE** te propose :
+- **Enregistrer l'activité** : la séance part dans Garmin Connect, avec un récap à faire défiler (DOWN) : durée, calories, FC, zones, sets
+- **Nouveau match** : on enchaîne dans la même séance
+- **Annuler le dernier point** : si le dernier point était une erreur
+
+Si l'app se ferme en plein match, elle propose de **reprendre le match** au prochain lancement (BACK = abandonner).
 
 ### Les règles gérées automatiquement
-- 21 points par set, **2 points d'écart** (cap à 30), **2 sets gagnants** le match
-- À la fin d'un set : l'app propose « TERMINER SET ? », gère le changement de côté et le repos
-- Fin de match : le score final reste affiché (et en ligne) jusqu'à ton prochain match
-- Tu te trompes ? **UP annule** le dernier point, y compris après la confirmation de set
+- Badminton : 2 points d'écart, plafond à 30 (21 en 3 × 15), changement de côté annoncé dans le set décisif
+- Padel : jeux, tie-break et mode d'égalité choisi (Star Point, point en or, avantages) ; changement de côté annoncé
+- Squash : PAR avec 2 points d'écart
 
 ### Le liseré de sync (autour du cadre de l'écran, pendant un match)
 
