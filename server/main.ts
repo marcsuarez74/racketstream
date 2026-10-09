@@ -65,6 +65,22 @@ function channelParam(url: URL): string | null {
   return c && CHANNEL_RE.test(c) ? c : null;
 }
 
+// Mesure de latence envoyée par la montre (≥ 0.3.1), horloge montre en ms :
+// attente = sentAt - ts du dernier point du lot (créneau, file d'envoi) ;
+// rtt = aller-retour de la sync précédente (Bluetooth + téléphone + réseau).
+// Latence point → serveur ≈ attente + rtt / 2. Lisible via journalctl.
+export function latencyLine(channel: string, body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const b = body as Record<string, unknown>;
+  const evs = Array.isArray(b.events) ? b.events as Record<string, unknown>[] : [];
+  const last = evs[evs.length - 1];
+  if (typeof b.sentAt !== "number" || !last || typeof last.ts !== "number") return null;
+  const wait = Math.max(0, b.sentAt - last.ts);
+  const rtt = typeof b.rtt === "number" ? b.rtt : null;
+  const est = rtt === null ? "?" : `${Math.round(wait + rtt / 2)}ms`;
+  return `[latence] canal=${channel} seq=${last.sequence} attente_montre=${wait}ms rtt=${rtt ?? "?"}ms estimé=${est}`;
+}
+
 function stream(store: Store, hub: Hub, channel: string, pingMs: number): Response {
   const enc = new TextEncoder();
   let cleanup = () => {};
@@ -116,8 +132,13 @@ export function makeHandler(store: Store, opts: Options = {}): (req: Request) =>
           return r;
         },
       };
+      const body = await req.clone().json().catch(() => null);
       const res = await handleSync(req, db, sender);
-      if (res.status === 200 && channel) hub.publish(channel, pickScore(store, channel));
+      if (res.status === 200 && channel) {
+        hub.publish(channel, pickScore(store, channel));
+        const lat = latencyLine(channel, body);
+        if (lat) console.log(lat);
+      }
       return res;
     }
     if (path === "/functions/v1/score-text") return handleScoreText(req, scoreDb);

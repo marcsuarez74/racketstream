@@ -1,6 +1,6 @@
 // Tests bout en bout du serveur : vrai Deno.serve sur port éphémère, base :memory:.
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { makeHandler } from "./main.ts";
+import { latencyLine, makeHandler } from "./main.ts";
 import { Hub } from "./hub.ts";
 import { KEY, seeded, syncReq } from "./test_util.ts";
 
@@ -91,3 +91,15 @@ Deno.test("serveur : chat-announce sans clé configurée → 503, healthz ok", (
   const h = await fetch(`${base}/healthz`);
   assertEquals([h.status, await h.text()], [200, "ok"]);
 }));
+
+Deno.test("latencyLine : attente montre + demi aller-retour", () => {
+  const body = { sentAt: 10_400, rtt: 1_800, events: [{ sequence: 4, ts: 9_000 }, { sequence: 5, ts: 10_000 }] };
+  assertEquals(latencyLine("marc", body), "[latence] canal=marc seq=5 attente_montre=400ms rtt=1800ms estimé=1300ms");
+  assertEquals(latencyLine("marc", { sentAt: 10_000, events: [{ sequence: 1, ts: 10_000 }] }),
+    "[latence] canal=marc seq=1 attente_montre=0ms rtt=?ms estimé=?");
+});
+
+Deno.test("latencyLine : montre sans mesure (≤ 0.3.0) → pas de ligne", () => {
+  assertEquals(latencyLine("marc", { events: [{ sequence: 1, ts: 5 }] }), null);
+  assertEquals(latencyLine("marc", null), null);
+});

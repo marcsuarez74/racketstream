@@ -23,6 +23,7 @@ class SyncService {
     var mDeviceId;
     var mInFlight = false;
     var mLastAttemptMs = 0l;
+    var mLastRttMs = 0;         // aller-retour de la dernière sync réussie (mesure de latence)
     var mBackoffUntilMs = 0l;
     var mErrors = 0;
     var mLastError = 0;
@@ -83,7 +84,13 @@ class SyncService {
             else { url = url + "/functions/v1/sync"; }
         }
         var now = System.getTimer();
-        if (!mCore.shouldSend(now, mLastAttemptMs, mInFlight, mBackoffUntilMs)) { return; }
+        if (!mCore.shouldSend(now, mLastAttemptMs, mInFlight, mBackoffUntilMs)) {
+            // Point marqué pendant le créneau minimal (ou le backoff) : l'envoyer
+            // dès la fin du créneau, sans attendre le point suivant. En vol, la
+            // réponse s'en charge (_scheduleDrain) et le timer sert de watchdog.
+            if (!mInFlight) { mTimer.stop(); _scheduleDrain(); }
+            return;
+        }
         var batch = mCore.batchSlice(engine.getEvents(), MatchStore.getPendingFrom(), 5);
         if (batch.size() == 0) { return; }
         _send(url, key, engine, batch);
@@ -96,6 +103,10 @@ class SyncService {
         mLastAttemptMs = System.getTimer();
         var fullUrl = url + "/matches/" + engine.getMatchId() + "/events";
         var body = mCore.buildBody(engine, mDeviceId, batch);
+        // Mesure de latence (horloge montre, ms) : le serveur en déduit l'attente
+        // du point sur la montre (sentAt - ts) et le trajet (rtt). Ignoré sinon.
+        body["sentAt"] = mLastAttemptMs;
+        if (mLastRttMs > 0) { body["rtt"] = mLastRttMs; }
         var options = {
             :method => Communications.HTTP_REQUEST_METHOD_POST,
             :headers => { "X-Device-Key" => key, "Content-Type" => Communications.REQUEST_CONTENT_TYPE_JSON },
@@ -112,6 +123,7 @@ class SyncService {
         mTimer.stop();
         mInFlight = false;
         if (responseCode == 200) {
+            mLastRttMs = System.getTimer() - mLastAttemptMs;
             mErrors = 0;
             mBackoffUntilMs = 0l;
             mStatus = SYNC_ST_OK;
