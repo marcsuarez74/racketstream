@@ -82,3 +82,19 @@ Deno.test("teamName : pas de slash en simple", async () => {
   assertEquals(teamName("MARC", ""), "MARC");
   assertEquals(teamName("MARC", "JULES"), "MARC/JULES");
 });
+
+Deno.test("formatScore padel : points, avantage, tie-break, fin", () => {
+  const p = (gamesMe: number, gamesOpp: number, tieBreak: number) => ({ gamesMe, gamesOpp, tieBreak });
+  assertEquals(formatScore(row({ scoreMe: 0, scoreOpp: 3, setsMe: 1, setsOpp: 0, padel: p(4, 4, 0) }), "A", "B"),
+    "A 0-40 B · Jeux 4-4 · Sets 1-0");
+  assertEquals(formatScore(row({ scoreMe: 4, scoreOpp: 3, padel: p(1, 0, 0) }), "A", "B"),
+    "A AV-40 B · Jeux 1-0 · Sets 1-0");
+  assertEquals(formatScore(row({ scoreMe: 5, scoreOpp: 5, padel: p(6, 6, 0) }), "A", "B"),
+    "A 40-40 B · Jeux 6-6 · Sets 1-0");
+  assertEquals(formatScore(row({ scoreMe: 5, scoreOpp: 3, padel: p(6, 6, 1) }), "A", "B"),
+    "A 5-3 B · Jeux 6-6 · Tie-break · Sets 1-0");
+  assertEquals(formatScore(row({ scoreMe: 8, scoreOpp: 9, setsMe: 1, setsOpp: 1, padel: p(0, 0, 2) }), "A", "B"),
+    "A 8-9 B · Jeux 0-0 · Super tie-break · Sets 1-1");
+  assertEquals(formatScore(row({ status: "match_finished", setsMe: 2, setsOpp: 1, padel: p(0, 0, 0) }), "A", "B"),
+    "A 2-1 B · Terminé");
+});

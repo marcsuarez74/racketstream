@@ -9,7 +9,28 @@ export interface ScoreRow {
   scoreOpp: number;
   setsMe: number;
   setsOpp: number;
-  config: { targetScore: number; winBy: number; cap: number; setsToWin: number } | null;
+  config: { targetScore: number; winBy: number; cap: number; setsToWin: number; sport?: string; deuce?: number } | null;
+  // Phase 9 : état padel envoyé par la montre (snapshot.padel). Absent pour
+  // le badminton/squash et pour les montres 0.2.x.
+  padel?: PadelSnapshot | null;
+}
+
+export interface PadelSnapshot {
+  gamesMe: number;
+  gamesOpp: number;
+  tieBreak: number; // 0 = jeu normal, 1 = tie-break, 2 = super tie-break
+}
+
+// Points d'un jeu de padel (miroir de PadelRules.labels côté montre) :
+// 0/15/30/40, AV en avantages, 40-40 sinon ; en tie-break, points bruts.
+export function padelPoints(a: number, b: number, tieBreak: number): [string, string] {
+  if (tieBreak > 0) return [String(a), String(b)];
+  if (a >= 3 && b >= 3) {
+    if (a === b) return ["40", "40"];
+    return a > b ? ["AV", "40"] : ["40", "AV"];
+  }
+  const pts = ["0", "15", "30", "40"];
+  return [pts[a] ?? String(a), pts[b] ?? String(b)];
 }
 
 export interface Db {
@@ -44,8 +65,16 @@ function normalizeSet(v: unknown): number | null {
 }
 
 // "Marc 5-3 Paul · SET 2 · Sets 1-0" — compact, lisible dans un chat Twitch.
+// Padel : "Marc 30-15 Paul · Jeux 3-2 · Sets 1-0" (TB : "· Tie-break").
 export function formatScore(row: ScoreRow, name1: string, name2: string): string {
   const sets = `Sets ${row.setsMe}-${row.setsOpp}`;
+  const p = row.padel;
+  if (p && row.status !== "match_finished") {
+    const [a, b] = padelPoints(row.scoreMe, row.scoreOpp, p.tieBreak);
+    const tb = p.tieBreak === 2 ? " · Super tie-break" : (p.tieBreak === 1 ? " · Tie-break" : "");
+    return `${name1} ${a}-${b} ${name2} · Jeux ${p.gamesMe}-${p.gamesOpp}${tb} · ${sets}`;
+  }
+  if (p) return `${name1} ${row.setsMe}-${row.setsOpp} ${name2} · Terminé`;
   const base = `${name1} ${row.scoreMe}-${row.scoreOpp} ${name2} · SET ${row.currentSet} · ${sets}`;
   return row.status === "match_finished" ? `${base} · Terminé` : base;
 }

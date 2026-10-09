@@ -6,6 +6,7 @@
 // (latence = délai de sync de la montre, ~5 s). L'échec de l'annonce
 // n'échoue JAMAIS la sync.
 import { maybeAnnounce, type Announcer, type AnnounceState } from "../_shared/announce.ts";
+import type { PadelSnapshot } from "../score-text/handler.ts";
 
 export interface Db {
   // Auth multi-device : le handler hash la clé du header et cherche la ligne
@@ -49,6 +50,14 @@ export async function sha256Hex(s: string): Promise<string> {
 
 function isInt(n: unknown, min: number, max: number): boolean {
   return typeof n === "number" && Number.isInteger(n) && n >= min && n <= max;
+}
+
+// snapshot.padel (phase 9) : conservé seulement s'il est bien formé.
+function toPadel(p: unknown): PadelSnapshot | null {
+  if (typeof p !== "object" || p === null) return null;
+  const k = p as Record<string, unknown>;
+  if (!isInt(k.gamesMe, 0, 99) || !isInt(k.gamesOpp, 0, 99) || !isInt(k.tieBreak, 0, 2)) return null;
+  return { gamesMe: k.gamesMe as number, gamesOpp: k.gamesOpp as number, tieBreak: k.tieBreak as number };
 }
 
 function isConfig(c: unknown): boolean {
@@ -159,6 +168,7 @@ export async function handleSync(req: Request, db: Db, sender?: Announcer): Prom
         setsMe: Number(v.snapshot.setsMe),
         setsOpp: Number(v.snapshot.setsOpp),
         config: null,
+        padel: toPadel(v.snapshot.padel),
       }, state, sender);
     } catch { /* l'annonce ne doit jamais casser la sync */ }
   }

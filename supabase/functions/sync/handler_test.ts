@@ -231,3 +231,25 @@ Deno.test("pas d'annonce sans sender (mode sans chat)", async () => {
   assertEquals(res.status, 200);
 });
 
+
+Deno.test("padel (phase 9) : payload accepté et annonce au format jeux", async () => {
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), announce: { seChannelId: "123456" } });
+  const { sender, sent } = makeSender();
+  const body = {
+    ...GOOD_BODY,
+    config: { ...GOOD_BODY.config, sport: "padel", deuce: 0, superTB: false },
+    snapshot: { ...GOOD_BODY.snapshot, padel: { gamesMe: 3, gamesOpp: 2, tieBreak: 0, server: 0, sets: [] } },
+  };
+  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, body), db, sender);
+  assertEquals(res.status, 200);
+  assertEquals(sent, ["MOI 30-15 LUI · Jeux 3-2 · Sets 0-0"]);
+});
+
+Deno.test("padel mal formé : ignoré, annonce au format points", async () => {
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), announce: { seChannelId: "123456" } });
+  const { sender, sent } = makeSender();
+  const body = { ...GOOD_BODY, snapshot: { ...GOOD_BODY.snapshot, padel: { gamesMe: "x" } } };
+  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, body), db, sender);
+  assertEquals(res.status, 200);
+  assertEquals(sent, ["MOI 2-1 LUI · SET 1 · Sets 0-0"]);
+});
