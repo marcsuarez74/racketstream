@@ -8,8 +8,8 @@ HOST="${HOST:-racketstream-vps}"
 DEST=/var/www/racketstream-portal
 
 # Portail = page + fichiers de l'app installable (manifeste, service worker, icônes).
-PORTAL_FILES=(index.html manifest.webmanifest sw.js icons/*)
-COPYFILE_DISABLE=1 tar -C portal -czf - "${PORTAL_FILES[@]}" | ssh "$HOST" "rm -rf /tmp/rs-portal && mkdir -p /tmp/rs-portal && tar -C /tmp/rs-portal -xzf -"
+PORTAL_FILES=(index.html manifest.webmanifest sw.js icons)
+COPYFILE_DISABLE=1 tar --no-xattrs -C portal -czf - "${PORTAL_FILES[@]}" | ssh "$HOST" "rm -rf /tmp/rs-portal && mkdir -p /tmp/rs-portal && tar -C /tmp/rs-portal -xzf -"
 scp -q overlay/index.html "$HOST:/tmp/rs-overlay-index.html"
 ssh "$HOST" "set -e
   sudo install -d -m 755 -o root -g root $DEST $DEST/icons $DEST/overlay

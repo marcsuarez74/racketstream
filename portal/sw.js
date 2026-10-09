@@ -1,7 +1,7 @@
 // Service worker du portail : rend l'app installable et lui permet de s'ouvrir
 // sans réseau. Il ne gère QUE les fichiers du portail : l'overlay (/overlay/,
 // même origine) et l'API (autre origine) passent sans être touchés.
-const CACHE = "rs-portal-v1";
+const CACHE = "rs-portal-v2";
 const SHELL = [
   "./",
   "./manifest.webmanifest",

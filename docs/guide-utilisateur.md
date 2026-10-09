@@ -38,10 +38,11 @@ Pas besoin de compte ailleurs : le backend est **fourni et gratuit**.
 2. L'écran affiche **« Configurez RacketStream dans Garmin Connect »** : c'est normal, il faut d'abord enregistrer ta montre (étape 3)
 
 ### Étape 3 — Créer ton canal et ta clé
-1. Sur ton téléphone, ouvre le **portail RacketStream** (lien sur la fiche store)
-2. En haut, **« Créer un canal »** : choisis un nom unique (ex. ton pseudo Twitch — c'est ce qui identifie tes matchs) puis **CRÉER**
-3. Ta **clé personnelle** s'affiche — ⚠️ elle n'est montrée **qu'une seule fois** : copie-la tout de suite (le portail pré-remplit ensuite Canal et Clé pour toi)
-4. Vérifie/choisis les **noms des joueurs** affichés à l'écran et sur l'overlay, puis **VALIDER**
+1. Sur ton téléphone, ouvre le **portail RacketStream** (lien sur la fiche store). Il s'installe comme une app : Safari › Partager › Sur l'écran d'accueil (iPhone), ou menu du navigateur › Installer (Android)
+2. Page **Canaux**, carte **« Nouvelle montre »** : choisis un nom unique (ex. ton pseudo Twitch — c'est ce qui identifie tes matchs) puis **Créer le canal**
+3. Ta **clé personnelle** s'affiche — ⚠️ elle n'est montrée en entier **qu'une seule fois** : touche **Copier la clé** tout de suite (elle reste mémorisée sur ce téléphone, page Canaux)
+4. Page **Match** (le rond au centre de la barre du bas) : choisis Simple / Double / Mixte, tape les **noms des joueurs** puis **Envoyer les noms**. Pendant un match, cette page affiche aussi le score en direct
+5. Page **Diffusion** : un aperçu de ce que voient tes spectateurs, et le lien du bandeau à coller dans OBS
 
 ### Étape 4 — Configurer Garmin Connect
 1. GCM → ta montre → **Activités & Apps** → RacketStream → **Réglages**
