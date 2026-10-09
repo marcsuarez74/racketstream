@@ -278,3 +278,10 @@ Le VPS est **partagé** (autres sites Caddy, Docker, MediaMTX). Règles de cette
 | SSE coupé par un proxy | `flush_interval -1` dans Caddy, ping toutes les 25 s, polling de secours toutes les 10 s dans l'overlay. |
 | Saturation du VPS partagé | `MemoryMax=256M`, plafond de connexions SSE, limite de corps à 64 Ko. |
 | Canal créé sur Supabase après l'import | Second import des `devices` à J+7 (tâche 11). |
+
+## Validation du 09/10/2026
+
+- [x] Montre marc (version store 0.2.1, Backend URL changée dans GCM) → match `39NST0VT` reçu par le VPS, overlay `racket-stream-portal.marc-suarez.fr/overlay/` à jour en direct, annonce chat StreamElements envoyée. Supabase ne reçoit plus rien de marc.
+- [x] Paquet store 0.2.2 prêt (`beta-store/v-0.2.2/`) : URL VPS par défaut + migration auto des anciennes URL Supabase.
+- [ ] **[USER ACTION]** Upload 0.2.2 (Developer Dashboard → RacketStream → Upload new version), puis bascule de Paul.
+- [ ] Ensuite seulement : tâche 11 (arrêt Supabase).
