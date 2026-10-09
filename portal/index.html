@@ -2,166 +2,687 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RacketStream — Noms du match</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RacketStream</title>
+<meta name="description" content="Noms des joueurs, canaux et diffusion du score de ta montre.">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="RacketStream">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* Portail RacketStream — le même langage visuel que l'écran de la montre :
-     fond noir, vert #2FE05C, typographie Archivo, gros blocs tapables. */
+  /* Portail RacketStream — même palette que l'écran de la montre (Ui.mc) :
+     fond noir, cartes #1A1F26, vert #3DD68C (équipe 1), bleu #4DABF7 (équipe 2).
+     Une seule page : barre d'onglets en bas sur téléphone, menu en haut sur ordinateur. */
   :root {
-    --green: #2FE05C;
-    --red: #E5484D;
-    --grey: #8A8A8A;
-    --dim: #4A4A4A;
+    --bg: #000000;
+    --box: #1A1F26;
+    --deep: #0B0E12;
+    --line: #333333;
+    --label: #9AA3AE;
+    --soft: #C9D1DA;
+    --faint: #6B737D;
+    --green: #3DD68C;
+    --green-bg: #0F2A1D;
+    --on-green: #04140C;
+    --blue: #4DABF7;
+    --red: #E8453C;
     --txt: #FFFFFF;
   }
+  * { box-sizing: border-box; }
   html, body {
-    margin: 0; padding: 0; background: #000; color: var(--txt);
+    margin: 0; padding: 0; background: var(--bg); color: var(--txt);
     font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
-    -webkit-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
   }
-  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-  .wrap { width: 100%; max-width: 420px; padding: 20px 16px 48px; box-sizing: border-box; }
-  header { text-align: center; padding: 18px 0 6px; }
-  .brand { color: var(--green); font-size: 26px; font-weight: 700; letter-spacing: 0.22em; }
-  .sub { color: var(--grey); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 6px; }
-  h2 { color: var(--grey); font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; margin: 26px 0 10px; text-align: center; }
-  .card { background: #0B0D0F; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; }
+  a { color: var(--blue); }
+  a:hover { color: #8CCBFF; }
+  button { font-family: inherit; cursor: pointer; }
+  button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  [hidden] { display: none !important; }
 
-  /* Tuiles de type — comme l'écran SETUP de la montre. */
-  .tiles { display: flex; flex-direction: column; gap: 10px; }
-  .tile {
-    border: 2px solid var(--dim); border-radius: 12px; background: #0B0D0F;
-    color: var(--txt); font-family: inherit; font-weight: 700; font-size: 17px;
-    letter-spacing: 0.14em; padding: 16px; cursor: pointer; text-align: center;
-    transition: border-color .15s, color .15s, background .15s;
+  /* --- en-tête --- */
+  .top {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+    border-bottom: 1px solid var(--box);
   }
-  .tile small { display: block; color: var(--grey); font-weight: 600; font-size: 11px; letter-spacing: 0.08em; margin-top: 3px; }
-  .tile.on { border-color: var(--green); color: var(--green); background: rgba(47,224,92,0.07); }
-  .tile.on small { color: rgba(47,224,92,0.7); }
+  .brand { display: flex; align-items: center; gap: 12px; color: var(--txt); text-decoration: none; }
+  .brand img { width: 40px; height: 40px; border-radius: 10px; display: block; }
+  .brand b { font-size: 20px; font-weight: 800; }
+  .chan { font-size: 13px; color: var(--label); text-decoration: none; display: block; }
+  .chan:hover { color: var(--soft); }
+  .chan strong { color: var(--txt); }
+  .pill {
+    margin-left: auto; display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+    border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap;
+    background: var(--box); color: var(--label);
+  }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .pill.live { background: var(--green-bg); color: var(--green); }
+  .pill.live::before { background: var(--green); }
+  .topnav { display: none; gap: 6px; margin-left: 24px; }
+  .topnav a {
+    padding: 12px 16px; border-radius: 10px; color: var(--label); text-decoration: none;
+    font-weight: 700; font-size: 14px;
+  }
+  .topnav a[aria-current="page"] { background: var(--box); color: var(--txt); }
 
-  label { display: block; color: var(--grey); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; margin: 14px 0 6px; }
+  /* --- contenu --- */
+  main { width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px 16px calc(104px + env(safe-area-inset-bottom)); }
+  h1 { margin: 0 0 4px; font-size: 24px; font-weight: 800; }
+  .lead { margin: 0 0 18px; font-size: 14px; color: var(--label); line-height: 1.45; }
+  h2 { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: var(--label); text-transform: uppercase; }
+  h3 { margin: 0; font-size: 16px; font-weight: 800; }
+  .stack { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .card { background: var(--box); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .card.ok { border: 1px solid var(--green); }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .muted { font-size: 13px; color: var(--label); line-height: 1.45; margin: 0; }
+  .body { font-size: 14px; color: var(--soft); line-height: 1.45; margin: 0; }
+  .icon { width: 22px; height: 22px; flex-shrink: 0; }
+
+  label { font-size: 13px; color: var(--label); display: flex; align-items: center; gap: 8px; }
+  .bar { width: 6px; height: 14px; border-radius: 3px; background: var(--green); }
+  .bar.b { background: var(--blue); }
   input {
-    width: 100%; box-sizing: border-box; background: #060708; color: var(--txt);
-    border: 2px solid var(--dim); border-radius: 10px; padding: 13px 14px;
-    font-family: inherit; font-size: 16px; font-weight: 600; letter-spacing: 0.06em;
-    text-transform: uppercase;
+    width: 100%; height: 50px; border-radius: 12px; border: 1px solid var(--line);
+    background: #000; color: var(--txt); padding: 0 14px;
+    font-family: inherit; font-size: 17px; font-weight: 700;
   }
+  input.up { text-transform: uppercase; letter-spacing: 0.04em; }
+  input::placeholder { color: var(--faint); font-weight: 600; text-transform: none; }
   input:focus { outline: none; border-color: var(--green); }
-  input::placeholder { color: var(--dim); }
+  .field { display: flex; flex-direction: column; gap: 6px; }
 
-  #validate {
-    width: 100%; margin-top: 22px; background: var(--green); color: #04180A;
-    border: none; border-radius: 12px; padding: 17px; cursor: pointer;
-    font-family: inherit; font-size: 18px; font-weight: 700; letter-spacing: 0.18em;
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .tile {
+    height: 54px; border-radius: 14px; border: 2px solid var(--line); background: var(--box);
+    color: var(--soft); font-weight: 700; font-size: 15px; letter-spacing: 0.08em;
   }
+  .tile[aria-pressed="true"] { border-color: var(--green); background: var(--green-bg); color: var(--txt); }
+
+  .btn {
+    height: 56px; border-radius: 16px; border: none; background: var(--green); color: var(--on-green);
+    font-weight: 800; font-size: 17px; letter-spacing: 0.16em; width: 100%;
+  }
+  .btn[disabled] { opacity: 0.45; }
   .ghost {
-    width: 100%; background: transparent; color: var(--green);
-    border: 2px solid var(--green); border-radius: 10px; padding: 12px;
-    cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 700;
-    letter-spacing: 0.16em;
+    height: 50px; border-radius: 14px; border: 2px solid var(--green); background: transparent;
+    color: var(--green); font-weight: 800; font-size: 15px; letter-spacing: 0.14em; width: 100%;
   }
-  .ghost:active { transform: translateY(1px); }
-  #validate:active { transform: translateY(1px); }
-  #validate[disabled] { opacity: 0.45; }
+  .small {
+    height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: #000;
+    color: var(--soft); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; white-space: nowrap; flex-shrink: 0;
+  }
+  .small.done { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+  .small.danger { color: #FF8A84; }
+  .code {
+    flex-grow: 1; min-width: 0; background: #000; border: 1px solid var(--line); border-radius: 12px;
+    padding: 13px 12px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--soft);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: all;
+  }
+  .code.key { color: var(--green); white-space: normal; word-break: break-all; }
 
-  #status { text-align: center; min-height: 22px; margin-top: 14px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; }
-  #status.ok { color: var(--green); }
-  #status.err { color: var(--red); }
+  .status { min-height: 20px; font-size: 14px; font-weight: 700; margin: 0; }
+  .status.ok { color: var(--green); }
+  .status.err { color: #FF8A84; }
 
-  details { margin-top: 26px; }
-  summary { color: var(--grey); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
-  summary::marker { color: var(--dim); }
-  .muted { color: var(--grey); font-size: 12px; margin-top: 4px; }
+  /* --- score en direct --- */
+  .live-head { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: var(--label); }
+  .score { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; align-items: center; }
+  .score .n { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .score .n span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score .n .bar { height: 22px; flex-shrink: 0; }
+  .score .p { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; text-align: right; }
+  .score .opp { color: var(--soft); }
+  .live-foot { display: flex; gap: 8px; font-size: 13px; color: var(--label); }
+  .live-foot b { color: var(--txt); }
+  .live-foot span:last-child { margin-left: auto; }
+
+  /* --- aperçu de l'overlay (iframe 1920×1080 réduite) --- */
+  .screen { position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #0B0E12; border: 1px solid var(--line); }
+  .screen::before {
+    content: "ta vidéo"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--faint); font-size: 13px;
+  }
+  .screen iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+
+  /* --- canaux --- */
+  .chans { display: flex; flex-direction: column; gap: 10px; }
+  .chanrow {
+    width: 100%; border-radius: 16px; padding: 14px; display: flex; align-items: center; gap: 12px;
+    background: var(--box); border: 2px solid var(--box); color: var(--txt); text-align: left; min-height: 64px;
+  }
+  .chanrow[aria-pressed="true"] { background: var(--green-bg); border-color: var(--green); }
+  .chanrow .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+  .chanrow .dot.live { background: var(--green); }
+  .chanrow .nm { display: block; font-size: 17px; font-weight: 800; }
+  .chanrow .meta { display: block; font-size: 13px; color: var(--label); margin-top: 2px; }
+  .chanrow .tag { margin-left: auto; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: var(--green); }
+  .chanact { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* --- installation --- */
+  .install { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--line); font-size: 13px; color: var(--label); }
+  .install .small { margin-left: auto; }
+
+  /* --- barre d'onglets (téléphone) --- */
+  .tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); background: rgba(0, 0, 0, 0.92);
+    border-top: 1px solid var(--box);
+  }
+  .tabs div { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .tabs a {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 56px;
+    border-radius: 14px; text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: var(--label);
+  }
+  .tabs a svg { stroke: var(--label); }
+  .tabs a[aria-current="page"] { background: var(--box); color: var(--txt); }
+  .tabs a[aria-current="page"] svg { stroke: var(--green); }
+
+  /* --- vues --- */
+  .grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+
+  @media (min-width: 900px) {
+    .top { padding: 12px 40px; min-height: 72px; }
+    .topnav { display: flex; }
+    .pill { margin-left: 0; }
+    .top .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+    .tabs { display: none; }
+    main { padding: 32px 40px 48px; }
+    h1 { font-size: 28px; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start; }
+    .names { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    #v-match .grid > .live-col { order: 2; }
+  }
+  @media (max-width: 899px) {
+    .top .right { display: contents; }
+    .top .right .chan-d { display: none; }
+  }
+  @media (min-width: 900px) { .chan-m { display: none !important; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">RACKETSTREAM</div>
-    <div class="sub">Noms du match</div>
-  </header>
 
-  <details open id="register">
-    <summary>Créer un canal</summary>
-    <div class="card" style="margin-top:10px">
-      <label for="newChannel">Nom du canal (ton pseudo Twitch par ex.)</label>
-      <input id="newChannel" maxlength="32" placeholder="paul" autocomplete="off" spellcheck="false">
-      <div class="muted">En minuscules, sans espaces — « Marc » et « marc » sont deux canaux différents.</div>
-      <button id="create" style="margin-top:12px" class="ghost">CRÉER</button>
-      <div id="regOut" class="muted" style="display:none">
-        <div style="margin-top:10px">Ta clé personnelle — <b>affichée une seule fois</b> :</div>
-        <textarea id="regKey" readonly style="width:100%;box-sizing:border-box;background:#060708;color:var(--green);border:1px solid var(--dim);border-radius:8px;padding:10px;font-family:monospace;font-size:13px;margin-top:6px;height:64px"></textarea>
-        <div style="margin-top:8px">Recopie-la maintenant. Elle alimente ce portail et les Réglages GCM de ta montre.</div>
+<header class="top">
+  <div class="brand"><a href="#match" aria-label="RacketStream, accueil"><img src="icons/icon.svg" alt=""></a><span><b>RacketStream</b><a class="chan chan-m" href="#canaux" id="chanM">Aucun canal · ajouter</a></span></div>
+  <nav class="topnav" aria-label="Navigation">
+    <a href="#match" data-tab="match">Match</a>
+    <a href="#diffusion" data-tab="diffusion">Diffusion</a>
+    <a href="#canaux" data-tab="canaux">Canaux</a>
+  </nav>
+  <div class="right">
+    <span class="pill" id="pill">PAS DE MATCH</span>
+    <a class="chan chan-d" href="#canaux" id="chanD">Aucun canal · ajouter</a>
+  </div>
+</header>
+
+<main>
+  <!-- ============ MATCH ============ -->
+  <section id="v-match" data-view="match" hidden>
+    <div class="grid">
+      <div class="stack live-col">
+        <div class="card" aria-live="polite">
+          <div class="live-head" id="liveHead">SCORE EN DIRECT</div>
+          <div id="liveOn" hidden>
+            <div class="score">
+              <div class="n"><span class="bar"></span><span id="ln1">—</span></div><div class="p" id="lp1">0</div>
+              <div class="n opp"><span class="bar b"></span><span id="ln2">—</span></div><div class="p opp" id="lp2">0</div>
+            </div>
+          </div>
+          <p class="muted" id="liveOff">Aucun match en cours. Lance un match sur la montre : le score s'affiche ici.</p>
+          <div class="live-foot" id="liveFoot" hidden><span>Sets</span><b id="lsets">0 – 0</b><span id="lago"></span></div>
+        </div>
+        <div class="install" id="install" hidden>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#4DABF7" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+          <span id="installTxt">Ajoute RacketStream à ton écran d'accueil pour l'ouvrir comme une app.</span>
+          <button class="small" id="installBtn" hidden>INSTALLER</button>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card" id="noChan" hidden>
+          <h3>Aucun canal sur cet appareil</h3>
+          <p class="body">Un canal relie ta montre au bandeau du live. Crée-le ou ajoute celui que tu as déjà.</p>
+          <a class="ghost" href="#canaux" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">CONFIGURER UN CANAL</a>
+        </div>
+        <div>
+          <h2>Type de match</h2>
+          <div class="tiles" role="group" aria-label="Type de match">
+            <button class="tile" data-format="simple" aria-pressed="true">SIMPLE</button>
+            <button class="tile" data-format="double" aria-pressed="false">DOUBLE</button>
+            <button class="tile" data-format="mixte" aria-pressed="false">MIXTE</button>
+          </div>
+        </div>
+        <div>
+          <h2>Noms des joueurs</h2>
+          <div class="card names">
+            <div class="field">
+              <label for="name1"><span class="bar"></span>Équipe 1</label>
+              <input id="name1" class="up" maxlength="24" placeholder="Joueur 1" autocomplete="off">
+              <input id="name1b" class="up dbl" maxlength="24" placeholder="Joueur 2" aria-label="Équipe 1, joueur 2" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="name2"><span class="bar b"></span>Équipe 2</label>
+              <input id="name2" class="up" maxlength="24" placeholder="Joueur 1" autocomplete="off">
+              <input id="name2b" class="up dbl" maxlength="24" placeholder="Joueur 2" aria-label="Équipe 2, joueur 2" autocomplete="off">
+            </div>
+          </div>
+        </div>
+        <button class="btn" id="validate">VALIDER</button>
+        <p class="status" id="status" role="status"></p>
       </div>
     </div>
-  </details>
+  </section>
 
-  <details open id="setup">
-    <summary>Canal et clé</summary>
-    <div class="card" style="margin-top:10px">
-      <label for="channel">Canal</label>
-      <input id="channel" placeholder="ton canal" autocomplete="off" spellcheck="false">
-      <label for="key">Clé device</label>
-      <input id="key" placeholder="ta clé personnelle" autocomplete="off">
-      <div class="muted">Saisis une seule fois — mémorisé sur ce téléphone. Les canaux sont en minuscules.</div>
-      <button id="showKey" class="ghost" style="margin-top:12px">👁 AFFICHER LA CLÉ MÉMORISÉE</button>
-      <div id="keyOut" class="muted" style="display:none">
-        <div style="margin-top:10px">Clé mémorisée sur cet appareil (canal <b id="keyChannel">?</b>) — recopie-la pour l'utiliser ailleurs :</div>
-        <textarea id="keyCopy" readonly style="width:100%;box-sizing:border-box;background:#060708;color:var(--green);border:1px solid var(--dim);border-radius:8px;padding:10px;font-family:monospace;font-size:13px;margin-top:6px;height:64px"></textarea>
+  <!-- ============ DIFFUSION ============ -->
+  <section id="v-diffusion" data-view="diffusion" hidden>
+    <h1>Diffusion</h1>
+    <p class="lead">Tout ce qu'il faut pour afficher le score sur ton live.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="row">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+          <h3>Avec un ordinateur (OBS)</h3>
+        </div>
+        <p class="body">Dans OBS, ajoute une source « Navigateur » de 1920 × 1080 et colle ce lien. Le bandeau apparaît par-dessus ta vidéo.</p>
+        <div class="row"><div class="code" id="obsUrl">—</div><button class="small" id="copyObs">COPIER</button></div>
+        <div class="screen" id="screen"><iframe id="preview" title="Aperçu du bandeau" tabindex="-1"></iframe></div>
+        <p class="muted">Aperçu réel du bandeau de ton canal.</p>
+      </div>
+      <div class="card">
+        <div class="row">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+          <h3>Avec le téléphone seul</h3>
+        </div>
+        <p class="body">L'app gratuite VDO.Ninja envoie la vidéo du téléphone au serveur RacketStream. Le serveur ajoute le bandeau et diffuse le live sur Twitch ou YouTube.</p>
+        <p class="body">Le lien d'envoi (WHIP) est personnel : il t'est donné par l'administrateur du serveur, à coller dans VDO.Ninja › Publishing settings › WHIP URL.</p>
+        <p class="muted">Le score est envoyé au serveur en moins d'une seconde après chaque point.</p>
       </div>
     </div>
-  </details>
+  </section>
 
-  <h2>Type de match</h2>
-  <div class="tiles">
-    <button class="tile on" data-format="simple">SIMPLE<small>1 joueur par équipe</small></button>
-    <button class="tile" data-format="double">DOUBLE<small>2 joueurs par équipe</small></button>
-    <button class="tile" data-format="mixte">MIXTE<small>2 joueurs par équipe</small></button>
-  </div>
-
-  <h2>Noms des joueurs</h2>
-  <div class="card">
-    <label for="name1">Équipe 1 — joueur 1</label>
-    <input id="name1" maxlength="24" placeholder="MARC" autocomplete="off">
-    <div id="b1">
-      <label for="name1b">Équipe 1 — joueur 2</label>
-      <input id="name1b" maxlength="24" placeholder="JULES" autocomplete="off">
+  <!-- ============ CANAUX ============ -->
+  <section id="v-canaux" data-view="canaux" hidden>
+    <h1>Canaux</h1>
+    <p class="lead">Un canal = une montre. Touche un canal pour l'utiliser.</p>
+    <div class="grid">
+      <div class="stack">
+        <div>
+          <h2>Sur cet appareil</h2>
+          <div class="chans" id="chans"></div>
+          <p class="muted" id="noChans">Aucun canal pour l'instant.</p>
+        </div>
+        <div class="card" id="keyCard" hidden>
+          <h2 style="margin:0">Clé du canal <span id="keyChan"></span></h2>
+          <div class="row"><div class="code key" id="keyShown"></div></div>
+          <div class="chanact">
+            <button class="small" id="copyKey">COPIER</button>
+            <button class="small danger" id="removeChan">RETIRER DE CET APPAREIL</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2 style="margin:0">Ajouter un canal existant</h2>
+          <div class="field"><label for="channel">Canal</label><input id="channel" placeholder="ton canal" autocomplete="off" autocapitalize="none" spellcheck="false"></div>
+          <div class="field"><label for="key">Clé de la montre</label><input id="key" type="password" placeholder="ta clé personnelle" autocomplete="off"></div>
+          <button class="ghost" id="add">AJOUTER</button>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h2 style="margin:0">Créer un canal</h2>
+          <div class="field">
+            <label for="newChannel">Nom du canal (ton pseudo Twitch par ex.)</label>
+            <input id="newChannel" maxlength="32" placeholder="julie" autocomplete="off" autocapitalize="none" spellcheck="false">
+          </div>
+          <p class="muted">En minuscules, sans espaces.</p>
+          <button class="ghost" id="create">CRÉER</button>
+        </div>
+        <div class="card ok" id="regOut" hidden>
+          <div class="row" style="color:var(--green);font-weight:800;">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span>Canal « <span id="regChan"></span> » créé</span>
+          </div>
+          <p class="body">Voici la clé de la montre, <b>affichée en entier une seule fois</b>. Colle-la dans Garmin Connect › RacketStream › Réglages. Elle est aussi mémorisée sur cet appareil.</p>
+          <div class="code key" id="regKey"></div>
+          <button class="btn" id="copyReg">COPIER LA CLÉ</button>
+        </div>
+        <p class="status" id="chanStatus" role="status"></p>
+      </div>
     </div>
-    <label for="name2">Équipe 2 — joueur 1</label>
-    <input id="name2" maxlength="24" placeholder="PAUL" autocomplete="off">
-    <div id="b2">
-      <label for="name2b">Équipe 2 — joueur 2</label>
-      <input id="name2b" maxlength="24" placeholder="HUGO" autocomplete="off">
-    </div>
-  </div>
+  </section>
+</main>
 
-  <button id="validate">VALIDER</button>
-  <div id="status"></div>
-</div>
+<nav class="tabs" aria-label="Navigation">
+  <div>
+    <a href="#match" data-tab="match"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M12 5v14M7 10v4M17 10v4"/></svg>Match</a>
+    <a href="#diffusion" data-tab="diffusion"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>Diffusion</a>
+    <a href="#canaux" data-tab="canaux"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Canaux</a>
+  </div>
+</nav>
 
 <script>
-  // Portail des noms — zéro framework, une seule requête au backend.
-  // GET  /names?channel=…  (public)  → pré-remplissage
-  // POST /names  (X-Device-Key)      → enregistrement
+  // Portail RacketStream — zéro framework.
+  // GET  /functions/v1/names?channel=…    (public)        → pré-remplissage
+  // POST /functions/v1/names  (X-Device-Key)              → noms du match
+  // POST /functions/v1/register                           → création de canal
+  // GET  /api/stream?channel=… (SSE) + /api/score (filet) → score en direct
   const API = "https://racket-stream.marc-suarez.fr";
-  const $ = (id) => document.getElementById(id);
   const LS = "badscore-portal";
+  // Anti-fantôme, aligné sur l'overlay et le renderer : sans sync depuis 10 min,
+  // un match « actif » est considéré comme abandonné.
+  const STALE_MS = 600 * 1000;
+  const $ = (id) => document.getElementById(id);
+  const teamName = (a, b) => b ? `${a}/${b}` : a;
 
+  // --- canaux mémorisés sur cet appareil ---
+  // Ancien format : { channel, key } (un seul canal) → migré en liste.
+  function loadStore() {
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem(LS) || "{}"); } catch { /* premier lancement */ }
+    if (!Array.isArray(s.channels)) {
+      s = s.channel ? { channels: [{ channel: s.channel, key: s.key || "" }], active: s.channel } : { channels: [], active: null };
+    }
+    if (!s.channels.some((c) => c.channel === s.active)) s.active = s.channels.length ? s.channels[0].channel : null;
+    return s;
+  }
+  let store = loadStore();
+  function saveStore() {
+    try { localStorage.setItem(LS, JSON.stringify(store)); } catch { /* stockage bloqué */ }
+  }
+  const active = () => store.channels.find((c) => c.channel === store.active) || null;
+  function upsertChannel(channel, key) {
+    const c = store.channels.find((x) => x.channel === channel);
+    if (c) c.key = key; else store.channels.push({ channel, key });
+    store.active = channel;
+    saveStore();
+    channelChanged();
+  }
+  const mask = (k) => k ? "•••• " + k.slice(-4) : "pas de clé";
+
+  function setStatus(id, msg, cls) {
+    const s = $(id);
+    s.textContent = msg || "";
+    s.className = "status" + (cls ? " " + cls : "");
+  }
+
+  async function copy(text, btn, label) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch { /* refusé : sélection manuelle */ }
+    if (ok && btn) {
+      const old = label || btn.textContent;
+      btn.textContent = "COPIÉ";
+      btn.classList.add("done");
+      setTimeout(() => { btn.textContent = old; btn.classList.remove("done"); }, 1800);
+    }
+    return ok;
+  }
+
+  // --- navigation par onglets (#match, #diffusion, #canaux) ---
+  const TABS = ["match", "diffusion", "canaux"];
+  function route() {
+    let tab = location.hash.slice(1);
+    if (!TABS.includes(tab)) tab = active() ? "match" : "canaux";
+    document.querySelectorAll("[data-view]").forEach((v) => { v.hidden = v.dataset.view !== tab; });
+    document.querySelectorAll("[data-tab]").forEach((a) => {
+      if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    // L'aperçu de l'overlay n'est chargé que sur l'onglet Diffusion (une
+    // connexion de moins au serveur le reste du temps).
+    setPreview(tab === "diffusion");
+    if (tab === "canaux") renderChannels();
+    window.scrollTo(0, 0);
+  }
+  addEventListener("hashchange", route);
+
+  // --- en-tête : canal actif ---
+  function renderHeader() {
+    const c = active();
+    for (const id of ["chanM", "chanD"]) {
+      $(id).innerHTML = c
+        ? `Canal <strong></strong> · changer`
+        : "Aucun canal · ajouter";
+      if (c) $(id).querySelector("strong").textContent = c.channel;
+    }
+    $("noChan").hidden = !!c;
+  }
+
+  // ================= MATCH =================
   let format = "simple";
+  let names = null;
+  function applyFormat() {
+    const dbl = format !== "simple";
+    document.querySelectorAll(".dbl").forEach((el) => { el.hidden = !dbl; });
+    document.querySelectorAll(".tile").forEach((t) => t.setAttribute("aria-pressed", String(t.dataset.format === format)));
+  }
+  document.querySelectorAll(".tile").forEach((t) => t.addEventListener("click", () => {
+    format = t.dataset.format;
+    applyFormat();
+  }));
 
-  // --- pré-remplissage depuis localStorage ---
-  try {
-    const saved = JSON.parse(localStorage.getItem(LS) || "{}");
-    if (saved.channel) $("channel").value = saved.channel;
-    if (saved.key) $("key").value = saved.key;
-  } catch { /* premier lancement */ }
+  async function loadNames() {
+    const c = active();
+    names = null;
+    for (const id of ["name1", "name1b", "name2", "name2b"]) $(id).value = "";
+    format = "simple";
+    applyFormat();
+    renderLive();
+    if (!c) return;
+    try {
+      const res = await fetch(`${API}/functions/v1/names?channel=${encodeURIComponent(c.channel)}`);
+      if (!res.ok || active() !== c) return;
+      names = await res.json();
+      $("name1").value = names.name1 || "";
+      $("name1b").value = names.name1b || "";
+      $("name2").value = names.name2 || "";
+      $("name2b").value = names.name2b || "";
+      format = names.format || "simple";
+      applyFormat();
+      renderLive();
+    } catch { /* hors ligne : champs vides */ }
+  }
 
-  // --- garde-fou anti-casse : les canaux vivent en minuscules (« Marc » et
-  // « marc » sont deux canaux différents côté backend). On force la casse à
-  // la saisie pour qu'un faux pas ne crée jamais un canal fantôme.
+  $("validate").addEventListener("click", async () => {
+    const c = active();
+    if (!c || !c.key) { setStatus("status", "Ajoute d'abord ton canal et sa clé (onglet Canaux)", "err"); return; }
+    const body = {
+      format,
+      name1: $("name1").value.trim(),
+      name1b: format === "simple" ? "" : $("name1b").value.trim(),
+      name2: $("name2").value.trim(),
+      name2b: format === "simple" ? "" : $("name2b").value.trim(),
+    };
+    if (format !== "simple" && (!body.name1b || !body.name2b)) { setStatus("status", "En double et en mixte, il faut les deux partenaires", "err"); return; }
+    $("validate").disabled = true;
+    setStatus("status", "Envoi…");
+    try {
+      const res = await fetch(`${API}/functions/v1/names`, {
+        method: "POST",
+        headers: { "X-Device-Key": c.key, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        names = body;
+        renderLive();
+        setStatus("status", "Noms envoyés : le bandeau et le chat suivent dès le prochain point", "ok");
+      } else if (res.status === 401) {
+        setStatus("status", "Clé refusée : vérifie la clé du canal dans l'onglet Canaux", "err");
+      } else {
+        setStatus("status", "Erreur " + res.status + " : réessaie", "err");
+      }
+    } catch {
+      setStatus("status", "Pas de réseau : réessaie", "err");
+    }
+    $("validate").disabled = false;
+  });
+
+  // --- score en direct ---
+  let es = null;
+  let lastRow = null;
+  const isLive = (r) => !!r && r.status === "active" && Date.now() - r.updated_at <= STALE_MS;
+  function ago(ms) {
+    const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+    if (s < 60) return `il y a ${s} s`;
+    return `il y a ${Math.round(s / 60)} min`;
+  }
+  function renderLive() {
+    const live = isLive(lastRow);
+    $("pill").textContent = live ? "EN MATCH" : "PAS DE MATCH";
+    $("pill").classList.toggle("live", live);
+    $("liveOn").hidden = !live;
+    $("liveFoot").hidden = !live;
+    $("liveOff").hidden = live;
+    if (!live) { $("liveHead").textContent = "SCORE EN DIRECT"; return; }
+    const r = lastRow;
+    $("liveHead").textContent = `EN DIRECT · SET ${r.current_set}`;
+    $("ln1").textContent = names ? teamName(names.name1, names.name1b) || "Équipe 1" : "Équipe 1";
+    $("ln2").textContent = names ? teamName(names.name2, names.name2b) || "Équipe 2" : "Équipe 2";
+    $("lp1").textContent = r.score_me;
+    $("lp2").textContent = r.score_opp;
+    $("lsets").textContent = `${r.sets_me} – ${r.sets_opp}`;
+    $("lago").textContent = "mis à jour " + ago(r.updated_at);
+  }
+  async function pollScore() {
+    const c = active();
+    if (!c) return;
+    try {
+      const r = await fetch(`${API}/api/score?channel=${encodeURIComponent(c.channel)}`, { cache: "no-store" });
+      if (r.ok && active() === c) { lastRow = await r.json(); renderLive(); }
+    } catch { /* hors ligne : on garde l'affichage */ }
+  }
+  function connectLive() {
+    if (es) { es.close(); es = null; }
+    lastRow = null;
+    renderLive();
+    const c = active();
+    if (!c) return;
+    // EventSource se reconnecte seul ; il envoie l'état courant à l'ouverture.
+    es = new EventSource(`${API}/api/stream?channel=${encodeURIComponent(c.channel)}`);
+    es.onmessage = (e) => { try { lastRow = JSON.parse(e.data); renderLive(); } catch { /* message invalide */ } };
+    pollScore();
+  }
+  setInterval(pollScore, 15000);
+  setInterval(renderLive, 5000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) pollScore(); });
+
+  // --- installation comme une app ---
+  let installEvt = null;
+  const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  function renderInstall() {
+    if (standalone()) { $("install").hidden = true; return; }
+    $("install").hidden = false;
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) && !installEvt;
+    $("installBtn").hidden = !installEvt;
+    $("installTxt").textContent = installEvt
+      ? "Installe RacketStream pour l'ouvrir comme une app."
+      : ios
+        ? "Pour l'ouvrir comme une app : Safari › Partager › Sur l'écran d'accueil."
+        : "Pour l'ouvrir comme une app : menu du navigateur › Installer / Ajouter à l'écran d'accueil.";
+  }
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; renderInstall(); });
+  addEventListener("appinstalled", () => { installEvt = null; renderInstall(); });
+  $("installBtn").addEventListener("click", async () => {
+    if (!installEvt) return;
+    installEvt.prompt();
+    try { await installEvt.userChoice; } catch { /* annulé */ }
+    installEvt = null;
+    renderInstall();
+  });
+
+  // ================= DIFFUSION =================
+  const overlayUrl = (ch) => new URL("overlay/?channel=" + encodeURIComponent(ch), location.href.split("#")[0]).href;
+  function renderDiffusion() {
+    const c = active();
+    $("obsUrl").textContent = c ? overlayUrl(c.channel) : "Ajoute d'abord un canal";
+    $("copyObs").disabled = !c;
+  }
+  $("copyObs").addEventListener("click", () => { const c = active(); if (c) copy(overlayUrl(c.channel), $("copyObs"), "COPIER"); });
+  let previewOn = false;
+  function setPreview(on) {
+    previewOn = on;
+    const c = active();
+    const want = on && c ? overlayUrl(c.channel) : "about:blank";
+    if ($("preview").src !== want) $("preview").src = want;
+    $("preview").hidden = want === "about:blank";
+    fitPreview();
+  }
+  function fitPreview() {
+    const w = $("screen").clientWidth;
+    if (w) $("preview").style.transform = `scale(${w / 1920})`;
+  }
+  new ResizeObserver(fitPreview).observe($("screen"));
+
+  // ================= CANAUX =================
+  const statusCache = {};
+  async function fetchStatus(ch) {
+    try {
+      const r = await fetch(`${API}/api/score?channel=${encodeURIComponent(ch)}`, { cache: "no-store" });
+      statusCache[ch] = r.ok ? isLive(await r.json()) : false;
+    } catch { statusCache[ch] = null; }
+    paintChannels();
+  }
+  function renderChannels() {
+    paintChannels();
+    store.channels.forEach((c) => fetchStatus(c.channel));
+  }
+  function paintChannels() {
+    const box = $("chans");
+    box.textContent = "";
+    $("noChans").hidden = store.channels.length > 0;
+    for (const c of store.channels) {
+      const on = c.channel === store.active;
+      const live = statusCache[c.channel];
+      const b = document.createElement("button");
+      b.className = "chanrow";
+      b.setAttribute("aria-pressed", String(on));
+      b.innerHTML = `<span class="dot"></span><span><span class="nm"></span><span class="meta"></span></span><span class="tag"></span>`;
+      b.querySelector(".dot").classList.toggle("live", !!live);
+      b.querySelector(".nm").textContent = c.channel;
+      b.querySelector(".meta").textContent =
+        (live ? "en match" : live === false ? "aucun match" : "état inconnu") + " · clé " + mask(c.key);
+      b.querySelector(".tag").textContent = on ? "ACTIF" : "";
+      b.addEventListener("click", () => {
+        store.active = c.channel;
+        saveStore();
+        channelChanged();
+        paintChannels();
+      });
+      box.appendChild(b);
+    }
+    const c = active();
+    $("keyCard").hidden = !c;
+    if (c) {
+      $("keyChan").textContent = "« " + c.channel + " »";
+      $("keyShown").textContent = mask(c.key);
+      $("keyShown").dataset.full = "0";
+    }
+  }
+  // Un clic affiche la clé en entier, le suivant la copie.
+  $("copyKey").addEventListener("click", async () => {
+    const c = active();
+    if (!c || !c.key) { setStatus("chanStatus", "Pas de clé mémorisée pour ce canal", "err"); return; }
+    $("keyShown").textContent = c.key;
+    await copy(c.key, $("copyKey"), "COPIER");
+  });
+  $("removeChan").addEventListener("click", () => {
+    const c = active();
+    if (!c) return;
+    if (!confirm(`Retirer le canal « ${c.channel} » de cet appareil ?\n\nLe canal n'est pas supprimé, mais sa clé ne sera plus mémorisée ici : note-la avant si tu n'en as pas de copie.`)) return;
+    store.channels = store.channels.filter((x) => x !== c);
+    store.active = store.channels.length ? store.channels[0].channel : null;
+    saveStore();
+    channelChanged();
+    paintChannels();
+    setStatus("chanStatus", "Canal retiré de cet appareil", "ok");
+  });
+
+  // Garde-fou anti-casse : les canaux vivent en minuscules côté serveur
+  // (« Marc » et « marc » sont deux canaux différents).
   for (const id of ["channel", "newChannel"]) {
     $(id).addEventListener("input", (e) => {
       const v = e.target.value;
@@ -169,65 +690,22 @@
     });
   }
 
-  // --- afficher / copier la clé mémorisée sur cet appareil ---
-  $("showKey").addEventListener("click", () => {
-    let saved = {};
-    try { saved = JSON.parse(localStorage.getItem(LS) || "{}"); } catch { /* vide */ }
-    if (!saved.key) {
-      status("Aucune clé mémorisée sur cet appareil — elle ne s'affiche qu'une fois, à la création du canal", "err");
-      return;
-    }
-    $("keyChannel").textContent = saved.channel || "?";
-    $("keyCopy").value = saved.key;
-    $("keyOut").style.display = "block";
-    $("keyCopy").select();
-    try {
-      navigator.clipboard.writeText(saved.key);
-      status("Clé copiée ✓ — recopie-la dans « Canal et clé » sur tes autres appareils", "ok");
-    } catch {
-      status("Clé affichée ci-dessous — sélectionne-la et copie-la", "ok");
-    }
+  $("add").addEventListener("click", () => {
+    const channel = $("channel").value.trim();
+    const key = $("key").value.trim();
+    if (!channel || !key) { setStatus("chanStatus", "Canal et clé requis", "err"); return; }
+    upsertChannel(channel, key);
+    $("channel").value = "";
+    $("key").value = "";
+    renderChannels();
+    setStatus("chanStatus", `Canal « ${channel} » ajouté et activé`, "ok");
   });
 
-  // --- tuiles de type ---
-  // Simple = UN joueur par équipe : les partenaires disparaissent entièrement.
-  function applyFormat() {
-    const dbl = format !== "simple";
-    $("b1").style.display = dbl ? "block" : "none";
-    $("b2").style.display = dbl ? "block" : "none";
-    document.querySelectorAll(".tile").forEach((x) => x.classList.toggle("on", x.dataset.format === format));
-  }
-  document.querySelectorAll(".tile").forEach((t) => t.addEventListener("click", () => {
-    format = t.dataset.format;
-    applyFormat();
-  }));
-  applyFormat();
-
-  // --- pré-remplir les noms si canal connu ---
-  async function loadNames() {
-    const channel = $("channel").value.trim();
-    if (!channel) return;
-    try {
-      const res = await fetch(`${API}/functions/v1/names?channel=${encodeURIComponent(channel)}`);
-      if (!res.ok) return;
-      const n = await res.json();
-      $("name1").value = n.name1 || "";
-      $("name1b").value = n.name1b || "";
-      $("name2").value = n.name2 || "";
-      $("name2b").value = n.name2b || "";
-      format = n.format || "simple";
-      applyFormat();
-    } catch { /* hors ligne : champs vides */ }
-  }
-  $("channel").addEventListener("change", loadNames);
-  loadNames();
-
-  // --- créer un canal ---
   $("create").addEventListener("click", async () => {
     const channel = $("newChannel").value.trim();
-    if (!channel) { status("Choisis un nom de canal", "err"); return; }
+    if (!channel) { setStatus("chanStatus", "Choisis un nom de canal", "err"); return; }
     $("create").disabled = true;
-    status("Création…");
+    setStatus("chanStatus", "Création…");
     try {
       const res = await fetch(`${API}/functions/v1/register`, {
         method: "POST",
@@ -236,65 +714,43 @@
       });
       if (res.ok) {
         const data = await res.json();
-        $("regKey").value = data.key;
-        $("regOut").style.display = "block";
-        $("channel").value = data.channel;
-        $("key").value = data.key;
-        localStorage.setItem(LS, JSON.stringify({ channel: data.channel, key: data.key }));
-        status("Canal créé ✓", "ok");
-        $("setup").open = true;
-        loadNames();
+        $("regChan").textContent = data.channel;
+        $("regKey").textContent = data.key;
+        $("regOut").hidden = false;
+        $("regOut").scrollIntoView({ behavior: "smooth", block: "center" });
+        $("newChannel").value = "";
+        upsertChannel(data.channel, data.key);
+        renderChannels();
+        setStatus("chanStatus", "");
       } else if (res.status === 409) {
-        status("Canal déjà pris — choisis-en un autre", "err");
+        setStatus("chanStatus", "Ce nom est déjà pris : choisis-en un autre", "err");
       } else {
-        status("Erreur " + res.status + " — réessaie", "err");
+        setStatus("chanStatus", "Erreur " + res.status + " : réessaie", "err");
       }
     } catch {
-      status("Réseau indisponible — réessaie", "err");
+      setStatus("chanStatus", "Pas de réseau : réessaie", "err");
     }
     $("create").disabled = false;
   });
+  $("copyReg").addEventListener("click", () => copy($("regKey").textContent, $("copyReg"), "COPIER LA CLÉ"));
 
-  // --- valider ---
-  function status(msg, cls) {
-    const s = $("status");
-    s.textContent = msg;
-    s.className = cls || "";
+  // --- changement de canal actif : tout se recharge ---
+  function channelChanged() {
+    renderHeader();
+    renderDiffusion();
+    setPreview(previewOn);
+    setStatus("status", "");
+    loadNames();
+    connectLive();
   }
 
-  $("validate").addEventListener("click", async () => {
-    const channel = $("channel").value.trim();
-    const key = $("key").value.trim();
-    const body = {
-      format,
-      name1: $("name1").value.trim(),
-      name1b: $("name1b").value.trim(),
-      name2: $("name2").value.trim(),
-      name2b: $("name2b").value.trim(),
-    };
-    if (!channel || !key) { status("Canal et clé requis", "err"); return; }
-    if (format !== "simple" && (!body.name1b || !body.name2b)) { status("Partenaires requis en double/mixte", "err"); return; }
-    $("validate").disabled = true;
-    status("Enregistrement…");
-    try {
-      const res = await fetch(`${API}/functions/v1/names`, {
-        method: "POST",
-        headers: { "X-Device-Key": key, "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        localStorage.setItem(LS, JSON.stringify({ channel, key }));
-        status("ENREGISTRÉ ✓ — le chat et l'overlay suivent dès le prochain point", "ok");
-      } else if (res.status === 401) {
-        status("Clé refusée (401) — recopie-la depuis le portail d'enregistrement", "err");
-      } else {
-        status("Erreur " + res.status + " — réessaie", "err");
-      }
-    } catch {
-      status("Réseau indisponible — réessaie", "err");
-    }
-    $("validate").disabled = false;
-  });
+  channelChanged();
+  renderInstall();
+  route();
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => { /* sans SW : le portail marche quand même */ });
+  }
 </script>
 </body>
 </html>
