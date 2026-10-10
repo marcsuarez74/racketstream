@@ -190,12 +190,14 @@ Deno.test("match supplanté : ses points sont acceptés mais il reste finished",
   const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
   assertEquals(res.status, 200);
   assertEquals(db.statusUsed, "finished");
+  assertEquals((await res.json()).superseded, true);
 });
 
 Deno.test("match supplanté : stop le passe quand même en archived", async () => {
   const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerId: 1, newer: true }) as StatusDb;
-  await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, { ...GOOD_BODY, events: [], stop: true }), db);
+  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, { ...GOOD_BODY, events: [], stop: true }), db);
   assertEquals(db.statusUsed, "archived");
+  assertEquals((await res.json()).superseded, undefined);
 });
 
 Deno.test("match ancien arrivé en retard : ne clôture pas le plus récent", async () => {
@@ -207,8 +209,9 @@ Deno.test("match ancien arrivé en retard : ne clôture pas le plus récent", as
 
 Deno.test("match le plus récent : reste active (undo après fin de match compris)", async () => {
   const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerId: 1 }) as StatusDb;
-  await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
+  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
   assertEquals(db.statusUsed, "active");
+  assertEquals((await res.json()).superseded, undefined);
 });
 
 Deno.test("403 si le match appartient à une autre clé", async () => {
