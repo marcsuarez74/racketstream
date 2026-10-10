@@ -120,10 +120,10 @@ Nouvelle section (même design « sportif ») :
 | Lot | Contenu | Dépend de |
 |---|---|---|
 | 1 | ✅ en production le 2026-10-10 (club d'essai `club-test`, clés dans `.secrets/club-test.env`) ([plan](../plans/2026-10-10-phase-10-lot-1-serveur-clubs.md)) — Serveur : table `clubs`, migration 1 → 2, routes clubs/terrains, match supplanté (§ 6), tests | — |
-| 2 | ✅ fait le 2026-10-10 (pas encore en ligne) — Portail : onglet « Club » (4ᵉ bouton du menu, visible par tous), créer / ouvrir un club, terrains, clés, liens overlay, scores en direct par le flux du club ; nouvelle route `GET /api/clubs/:slug/auth` pour vérifier une clé club. Maquettes : tableaux ClubTel, ClubMenu, ClubCreer, ClubPC du canevas de design. Le « QR scoreur » viendra avec le lot 4 | 1 |
+| 2 | ✅ en production le 2026-10-10 — Portail : onglet « Club » (4ᵉ bouton du menu, visible par tous), créer / ouvrir un club, terrains, clés, liens overlay, scores en direct par le flux du club ; nouvelle route `GET /api/clubs/:slug/auth` pour vérifier une clé club. Maquettes : tableaux ClubTel, ClubMenu, ClubCreer, ClubPC du canevas de design. Le « QR scoreur » viendra avec le lot 4 | 1 |
 | 3 | Moteur JS + tests de parité avec la montre | ✅ fait le 2026-10-10 — `portal/engine/` (badminton, squash, sync), 56 tests Deno dont les 35 de `EngineTest.mc` portés à l'identique |
-| 4 | Scoreur web (écrans, envoi, file hors ligne, QR) | 1, 3 |
-| 5 | Page publique du club | 1 |
+| 4 | ✅ fait le 2026-10-10 — Scoreur web `portal/scoreur.html` (ouvert par `scoreur.html#c=<canal>&k=<clé>`, la clé reste dans le fragment et est retirée de l'adresse), file d'envoi hors ligne, Wake Lock ; bloc « Marquer sans montre » + QR (`portal/vendor/qrcode.js`, qrcode-generator MIT) dans la fiche du terrain. Maquettes : Scoreur, ClubQR | 1, 3 |
+| 5 | ✅ fait le 2026-10-10 — `portal/club.html?c=<slug>` (et non `#club/<slug>` : page séparée, plus légère pour une TV), flux du club, noms relus toutes les 60 s, 2 colonnes + QR à partir de 900 px. Lien dans l'onglet Club. Maquettes : ClubPublic, ClubPublicTV | 1 |
 
 Les lots 1 et 3 sont indépendants et peuvent avancer en parallèle.
 

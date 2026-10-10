@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Scoreur — RacketStream</title>
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&display=swap" rel="stylesheet">
+<style>
+  /* Scoreur sans montre : le téléphone (ou la tablette) au bord du terrain
+     fait office de montre. Même moteur de score (engine/) et même contrat de
+     sync que la montre. Ouvert par le QR du terrain : #c=<canal>&k=<clé>. */
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #000; color: #FFFFFF; font-family: Archivo, "Helvetica Neue", sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+  button { cursor: pointer; font-family: inherit; }
+  input { font-family: inherit; }
+  button:focus-visible, a:focus-visible { outline: 2px solid #22D3EE; outline-offset: 3px; }
+  h1, h2, p { margin: 0; }
+  [hidden] { display: none !important; }
+  .app { max-width: 560px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  .scr { flex-grow: 1; display: flex; flex-direction: column; }
+
+  .eyebrow { font-size: 13px; font-weight: 900; font-style: italic; color: #4DABF7; text-transform: uppercase; letter-spacing: .02em; }
+  .h1 { font-size: 40px; font-weight: 900; font-style: italic; font-stretch: 68%; line-height: 1; }
+  .lead { font-size: 14px; color: #9AA3AE; line-height: 1.45; }
+  .head { padding: 18px 16px 0; display: flex; flex-direction: column; gap: 4px; }
+  .form { padding: 20px 16px 0; display: flex; flex-direction: column; gap: 12px; }
+  .lbl { font-size: 14px; font-weight: 700; color: #C9D1DA; }
+  .segs { display: grid; gap: 6px; background: #1A1F26; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+  .segs.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .segs.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .seg { min-height: 48px; padding: 4px 6px; border: 0; background: transparent; color: #9AA3AE; font-size: 16px; font-weight: 900; font-style: italic; font-stretch: 80%; line-height: 1.1; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); transition: color .2s; }
+  .seg[aria-pressed="true"] { background: linear-gradient(100deg, #3DD68C, #22D3EE); color: #04140C; }
+  .fdet { font-size: 13px; color: #9AA3AE; }
+  .prow { display: flex; gap: 8px; align-items: center; }
+  .prow i { width: 8px; height: 52px; transform: skewX(-12deg); background: #3DD68C; flex: none; }
+  .prow i.b { background: #4DABF7; }
+  .ci { width: 100%; height: 52px; border: 0; border-radius: 0; border-bottom: 3px solid #333333; background: #1A1F26; color: #FFFFFF; padding: 0 14px; font-size: 17px; font-weight: 700; }
+  .ci::placeholder { color: #6B737D; font-weight: 600; }
+  .ci:focus { outline: none; background: #222933; border-bottom-color: #22D3EE; }
+  .foot { margin-top: auto; padding: 20px 16px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .note { font-size: 13px; color: #9AA3AE; text-align: center; line-height: 1.4; }
+  .cta { position: relative; overflow: hidden; height: 62px; border: 0; color: #04140C; background: linear-gradient(100deg, #3DD68C 0%, #2EDBB0 55%, #22D3EE 100%); clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%); font-size: 22px; font-weight: 900; font-style: italic; font-stretch: 72%; transition: transform .12s; }
+  .cta:active { transform: scale(.97); }
+  .cta:disabled { filter: grayscale(.8) brightness(.6); }
+  .ghost { height: 52px; border: 2px solid #3DD68C; background: transparent; color: #3DD68C; font-size: 18px; font-weight: 900; font-style: italic; font-stretch: 80%; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+  .linkbtn { align-self: center; min-height: 44px; padding: 0 8px; border: 0; background: transparent; color: #22D3EE; font-size: 15px; font-weight: 700; }
+  .status { min-height: 1.2em; font-size: 14px; font-weight: 700; text-align: center; }
+  .status.err { color: #FF8A84; }
+
+  /* --- score --- */
+  .bar { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; }
+  .badge { display: flex; align-items: center; gap: 7px; padding: 5px 12px 5px 10px; background: #E8453C; font-size: 13px; font-weight: 900; font-style: italic; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); white-space: nowrap; }
+  .badge .d { width: 7px; height: 7px; border-radius: 50%; background: #FFFFFF; animation: pulse 1.6s ease-in-out infinite; }
+  .where { min-width: 0; font-size: 15px; font-weight: 800; font-style: italic; font-stretch: 85%; color: #C9D1DA; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sync { margin-left: auto; flex: none; font-size: 13px; font-weight: 700; color: #3DD68C; white-space: nowrap; }
+  .sync.wait { color: #FFD43B; }
+  .sync.err { color: #FF8A84; }
+  .zones { flex-grow: 1; display: flex; flex-direction: column; gap: 6px; padding: 0 12px; }
+  .zones.swap { flex-direction: column-reverse; }
+  .zone { position: relative; overflow: hidden; flex: 1 1 0; min-height: 0; border: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 0 22px; text-align: left; color: #04140C; background: linear-gradient(105deg, #2FCB7F 0%, #3DD68C 45%, #7BEBB6 100%); clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); touch-action: manipulation; user-select: none; -webkit-user-select: none; transition: transform .1s, filter .2s; }
+  .zone.b { color: #031426; background: linear-gradient(105deg, #2E86E6 0%, #4DABF7 50%, #8ACBFF 100%); }
+  .zone:active { transform: scale(.97); }
+  .zone:disabled { filter: grayscale(.7) brightness(.6); }
+  .zone::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(0, 0, 0, .07) 0 3px, transparent 3px 29px); }
+  .zone > * { position: relative; }
+  .zone .nm { display: flex; align-items: center; gap: 8px; max-width: 100%; font-size: 26px; font-weight: 900; font-style: italic; font-stretch: 70%; text-transform: uppercase; }
+  .zone .nm span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .zone .nm svg { flex: none; width: 24px; height: 24px; opacity: 0; transform: scale(.4); transition: opacity .3s, transform .3s; }
+  .zone.srv .nm svg { opacity: 1; transform: none; }
+  .zone .st { font-size: 15px; font-weight: 800; font-style: italic; opacity: .75; }
+  .zone .pts { font-size: min(150px, 18vh); font-weight: 900; font-style: italic; font-stretch: 62%; line-height: .9; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .zone .pts.pop { animation: pop .3s cubic-bezier(.2, .9, .25, 1.3); }
+  .zone .hint { font-size: 14px; font-weight: 800; opacity: .7; }
+  .tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 10px 12px 16px; }
+  .tool { height: 56px; border: 0; background: #1A1F26; color: #FFFFFF; font-size: 15px; font-weight: 900; font-style: italic; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  .tool.red { color: #FF8A84; }
+  .tool:disabled { color: #6B737D; }
+  .setcard { position: absolute; left: 12px; right: 12px; top: 50%; transform: translateY(-50%); z-index: 3; display: flex; flex-direction: column; gap: 12px; padding: 22px 18px; background: #0F2A1D; box-shadow: 0 18px 50px rgba(0, 0, 0, .7); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%); animation: inUp .35s cubic-bezier(.2, .9, .25, 1) both; }
+  .setcard .t { font-size: 30px; font-weight: 900; font-style: italic; font-stretch: 70%; line-height: 1; }
+  .setcard .s { font-size: 46px; font-weight: 900; font-style: italic; font-stretch: 64%; line-height: 1; color: #3DD68C; }
+  .playwrap { position: relative; flex-grow: 1; display: flex; flex-direction: column; }
+  .toast { position: fixed; left: 50%; top: 40%; z-index: 5; transform: translate(-50%, -50%); padding: 14px 22px; background: #FFD43B; color: #04140C; font-size: 24px; font-weight: 900; font-style: italic; font-stretch: 72%; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); pointer-events: none; animation: inUp .3s both; }
+
+  /* --- fin --- */
+  .win { font-size: 44px; font-weight: 900; font-style: italic; font-stretch: 66%; line-height: 1; }
+  .win span { color: #3DD68C; }
+  .win span.b { color: #4DABF7; }
+  .recap { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .recap div { display: flex; align-items: center; height: 52px; padding: 0 16px; background: #1A1F26; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  .recap span { flex-grow: 1; font-size: 15px; font-weight: 800; font-style: italic; color: #9AA3AE; }
+  .recap b { font-size: 26px; font-weight: 900; font-style: italic; font-stretch: 70%; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes pop { from { transform: scale(1.3); } to { transform: none; } }
+  @keyframes inUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .setcard { animation-name: cardIn; }
+  @keyframes cardIn { from { transform: translateY(calc(-50% + 18px)); opacity: 0; } to { transform: translateY(-50%); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .badge .d, .zone .pts.pop, .setcard, .toast { animation: none; } .zone, .cta { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Lien incomplet ou clé refusée -->
+  <section class="scr" id="sNoKey" hidden>
+    <div class="head">
+      <span class="eyebrow">RacketStream · scoreur</span>
+      <h1 class="h1">Lien incomplet</h1>
+    </div>
+    <div class="form">
+      <p class="lead" id="noKeyMsg">Scanne le QR code collé au poteau du terrain : il ouvre le scoreur de ce terrain.</p>
+    </div>
+  </section>
+
+  <!-- 1. Préparation -->
+  <section class="scr" id="sPrep" hidden>
+    <div class="head">
+      <span class="eyebrow" id="prepClub">Scoreur</span>
+      <h1 class="h1" id="prepTerrain">Terrain</h1>
+    </div>
+    <div class="form">
+      <span class="lbl" id="lSport">Sport</span>
+      <div class="segs two" id="sports" role="group" aria-labelledby="lSport"></div>
+      <span class="lbl" id="lFmt">Format</span>
+      <div class="segs three" id="formats" role="group" aria-labelledby="lFmt"></div>
+      <span class="fdet" id="fdet"></span>
+      <span class="lbl" style="margin-top: 4px;">Joueurs</span>
+      <div class="prow"><i></i><input class="ci" id="n1" maxlength="49" placeholder="Équipe 1 (ex. Léa / Tom)" aria-label="Équipe 1" autocomplete="off"></div>
+      <div class="prow"><i class="b"></i><input class="ci" id="n2" maxlength="49" placeholder="Équipe 2" aria-label="Équipe 2" autocomplete="off"></div>
+      <span class="fdet">En double, sépare les partenaires par « / ».</span>
+    </div>
+    <div class="foot">
+      <p class="status" id="prepStatus" role="status"></p>
+      <span class="note">L'écran reste allumé pendant le match.</span>
+      <button class="cta" id="start">Lancer le match</button>
+    </div>
+  </section>
+
+  <!-- 2. Score -->
+  <section class="scr" id="sPlay" hidden>
+    <div class="bar">
+      <span class="badge"><span class="d"></span>EN DIRECT</span>
+      <span class="where" id="where">Set 1</span>
+      <span class="sync" id="sync" role="status"></span>
+    </div>
+    <div class="playwrap">
+      <div class="zones" id="zones">
+        <button class="zone" id="zA"><span class="nm"><span id="nA">Équipe 1</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg></span><span class="st" id="stA">Sets 0</span><span class="pts" id="pA">0</span><span class="hint">Touche pour +1</span></button>
+        <button class="zone b" id="zB"><span class="nm"><span id="nB">Équipe 2</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg></span><span class="st" id="stB">Sets 0</span><span class="pts" id="pB">0</span><span class="hint">Touche pour +1</span></button>
+      </div>
+      <div class="setcard" id="setCard" role="dialog" aria-labelledby="setT" hidden>
+        <span class="t" id="setT">Set 1 pour Équipe 1</span>
+        <span class="s" id="setS">21–17</span>
+        <button class="cta" id="nextSet">Set suivant</button>
+        <button class="linkbtn" id="setUndo">Annuler le dernier point</button>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="tool" id="undo">↶ Annuler</button>
+      <button class="tool" id="swap">⇅ Côtés</button>
+      <button class="tool red" id="stop">Fin</button>
+    </div>
+  </section>
+
+  <!-- 3. Fin du match -->
+  <section class="scr" id="sEnd" hidden>
+    <div class="form" style="padding-top: 40px;">
+      <span class="eyebrow" id="endWhere">Match terminé</span>
+      <h1 class="win">Victoire<br><span id="winner">Équipe 1</span></h1>
+      <div class="recap" id="recap"></div>
+      <span class="fdet" id="endMeta"></span>
+    </div>
+    <div class="foot">
+      <p class="sync" id="endSync" role="status" style="margin: 0 auto;"></p>
+      <button class="cta" id="again">Nouveau match</button>
+      <button class="ghost" id="finish">Terminer (le live se vide)</button>
+      <button class="linkbtn" id="endUndo">Annuler le dernier point</button>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+  import { ScoreEngine, server, sideChange } from "./engine/engine.js";
+  import { ScorePhase } from "./engine/rules.js";
+  import * as Sports from "./engine/sports.js";
+  import { batchSlice, buildBody, newMatchId, newDeviceId } from "./engine/sync.js";
+  import { rallySetRows, setText, points } from "./engine/stats.js";
+
+  const API = "https://racket-stream.marc-suarez.fr";
+  const LS = "rs-scoreur";
+  const $ = (id) => document.getElementById(id);
+
+  // État mémorisé (le match reprend après un rechargement ou une coupure) :
+  // { deviceId, channel, key, terrain, club, sport, fmt, n1, n2, match, acked, rev, sentRev, swap, stop }
+  let st = {};
+  try { st = JSON.parse(localStorage.getItem(LS)) || {}; } catch { st = {}; }
+  if (!st.deviceId) st.deviceId = newDeviceId();
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify({ ...st, match: engine ? engine.toJSON() : null })); } catch { /* stockage indisponible */ } };
+
+  // Lien du QR : #c=<canal>&k=<clé>. La clé reste dans le fragment (jamais
+  // envoyée au serveur de pages) et on l'efface de la barre d'adresse.
+  const hp = new URLSearchParams(location.hash.slice(1));
+  const hc = hp.get("c"), hk = hp.get("k");
+  if (hc && hc !== st.channel) {
+    st = { deviceId: st.deviceId, channel: hc, key: "", sport: Sports.BADMINTON, fmt: 0 };
+  }
+  if (hk) st.key = hk;
+  if (hc || hk) history.replaceState(null, "", location.pathname + (st.channel ? "#c=" + encodeURIComponent(st.channel) : ""));
+
+  let engine = null;
+  try { if (st.match) engine = ScoreEngine.fromJSON(st.match); } catch { engine = null; }
+  st.sport = Sports.WEB_SPORTS.includes(st.sport) ? st.sport : Sports.BADMINTON;
+  st.fmt = Sports.clampFormat(st.sport, st.fmt);
+  st.acked = st.acked || 0;
+  st.rev = st.rev || 0;
+  st.sentRev = st.sentRev || 0;
+  save();
+
+  const team = (v, i) => v || "Équipe " + i;
+  const nameA = () => team(st.n1, 1);
+  const nameB = () => team(st.n2, 2);
+  const setW = () => Sports.setWord(engine ? engine.config.sport : st.sport) === "JEU" ? "Jeu" : "Set";
+
+  function show(id) {
+    for (const s of ["sNoKey", "sPrep", "sPlay", "sEnd"]) $(s).hidden = s !== id;
+    keepAwake(id === "sPlay");
+  }
+
+  // ---------- en-tête : terrain et club ----------
+  // Le canal d'un terrain est « <club>-t<n> » : on retrouve le club pour
+  // afficher les noms (mémorisés pour le mode hors ligne).
+  async function loadTerrain() {
+    const slug = st.channel.replace(/-t\d+$/, "");
+    paintTerrain();
+    if (slug === st.channel) return;
+    try {
+      const res = await fetch(`${API}/api/clubs/${encodeURIComponent(slug)}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const d = await res.json();
+      const t = d.terrains.find((x) => x.channel === st.channel);
+      st.club = d.name;
+      if (t) st.terrain = t.label;
+      save();
+      paintTerrain();
+    } catch { /* hors ligne : noms mémorisés */ }
+  }
+  function paintTerrain() {
+    $("prepClub").textContent = (st.club ? st.club + " · " : "") + "Scoreur";
+    $("prepTerrain").textContent = st.terrain || st.channel;
+    document.title = (st.terrain || st.channel) + " — Scoreur";
+  }
+
+  // ---------- préparation ----------
+  function paintPrep() {
+    $("sports").textContent = "";
+    for (const s of Sports.WEB_SPORTS) {
+      const b = document.createElement("button");
+      b.className = "seg";
+      b.textContent = Sports.name(s);
+      b.setAttribute("aria-pressed", String(s === st.sport));
+      b.addEventListener("click", () => { st.sport = s; st.fmt = 0; save(); paintPrep(); });
+      $("sports").appendChild(b);
+    }
+    $("formats").textContent = "";
+    for (let f = 0; f < Sports.formatCount(st.sport); f++) {
+      const b = document.createElement("button");
+      b.className = "seg";
+      b.textContent = Sports.formatLabel(st.sport, f);
+      b.setAttribute("aria-pressed", String(f === st.fmt));
+      b.addEventListener("click", () => { st.fmt = f; save(); paintPrep(); });
+      $("formats").appendChild(b);
+    }
+    $("fdet").textContent = Sports.formatDetail(st.sport, st.fmt);
+  }
+  // Noms du live du terrain (les mêmes que ceux saisis dans le portail).
+  let names = null;
+  async function loadNames() {
+    try {
+      const res = await fetch(`${API}/functions/v1/names?channel=${encodeURIComponent(st.channel)}`, { cache: "no-store" });
+      if (!res.ok) return;
+      names = await res.json();
+      const pair = (a, b) => [a, b].filter(Boolean).join(" / ");
+      if (!$("n1").value) $("n1").value = pair(names.name1, names.name1b);
+      if (!$("n2").value) $("n2").value = pair(names.name2, names.name2b);
+    } catch { /* hors ligne */ }
+  }
+  // « Léa / Tom » → name1 = Léa, name1b = Tom (format double, ou mixte s'il l'était).
+  async function sendNames(n1, n2) {
+    const split = (v) => { const [a, ...b] = v.split("/"); return [a.trim(), b.join("/").trim()]; };
+    const [a, ab] = split(n1), [b, bb] = split(n2);
+    const dbl = !!(ab || bb);
+    const body = { format: dbl ? (names && names.format === "mixte" ? "mixte" : "double") : "simple", name1: a, name1b: dbl ? ab : "", name2: b, name2b: dbl ? bb : "" };
+    if (names && ["format", "name1", "name1b", "name2", "name2b"].every((k) => (names[k] || "") === body[k])) return;
+    try {
+      await fetch(`${API}/functions/v1/names`, { method: "POST", headers: { "X-Device-Key": st.key, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      names = body;
+    } catch { /* noms non envoyés : le score part quand même */ }
+  }
+
+  $("start").addEventListener("click", () => {
+    st.n1 = $("n1").value.trim().replace(/\s*\/\s*/g, " / ");
+    st.n2 = $("n2").value.trim().replace(/\s*\/\s*/g, " / ");
+    sendNames(st.n1, st.n2);
+    engine = new ScoreEngine(Sports.config(st.sport, st.fmt), newMatchId());
+    st.acked = 0;
+    st.stop = false;
+    st.swap = false;
+    changed();        // un envoi sans point ouvre le match à 0-0 (comme la montre)
+    render();
+  });
+
+  // ---------- score ----------
+  let lastTap = null;
+  function point(who) {
+    if (!engine || engine.phase !== ScorePhase.PLAYING) return;
+    if (who === "a") engine.pointMe(); else engine.pointOpponent();
+    lastTap = who;
+    if (navigator.vibrate) navigator.vibrate(30);
+    if (sideChange(engine, st.sport, st.fmt)) toast("Changement de côté");
+    changed();
+    render();
+  }
+  $("zA").addEventListener("click", () => point("a"));
+  $("zB").addEventListener("click", () => point("b"));
+  function undoPoint() {
+    if (!engine || engine.events.length === 0) return;
+    engine.undoPoint();
+    lastTap = null;
+    changed();
+    render();
+  }
+  $("undo").addEventListener("click", undoPoint);
+  $("setUndo").addEventListener("click", undoPoint);
+  $("endUndo").addEventListener("click", undoPoint);
+  $("swap").addEventListener("click", () => { st.swap = !st.swap; save(); render(); });
+  $("nextSet").addEventListener("click", () => { engine.changeSet(); changed(); render(); });
+  $("stop").addEventListener("click", () => {
+    if (!confirm("Arrêter ce match ?\n\nLe score disparaît du live du terrain.")) return;
+    finish();
+  });
+  $("finish").addEventListener("click", finish);
+  $("again").addEventListener("click", () => {
+    // Le match terminé reste « fini » côté serveur ; le suivant le remplace.
+    if (pending() && !confirm("Le score final n'est pas encore envoyé (pas de réseau).\n\nCommencer quand même un nouveau match ?")) return;
+    engine = null;
+    st.stop = false;
+    save();
+    render();
+  });
+  // « Fin » : le match passe en archivé (comme « fin de séance » sur la montre).
+  function finish() {
+    st.stop = true;
+    changed();
+    render();
+  }
+
+  let toastT = null;
+  function toast(msg) {
+    document.querySelectorAll(".toast").forEach((t) => t.remove());
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.setAttribute("role", "status");
+    t.textContent = msg;
+    document.body.appendChild(t);
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.remove(), 2600);
+  }
+
+  function render() {
+    if (!st.key) {
+      $("noKeyMsg").textContent = "Scanne le QR code collé au poteau du terrain : il ouvre le scoreur de ce terrain.";
+      show("sNoKey");
+      return;
+    }
+    if (keyRefused) {
+      $("noKeyMsg").textContent = "Ce QR code n'est plus valable : le club a créé une nouvelle clé pour ce terrain. Demande le nouveau QR code au club.";
+      show("sNoKey");
+      return;
+    }
+    // Match arrêté (en attente d'envoi) ou pas de match : préparation.
+    if (!engine || st.stop) {
+      paintPrep();
+      show("sPrep");
+      paintSync();
+      return;
+    }
+    const e = engine;
+    if (e.phase === ScorePhase.MATCH_FINISHED) {
+      const rows = rallySetRows(e.events, e.startedAtMs);
+      const aWon = e.setsMe > e.setsOpp;
+      $("winner").textContent = aWon ? nameA() : nameB();
+      $("winner").className = aWon ? "" : "b";
+      $("endWhere").textContent = (st.terrain || st.channel) + " · match terminé";
+      $("recap").textContent = "";
+      rows.forEach((r, i) => {
+        const d = document.createElement("div");
+        d.innerHTML = "<span></span><b></b>";
+        d.querySelector("span").textContent = setW() + " " + (i + 1);
+        d.querySelector("b").textContent = setText(r).replace("-", " – ");
+        $("recap").appendChild(d);
+      });
+      const n = points(e.events)[1];
+      const last = e.events.length ? e.events[e.events.length - 1][3] : e.startedAtMs;
+      $("endMeta").textContent = `Durée ${Math.max(1, Math.round((last - e.startedAtMs) / 60000))} min · ${n} points`;
+      show("sEnd");
+      paintSync();
+      return;
+    }
+    show("sPlay");
+    $("nA").textContent = nameA();
+    $("nB").textContent = nameB();
+    $("zA").setAttribute("aria-label", `Point pour ${nameA()} (${e.scoreMe})`);
+    $("zB").setAttribute("aria-label", `Point pour ${nameB()} (${e.scoreOpp})`);
+    $("stA").textContent = Sports.setsWord(e.config.sport).toLowerCase().replace(/^./, (c) => c.toUpperCase()) + " " + e.setsMe;
+    $("stB").textContent = Sports.setsWord(e.config.sport).toLowerCase().replace(/^./, (c) => c.toUpperCase()) + " " + e.setsOpp;
+    for (const [id, v, k] of [["pA", e.scoreMe, "a"], ["pB", e.scoreOpp, "b"]]) {
+      const el = $(id);
+      if (el.textContent !== String(v)) {
+        el.textContent = v;
+        if (k === lastTap) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+      }
+    }
+    const srv = server(e);
+    $("zA").classList.toggle("srv", srv === 0);
+    $("zB").classList.toggle("srv", srv === 1);
+    $("zones").classList.toggle("swap", !!st.swap);
+    $("where").textContent = (st.terrain || st.channel) + " · " + setW() + " " + e.setNumber;
+    const res = e.phase === ScorePhase.SET_RESULT;
+    $("setCard").hidden = !res;
+    $("zA").disabled = res;
+    $("zB").disabled = res;
+    if (res) {
+      const aWon = e.lastSetScoreMe > e.lastSetScoreOpp;
+      $("setT").textContent = `${setW()} ${e.setNumber} pour ${aWon ? nameA() : nameB()}`;
+      $("setS").textContent = `${e.lastSetScoreMe}–${e.lastSetScoreOpp}`;
+      $("nextSet").textContent = setW() + " suivant";
+    }
+    $("undo").disabled = e.events.length === 0;
+    paintSync();
+  }
+
+  // ---------- envoi au serveur ----------
+  // Même contrat que la montre : events par lots (≤ 10, limite serveur),
+  // snapshot = vérité. Un envoi est dû tant qu'il reste des events non
+  // acquittés ou que l'état a changé depuis le dernier envoi (annulation,
+  // arrêt). Hors ligne : on réessaie, l'idempotence serveur évite les doublons.
+  let sending = false, retryT = null, retryMs = 2000, keyRefused = false, lastErr = "";
+  function changed() {
+    st.rev += 1;
+    save();
+    flush();
+  }
+  function pending() {
+    if (!engine) return 0;
+    const n = batchSlice(engine.events, st.acked + 1, 1e9).length;
+    return n || (st.rev !== st.sentRev ? 1 : 0);
+  }
+  async function flush() {
+    if (sending || !engine || keyRefused) return;
+    clearTimeout(retryT);
+    sending = true;
+    paintSync();
+    try {
+      while (engine && pending()) {
+        const e = engine;
+        const rev = st.rev;
+        const batch = batchSlice(e.events, st.acked + 1);
+        const last = batchSlice(e.events, st.acked + 1, 1e9).length <= batch.length;
+        const stop = st.stop && last;
+        const res = await fetch(`${API}/functions/v1/sync/matches/${e.matchId}/events`, {
+          method: "POST",
+          headers: { "X-Device-Key": st.key, "Content-Type": "application/json" },
+          body: JSON.stringify(buildBody(e, st.deviceId, batch, stop)),
+        });
+        if (res.status === 401) { keyRefused = true; break; }
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const d = await res.json().catch(() => ({}));
+        if (engine !== e) continue;       // nouveau match lancé entre-temps
+        if (batch.length) st.acked = Math.max(st.acked, d.lastAcceptedSequence || batch[batch.length - 1][2]);
+        if (last) st.sentRev = rev;
+        if (stop && st.rev === rev) { engine = null; st.stop = false; }
+        lastErr = "";
+        retryMs = 2000;
+        save();
+      }
+    } catch (err) {
+      lastErr = navigator.onLine === false ? "hors ligne" : "réseau";
+      retryT = setTimeout(flush, retryMs);
+      retryMs = Math.min(retryMs * 2, 30000);
+    }
+    sending = false;
+    render();
+  }
+  addEventListener("online", () => { retryMs = 2000; flush(); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { flush(); keepAwake(!$("sPlay").hidden); } });
+
+  function paintSync() {
+    const n = pending();
+    let txt = "✓ envoyé", cls = "sync";
+    if (keyRefused) { txt = "clé refusée"; cls = "sync err"; }
+    else if (n && lastErr) { txt = `⏳ ${lastErr}, ${n} en attente`; cls = "sync wait"; }
+    else if (n) { txt = "envoi…"; cls = "sync wait"; }
+    for (const id of ["sync", "endSync"]) { $(id).textContent = txt; $(id).className = cls; }
+    $("prepStatus").textContent = st.stop && n ? "Arrêt du match en attente de réseau…" : "";
+  }
+
+  // ---------- écran allumé pendant le match ----------
+  let lock = null;
+  async function keepAwake(on) {
+    try {
+      if (on && !lock && "wakeLock" in navigator && !document.hidden) {
+        lock = await navigator.wakeLock.request("screen");
+        lock.addEventListener("release", () => { lock = null; });
+      } else if (!on && lock) { await lock.release(); lock = null; }
+    } catch { /* refusé (économie d'énergie) : sans conséquence */ }
+  }
+
+  if (st.channel) {
+    loadTerrain();
+    loadNames().then(() => { if (st.n1 && !$("n1").value) $("n1").value = st.n1; });
+    if (st.n1) $("n1").value = st.n1;
+    if (st.n2) $("n2").value = st.n2;
+  }
+  render();
+  flush();
+</script>
+</body>
+</html>

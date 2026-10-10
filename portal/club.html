@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Club en direct — RacketStream</title>
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Tous les matchs du club en direct.">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&display=swap" rel="stylesheet">
+<style>
+  /* Page publique d'un club (lecture seule, sans clé) : tous les terrains en
+     direct. Téléphone = liste ; écran large (TV de la salle) = 2 colonnes et un
+     QR vers cette page. Ouverte par club.html?c=<slug>. */
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #000; color: #FFFFFF; font-family: Archivo, "Helvetica Neue", sans-serif; }
+  button { cursor: pointer; font-family: inherit; }
+  button:focus-visible, a:focus-visible { outline: 2px solid #22D3EE; outline-offset: 3px; }
+  h1, p { margin: 0; }
+  [hidden] { display: none !important; }
+  .page { position: relative; max-width: 640px; margin: 0 auto; padding: 22px 0 30px; overflow: hidden; }
+  .glow { display: none; }
+  header { position: relative; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .hw { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .eyebrow { font-size: 13px; font-weight: 900; font-style: italic; color: #4DABF7; }
+  h1 { font-size: 44px; font-weight: 900; font-style: italic; font-stretch: 66%; line-height: 1; overflow-wrap: anywhere; }
+  .badge { align-self: flex-start; display: flex; align-items: center; gap: 7px; padding: 5px 12px 5px 10px; background: #E8453C; font-size: 13px; font-weight: 900; font-style: italic; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+  .badge .d { width: 7px; height: 7px; border-radius: 50%; background: #FFFFFF; animation: pulse 1.6s ease-in-out infinite; }
+  .badge.off { background: #1A1F26; color: #9AA3AE; }
+  .badge.off .d { background: #6B737D; animation: none; }
+  .tvqr { display: none; }
+  .cards { position: relative; padding: 18px 12px 0; display: flex; flex-direction: column; gap: 10px; }
+  .card { display: flex; gap: 14px; padding: 16px 16px 18px 12px; background: #12161B; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%); animation: inUp .4s cubic-bezier(.2, .9, .25, 1) both; }
+  .card .bar { flex: none; width: 8px; align-self: stretch; transform: skewX(-12deg); background: #333333; }
+  .card.live .bar { background: linear-gradient(180deg, #3DD68C, #22D3EE); animation: barGlow 1.8s ease-in-out infinite; }
+  .card .in { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .card .top { display: flex; align-items: baseline; gap: 10px; }
+  .card .tn { flex-grow: 1; min-width: 0; font-size: 22px; font-weight: 900; font-style: italic; font-stretch: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .hot { font-size: 12px; font-weight: 900; font-style: italic; color: #04140C; background: #FFD43B; padding: 3px 8px; clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%); }
+  .card .sn { font-size: 14px; font-weight: 800; font-style: italic; color: #C9D1DA; white-space: nowrap; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row i { flex: none; width: 6px; height: 30px; transform: skewX(-12deg); background: #3DD68C; }
+  .row.b i { background: #4DABF7; }
+  .row .pn { flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 900; font-style: italic; font-stretch: 72%; text-transform: uppercase; white-space: nowrap; }
+  .row .pn span { overflow: hidden; text-overflow: ellipsis; }
+  .row .pn svg { flex: none; width: 22px; height: 22px; }
+  .row .ps { flex: none; width: 17px; font-size: 14px; font-weight: 800; color: #9AA3AE; text-align: center; }
+  .row .pt { flex: none; min-width: 48px; font-size: 44px; font-weight: 900; font-style: italic; font-stretch: 62%; line-height: 1; text-align: right; font-variant-numeric: tabular-nums; }
+  .row .pt.pop { animation: pop .3s cubic-bezier(.2, .9, .25, 1.3); }
+  .card .wait { font-size: 14px; color: #6B737D; padding: 6px 0; }
+  .msg { padding: 18px 16px 0; font-size: 15px; color: #9AA3AE; line-height: 1.45; }
+  .foot { padding: 18px 16px 0; display: flex; flex-direction: column; gap: 12px; }
+  .foot p { font-size: 13px; color: #6B737D; line-height: 1.45; }
+  .share { display: flex; gap: 6px; }
+  .share .u { flex-grow: 1; min-width: 0; display: flex; align-items: center; height: 52px; padding: 0 14px; background: #1A1F26; font-size: 14px; font-weight: 600; color: #C9D1DA; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .share button { flex: none; min-width: 96px; height: 52px; border: 0; background: #FFFFFF; color: #04140C; font-size: 15px; font-weight: 900; font-style: italic; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); transition: background .25s, color .25s; }
+  .share button.done { background: #0F2A1D; color: #3DD68C; }
+
+  /* Écran large : TV de la salle. */
+  @media (min-width: 900px) {
+    .page { max-width: none; min-height: 100vh; padding: 36px 48px 40px; }
+    .glow { display: block; position: absolute; left: -160px; top: -120px; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, rgba(61, 214, 140, .22), transparent 65%); pointer-events: none; }
+    header { padding: 0; flex-direction: row; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+    .hw { flex-grow: 1; }
+    .eyebrow { font-size: 16px; }
+    h1 { font-size: 72px; font-stretch: 64%; line-height: .95; }
+    .badge { align-self: auto; gap: 9px; padding: 8px 16px 8px 14px; font-size: 17px; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+    .badge .d { width: 9px; height: 9px; }
+    .tvqr { display: flex; align-items: center; gap: 12px; padding: 10px; background: #FFFFFF; color: #04140C; }
+    .tvqr .q { width: 84px; height: 84px; }
+    .tvqr .q svg { display: block; width: 100%; height: 100%; }
+    .tvqr span { width: 110px; font-size: 14px; font-weight: 900; font-style: italic; line-height: 1.2; }
+    .cards { padding: 28px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .card { padding: 22px 24px 24px 18px; }
+    .card .tn { font-size: 32px; }
+    .card .hot { font-size: 15px; }
+    .card .sn { font-size: 17px; }
+    .row i { height: 50px; }
+    .row .pn { font-size: 26px; }
+    .row .pn svg { width: 26px; height: 26px; }
+    .row .ps { width: 24px; font-size: 18px; }
+    .row .pt { min-width: 80px; font-size: 64px; }
+    .card .wait { font-size: 17px; }
+    .msg { padding: 28px 0 0; font-size: 18px; }
+    .foot { display: none; }
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes inUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes pop { from { transform: scale(1.35); } to { transform: none; } }
+  @keyframes barGlow { 0%, 100% { box-shadow: 0 0 0 rgba(61, 214, 140, 0); } 50% { box-shadow: 0 0 14px rgba(61, 214, 140, .8); } }
+  @media (prefers-reduced-motion: reduce) { .badge .d, .card, .card.live .bar, .row .pt.pop { animation: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="glow"></div>
+  <header>
+    <div class="hw">
+      <span class="eyebrow">RACKETSTREAM · EN DIRECT</span>
+      <h1 id="name">Club</h1>
+    </div>
+    <span class="badge off" id="badge" role="status"><span class="d"></span><span id="badgeTxt">CHARGEMENT…</span></span>
+    <div class="tvqr" id="tvqr" hidden><div class="q" id="tvqrImg" role="img" aria-label="QR code de cette page"></div><span>Suis les scores sur ton téléphone</span></div>
+  </header>
+  <section class="cards" id="cards" aria-label="Terrains" aria-live="polite"></section>
+  <p class="msg" id="msg" hidden></p>
+  <div class="foot" id="foot" hidden>
+    <p>Mis à jour en direct. Aucun compte nécessaire : partage simplement ce lien.</p>
+    <div class="share"><span class="u" id="url"></span><button id="share">Partager</button></div>
+  </div>
+</div>
+
+<script>
+  const API = "https://racket-stream.marc-suarez.fr";
+  // Même règle que partout (pickScore, portail, overlay, renderer) : un match
+  // n'est « en direct » que s'il est actif et a bougé il y a moins de 10 min.
+  const STALE_MS = 600 * 1000;
+  const isLive = (r) => !!r && r.status === "active" && Date.now() - r.updated_at <= STALE_MS;
+  const $ = (id) => document.getElementById(id);
+  const SRV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg>';
+
+  const slug = (new URLSearchParams(location.search).get("c") || "").trim().toLowerCase();
+  const pageUrl = location.origin + location.pathname + "?c=" + encodeURIComponent(slug);
+  let terrains = [];       // [{ channel, label }]
+  const scores = {};       // canal → score (ou null)
+  const names = {};        // canal → { name1, name1b, name2, name2b }
+  const serve = {};        // canal → { a, b, set, who } : service déduit du dernier point
+  const shown = {};        // canal → points affichés (animation au changement)
+
+  function fail(msg) {
+    $("cards").textContent = "";
+    $("msg").textContent = msg;
+    $("msg").hidden = false;
+    $("badgeTxt").textContent = "HORS LIGNE";
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(`${API}/api/clubs/${encodeURIComponent(slug)}`, { cache: "no-store" });
+      if (res.status === 404) { fail("Ce club n'existe pas. Vérifie le lien."); return false; }
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      $("name").textContent = d.name;
+      document.title = d.name + " en direct — RacketStream";
+      terrains = d.terrains.map((t) => ({ channel: t.channel, label: t.label }));
+      for (const t of d.terrains) note(t.channel, t.score);
+      $("msg").hidden = true;
+      render();
+      return true;
+    } catch {
+      if (!terrains.length) fail("Pas de réseau : la page se met à jour dès que la connexion revient.");
+      return null;
+    }
+  }
+
+  async function loadNames() {
+    await Promise.all(terrains.map(async (t) => {
+      try {
+        const res = await fetch(`${API}/functions/v1/names?channel=${encodeURIComponent(t.channel)}`, { cache: "no-store" });
+        if (res.ok) names[t.channel] = await res.json();
+      } catch { /* garder les noms connus */ }
+    }));
+    render();
+  }
+
+  // Service (badminton, squash) : celui qui vient de marquer sert ; au
+  // début de chaque set, l'équipe 1 (comme sur la montre).
+  function note(ch, r) {
+    scores[ch] = r;
+    if (!r) { delete serve[ch]; return; }
+    const p = serve[ch];
+    let who = p ? p.who : null;
+    if (!p || r.match_id !== p.id || r.current_set !== p.set) who = r.score_me + r.score_opp === 0 ? "a" : null;
+    else if (r.score_me > p.a && r.score_opp === p.b) who = "a";
+    else if (r.score_opp > p.b && r.score_me === p.a) who = "b";
+    else if (r.score_me + r.score_opp === 0) who = "a";
+    serve[ch] = { id: r.match_id, set: r.current_set, a: r.score_me, b: r.score_opp, who };
+  }
+
+  const pair = (a, b, dflt) => [a, b].filter(Boolean).join(" / ") || dflt;
+
+  function render() {
+    const live = terrains.filter((t) => isLive(scores[t.channel])).length;
+    $("badge").className = live ? "badge" : "badge off";
+    $("badgeTxt").textContent = live ? `${live} TERRAIN${live > 1 ? "S" : ""} EN MATCH` : "AUCUN MATCH EN COURS";
+    if (!terrains.length) {
+      $("cards").textContent = "";
+      $("msg").textContent = "Ce club n'a pas encore de terrain.";
+      $("msg").hidden = false;
+      return;
+    }
+    const box = $("cards");
+    // Les cartes sont recréées seulement si la liste des terrains change :
+    // sinon on met à jour sur place (pas de clignotement sur la TV).
+    if (box.dataset.list !== terrains.map((t) => t.channel).join()) {
+      box.textContent = "";
+      for (const t of terrains) {
+        const c = document.createElement("article");
+        c.className = "card";
+        c.dataset.ch = t.channel;
+        c.innerHTML = `<span class="bar"></span><div class="in">
+          <div class="top"><span class="tn"></span><span class="hot" hidden></span><span class="sn"></span></div>
+          <div class="row a"><i></i><span class="pn"><span></span></span><span class="ps"></span><span class="pt"></span></div>
+          <div class="row b"><i></i><span class="pn"><span></span></span><span class="ps"></span><span class="pt"></span></div>
+          <span class="wait">Aucun match pour l'instant</span></div>`;
+        box.appendChild(c);
+      }
+      box.dataset.list = terrains.map((t) => t.channel).join();
+    }
+    for (const t of terrains) {
+      const c = box.querySelector(`[data-ch="${CSS.escape(t.channel)}"]`);
+      const r = scores[t.channel];
+      const on = isLive(r);
+      c.classList.toggle("live", on);
+      c.querySelector(".tn").textContent = t.label;
+      c.querySelector(".wait").hidden = on;
+      c.querySelectorAll(".row").forEach((row) => { row.hidden = !on; });
+      const hot = c.querySelector(".hot");
+      if (!on) {
+        c.querySelector(".sn").textContent = "En attente";
+        hot.hidden = true;
+        c.setAttribute("aria-label", `${t.label} : aucun match`);
+        continue;
+      }
+      const cfg = r.config || {};
+      const word = cfg.sport === "squash" || cfg.sport === 2 ? "Jeu" : "Set";
+      c.querySelector(".sn").textContent = `${word} ${r.current_set}`;
+      const target = cfg.targetScore || 21;
+      hot.hidden = !(r.score_me >= target - 1 && r.score_opp >= target - 1);
+      hot.textContent = `${r.score_me}–${r.score_opp}`;
+      const n = names[t.channel] || {};
+      const pa = pair(n.name1, n.name1b, "Équipe 1"), pb = pair(n.name2, n.name2b, "Équipe 2");
+      const s = serve[t.channel];
+      for (const [k, nm, sets, pts] of [["a", pa, r.sets_me, r.score_me], ["b", pb, r.sets_opp, r.score_opp]]) {
+        const row = c.querySelector(".row." + k);
+        const pn = row.querySelector(".pn");
+        pn.firstElementChild.textContent = nm;
+        const hasSrv = !!pn.querySelector("svg");
+        if (s && s.who === k && !hasSrv) pn.insertAdjacentHTML("beforeend", SRV);
+        else if (!(s && s.who === k) && hasSrv) pn.querySelector("svg").remove();
+        row.querySelector(".ps").textContent = sets;
+        const pt = row.querySelector(".pt");
+        const key = t.channel + k;
+        if (pt.textContent !== String(pts)) {
+          pt.textContent = pts;
+          if (shown[key] !== undefined) { pt.classList.remove("pop"); void pt.offsetWidth; pt.classList.add("pop"); }
+          shown[key] = pts;
+        }
+      }
+      c.setAttribute("aria-label", `${t.label}, ${word.toLowerCase()} ${r.current_set} : ${pa} ${r.score_me}, ${pb} ${r.score_opp}`);
+    }
+  }
+
+  // Flux en direct du club : un message { channel, score } par point.
+  // Un terrain ajouté après l'ouverture apparaît au rechargement périodique.
+  let es = null;
+  function openStream() {
+    if (es) es.close();
+    es = new EventSource(`${API}/api/clubs/${encodeURIComponent(slug)}/stream`);
+    es.onmessage = (ev) => {
+      try {
+        const m = JSON.parse(ev.data);
+        if (!terrains.some((t) => t.channel === m.channel)) return;
+        note(m.channel, m.score);
+        render();
+      } catch { /* message illisible : ignoré */ }
+    };
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) { es = null; setTimeout(openStream, 5000); }
+    };
+  }
+
+  async function qr() {
+    try {
+      await new Promise((ok, ko) => {
+        const s = document.createElement("script");
+        s.src = "vendor/qrcode.js";
+        s.onload = ok; s.onerror = ko;
+        document.head.appendChild(s);
+      });
+      const q = qrcode(0, "M");
+      q.addData(pageUrl);
+      q.make();
+      $("tvqrImg").innerHTML = q.createSvgTag({ cellSize: 4, margin: 1, scalable: true });
+      $("tvqr").hidden = false;
+    } catch { /* pas de QR : la page reste utilisable */ }
+  }
+
+  $("url").textContent = pageUrl.replace(/^https?:\/\//, "");
+  $("share").addEventListener("click", async () => {
+    const b = $("share");
+    if (navigator.share) {
+      try { await navigator.share({ title: $("name").textContent + " en direct", url: pageUrl }); return; }
+      catch (e) { if (e.name === "AbortError") return; }
+    }
+    try { await navigator.clipboard.writeText(pageUrl); } catch { return; }
+    b.textContent = "Copié ✓";
+    b.classList.add("done");
+    setTimeout(() => { b.textContent = "Partager"; b.classList.remove("done"); }, 1800);
+  });
+
+  (async () => {
+    if (!slug) { fail("Lien incomplet : demande au club le lien de sa page."); return; }
+    let ok;
+    while ((ok = await load()) === null) await new Promise((r) => setTimeout(r, 10000));
+    if (ok === false) return;
+    $("foot").hidden = false;
+    openStream();
+    loadNames();
+    qr();
+    setInterval(loadNames, 60 * 1000);            // noms changés depuis le portail
+    setInterval(load, 5 * 60 * 1000);             // terrains ajoutés ou renommés
+    setInterval(render, 30 * 1000);               // fraîcheur des 10 min
+    // TV allumée toute la journée : on garde l'écran éveillé si possible.
+    const awake = () => { if ("wakeLock" in navigator && !document.hidden) navigator.wakeLock.request("screen").catch(() => {}); };
+    awake();
+    document.addEventListener("visibilitychange", awake);
+  })();
+</script>
+</body>
+</html>

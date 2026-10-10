@@ -286,6 +286,23 @@
   .tpanel .tt { display: none; }
   .tpanel .dk { display: none; font-size: 14px; font-weight: 700; color: #C9D1DA; }
   .tpanel .acts { display: flex; gap: 22px; }
+  .scorer { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; padding-top: 14px; border-top: 1px solid #1A1F26; }
+  .scorer .qh { font-size: 18px; font-weight: 900; font-style: italic; font-stretch: 78%; color: #FFFFFF; }
+  .scorer p { font-size: 14px; color: #9AA3AE; line-height: 1.45; }
+  .scorer a.cta { display: flex; align-items: center; justify-content: center; height: 56px; font-size: 20px; text-decoration: none; }
+  .ghostbtn { height: 52px; border: 2px solid #3DD68C; background: transparent; color: #3DD68C; font-size: 16px; font-weight: 900; font-style: italic; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+  .ghostbtn[aria-expanded="true"] { background: #0F2A1D; }
+  .qrwrap { display: flex; flex-direction: column; gap: 10px; animation: inUp .35s cubic-bezier(.2, .9, .25, 1) both; }
+  .qrcard { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 22px 18px 20px; background: #FFFFFF; color: #04140C; text-align: center; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%); }
+  .qrcard .qc { font-size: 14px; font-weight: 900; font-style: italic; letter-spacing: .04em; color: #2E86E6; text-transform: uppercase; }
+  .qrcard .qt { font-size: 34px; font-weight: 900; font-style: italic; font-stretch: 70%; line-height: 1; }
+  .qrcard .qimg { width: min(240px, 70vw); aspect-ratio: 1; margin: 10px 0 6px; }
+  .qrcard .qimg svg { display: block; width: 100%; height: 100%; }
+  .qrcard b { font-size: 18px; font-weight: 900; font-style: italic; }
+  .qrcard small { font-size: 13px; color: #4A535E; }
+  .qacts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .qacts .cbtn { width: 100%; }
+  .qwarn { font-size: 13px; color: #FF8A84; line-height: 1.45; }
   .codebox .kv.none { font-size: 14px; font-weight: 600; color: #9AA3AE; font-style: italic; letter-spacing: 0; }
   .linkcyan { align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: transparent; color: #22D3EE; font-size: 14px; font-weight: 800; }
   .clubkey { padding: 30px 16px 0; display: flex; flex-direction: column; gap: 10px; }
@@ -724,6 +741,15 @@
         </section>
         <section class="terrains" id="terrains" aria-label="Terrains du club"></section>
         <p class="nochans" id="noTerrains">Aucun terrain pour l'instant : ajoute le premier ci-dessous.</p>
+        <section class="clubkey">
+          <h2 class="h2">Page publique</h2>
+          <p>Tous les matchs du club en direct, à afficher sur la TV de la salle ou à partager. Sans clé : elle ne permet que de regarder.</p>
+          <div class="copyrow">
+            <div class="codebox"><span class="k">Lien</span><span class="kv" id="clubPubUrl"></span></div>
+            <button class="cbtn" id="copyClubPub"><span>Copier</span></button>
+          </div>
+          <a class="linkcyan" id="openClubPub" target="_blank" rel="noopener" style="display:flex;align-items:center;text-decoration:none;">Ouvrir la page publique ›</a>
+        </section>
         <section class="clubkey" id="clubKeySec">
           <h2 class="h2">Clé du club</h2>
           <p>Elle sert à gérer les terrains, pas à envoyer des points. Garde-la pour ouvrir le club sur un autre appareil.</p>
@@ -1430,6 +1456,7 @@
   let clubEs = null;
   let clubJustCreated = false;  // la clé du club reste affichée jusqu'à « continuer »
   let renaming = null;          // terrain dont le nom est en cours de modification
+  let qrOpen = null;            // terrain dont le QR scoreur est affiché
   let regen = null;             // { channel, key } : nouvelle clé tout juste créée
   let freshTerrain = null;      // terrain tout juste ajouté : arrive avec un « claquement »
   const desk = matchMedia("(min-width: 1024px)");
@@ -1521,6 +1548,9 @@
     $("clubCards").hidden = !open;
     if (!open) return;
     $("clubSlug").textContent = "CLUB · " + club.slug;
+    const pub = clubPubUrl(club.slug);
+    $("clubPubUrl").textContent = pub.replace(/^https?:\/\//, "");
+    $("openClubPub").href = pub;
     $("clubName").textContent = club.name;
     $("clubKeyShown").textContent = mask(club.key);
     const box = $("terrains");
@@ -1592,6 +1622,20 @@
       <div class="copyrow"><div class="codebox"><span class="k">Clé montre</span><span class="kv"></span></div><button class="cbtn" data-act="copyKey"><span>Copier</span></button></div>
       <span class="dk">Lien du bandeau pour OBS</span>
       <div class="copyrow"><div class="codebox"><span class="k">OBS</span><span class="obs"></span></div><button class="cbtn" data-act="copyObs"><span>Copier</span></button></div>
+      <div class="scorer">
+        <span class="qh">Marquer sans montre</span>
+        <p class="qnokey" hidden>La clé de ce terrain n'est pas sur cet appareil : crée une nouvelle clé (en bas) pour obtenir le scoreur et son QR code.</p>
+        <div class="qok">
+          <p>Un téléphone au bord du terrain remplace la montre : on touche l'équipe qui marque.</p>
+        </div>
+        <a class="cta qopen" target="_blank" rel="noopener">Ouvrir le scoreur ici</a>
+        <button class="ghostbtn" data-act="qr" aria-expanded="false">QR code à coller au poteau</button>
+        <div class="qrwrap" hidden>
+          <div class="qrcard"><span class="qc"></span><span class="qt"></span><div class="qimg" role="img" aria-label="QR code du scoreur"></div><b>Scanne pour marquer les points</b><small>Pas d'appli à installer : ça s'ouvre dans le navigateur.</small></div>
+          <div class="qacts"><button class="cbtn" data-act="print"><span>Imprimer</span></button><button class="cbtn" data-act="share"><span>Partager le lien</span></button></div>
+          <p class="qwarn">Ce QR contient la clé du terrain : ne le donne qu'aux personnes qui marquent. S'il circule trop, crée une nouvelle clé : l'ancien QR ne marchera plus.</p>
+        </div>
+      </div>
       <div class="okcard" role="status" hidden>
         <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span>Nouvelle clé</span></span>
         <p>Colle-la dans la montre du terrain (Garmin Connect › RacketStream › Réglages). L'ancienne clé ne marche plus.</p>
@@ -1609,6 +1653,13 @@
     if (renaming === c.channel) {
       p.querySelector(".rrow").hidden = false;
       input.value = chanName(c);
+    }
+    p.querySelector(".qnokey").hidden = !!c.key;
+    p.querySelector(".qok").hidden = !c.key;
+    for (const sel of [".qopen", '[data-act="qr"]']) p.querySelector(sel).hidden = !c.key;
+    if (c.key) {
+      p.querySelector(".qopen").href = scorerUrl(c);
+      if (qrOpen === c.channel) showQr(c, p);
     }
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") saveLabel(c, input.value.trim(), p.querySelector('[data-act="save"]')); });
     if (regen && regen.channel === c.channel) {
@@ -1630,8 +1681,69 @@
       }
       else if (act === "save") saveLabel(c, input.value.trim(), b);
       else if (act === "newKey") renewKey(c, b);
+      else if (act === "qr") { qrOpen = qrOpen === c.channel ? null : c.channel; paintClub(); }
+      else if (act === "print") printQr(c, p);
+      else if (act === "share") shareScorer(c, b);
     });
     return p;
+  }
+
+  // --- scoreur sans montre : lien et QR du terrain ---
+  // La clé voyage dans le fragment (#) : jamais envoyée au serveur de pages.
+  const scorerUrl = (c) => new URL("scoreur.html", location.href).href.split("#")[0] +
+    "#c=" + encodeURIComponent(c.channel) + "&k=" + encodeURIComponent(c.key);
+  let qrLib = null;
+  function loadQrLib() {
+    qrLib = qrLib || new Promise((ok, ko) => {
+      const s = document.createElement("script");
+      s.src = "vendor/qrcode.js";
+      s.onload = () => ok(window.qrcode);
+      s.onerror = () => { qrLib = null; ko(new Error("qr")); };
+      document.head.appendChild(s);
+    });
+    return qrLib;
+  }
+  async function qrSvg(text) {
+    const qrcode = await loadQrLib();
+    const q = qrcode(0, "M");
+    q.addData(text);
+    q.make();
+    return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+  }
+  async function showQr(c, p) {
+    p.querySelector(".qrwrap").hidden = false;
+    p.querySelector('[data-act="qr"]').setAttribute("aria-expanded", "true");
+    p.querySelector(".qc").textContent = store.club ? store.club.name : "";
+    p.querySelector(".qt").textContent = chanName(c);
+    try { p.querySelector(".qimg").innerHTML = await qrSvg(scorerUrl(c)); }
+    catch { p.querySelector(".qimg").textContent = "QR indisponible (pas de réseau) : utilise « Partager le lien »."; }
+  }
+  // Impression : la carte seule, en noir sur blanc, sur une page vierge.
+  function printQr(c, p) {
+    const w = window.open("", "_blank");
+    if (!w) { setStatus("clubStatus", "Autorise les fenêtres pour imprimer", "err"); return; }
+    const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(chanName(c))} — QR scoreur</title>
+<style>body{margin:0;font-family:Archivo,Helvetica,Arial,sans-serif;display:flex;justify-content:center;padding:40px 20px;color:#000}
+.c{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border:3px solid #000;padding:36px 40px;max-width:420px}
+.k{font-size:18px;font-weight:900;font-style:italic;letter-spacing:.05em;text-transform:uppercase}
+.t{font-size:54px;font-weight:900;font-style:italic;line-height:1}
+.q{width:300px;height:300px;margin:14px 0}.q svg{width:100%;height:100%}
+b{font-size:24px;font-style:italic}small{font-size:15px}</style>
+<div class="c"><span class="k">${esc(store.club ? store.club.name : "")}</span><span class="t">${esc(chanName(c))}</span>
+<div class="q">${p.querySelector(".qimg").innerHTML}</div><b>Scanne pour marquer les points</b>
+<small>Pas d'appli à installer : ça s'ouvre dans le navigateur.</small></div>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
+  }
+  async function shareScorer(c, btn) {
+    const url = scorerUrl(c);
+    if (navigator.share) {
+      try { await navigator.share({ title: chanName(c) + " — scoreur", text: "Marque les points de " + chanName(c) + " :", url }); return; }
+      catch (e) { if (e.name === "AbortError") return; }
+    }
+    copy(url, btn, "Partager le lien");
   }
 
   async function saveLabel(c, label, btn) {
@@ -1783,6 +1895,8 @@
   });
 
   // Un clic affiche la clé du club en entier et la copie.
+  function clubPubUrl(slug) { return new URL("club.html", location.href).href.split(/[?#]/)[0] + "?c=" + encodeURIComponent(slug); }
+  $("copyClubPub").addEventListener("click", () => { if (store.club) copy(clubPubUrl(store.club.slug), $("copyClubPub"), "Copier"); });
   $("copyClubKey").addEventListener("click", () => {
     if (!store.club) return;
     $("clubKeyShown").textContent = store.club.key;

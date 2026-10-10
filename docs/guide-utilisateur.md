@@ -156,6 +156,28 @@ Touche un terrain pour l'utiliser : le portail affiche alors son score et sa dif
 
 Onglet **Club** › « Club existant » : saisis l'identifiant et la clé du club. Sur cet appareil, les clés des terrains affichent « pas sur cet appareil » : comme un mot de passe, le serveur ne garde pas les clés, il ne peut donc pas les renvoyer. Si une montre a besoin de sa clé, utilise **Nouvelle clé montre**. L'ancienne clé cesse alors de marcher : colle la nouvelle dans la montre du terrain.
 
+### Marquer sans montre (scoreur sur téléphone)
+
+Un terrain n'a pas besoin de montre : un téléphone ou une tablette posé au bord du terrain peut marquer les points (badminton et squash).
+
+Dans la fiche du terrain, bloc **Marquer sans montre** :
+- **Ouvrir le scoreur ici** ouvre le scoreur sur l'appareil où tu es ;
+- **QR code à coller au poteau** affiche un QR code à imprimer (**Imprimer**) ou à envoyer (**Partager le lien**). Il suffit de le scanner avec l'appareil photo du téléphone : rien à installer.
+
+Dans le scoreur, choisis le sport, le format et les noms (en double, sépare les partenaires par « / », par exemple « Léa / Tom »), puis **Lancer le match**. Touche la zone de l'équipe qui marque. **↶ Annuler** retire le dernier point, **⇅ Côtés** inverse les zones à l'écran et **Fin** arrête le match : le live du terrain se vide. L'écran reste allumé pendant le match.
+
+Sans réseau, le scoreur continue de compter : les points sont envoyés dès que la connexion revient (« ⏳ hors ligne, N en attente » s'affiche en haut).
+
+⚠️ Le QR code contient la clé du terrain : toute personne qui le scanne peut marquer des points sur ce terrain. Ne le donne qu'aux personnes qui marquent. S'il circule trop, utilise **Nouvelle clé montre** : l'ancien QR ne marche plus (le scoreur affiche « Ce QR code n'est plus valable »). Pense à remettre la nouvelle clé dans la montre du terrain s'il y en a une, puis imprime le nouveau QR.
+
+Une montre et un scoreur peuvent servir sur le même terrain : c'est le match lancé le plus récemment qui s'affiche.
+
+### Page publique du club
+
+Dans l'onglet **Club**, la section **Page publique** donne le lien d'une page qui montre **tous les matchs du club en direct**. Elle ne contient aucune clé : elle permet seulement de regarder. Partage-la aux joueurs et aux parents, ou affiche-la sur la TV de la salle. Sur un grand écran, elle passe sur deux colonnes et affiche un QR code pour suivre les scores sur son téléphone.
+
+Comme le bandeau du live, un terrain s'affiche « En attente » entre deux sets, une fois le match terminé, ou si aucun point n'a été marqué depuis 10 minutes.
+
 ---
 
 ## 7. Dépannage (FAQ)
