@@ -2,14 +2,16 @@
 // Supabase (la montre et le portail ne changent que d'URL de base), plus
 // /api/score et /api/stream (SSE) qui remplacent REST + Realtime pour
 // l'overlay, le widget et le renderer. Écoute en local derrière Caddy.
+// Phase 10 : /api/clubs… (clubs multi-terrains) et leur flux SSE par club.
 import { openDb, type Store } from "./db.ts";
 import { Hub } from "./hub.ts";
-import { pickScore, sqliteAnnounceDb, sqliteNamesDb, sqliteRegisterDb, sqliteScoreDb, sqliteSyncDb } from "./stores.ts";
+import { pickScore, sqliteAnnounceDb, sqliteClubsDb, sqliteNamesDb, sqliteRegisterDb, sqliteScoreDb, sqliteSyncDb } from "./stores.ts";
 import { handleSync } from "../supabase/functions/sync/handler.ts";
 import { handleScoreText } from "../supabase/functions/score-text/handler.ts";
 import { handleChatAnnounce } from "../supabase/functions/chat-announce/handler.ts";
 import { handleNamesGet, handleNamesPost } from "../supabase/functions/names/handler.ts";
 import { handleRegisterPost } from "../supabase/functions/register/handler.ts";
+import { handleClubs } from "../supabase/functions/clubs/handler.ts";
 import { type Announcer, makeSeSender } from "../supabase/functions/_shared/announce.ts";
 
 export interface Options {
@@ -21,10 +23,12 @@ export interface Options {
 
 const MAX_BODY = 64 * 1024;
 const CHANNEL_RE = /^[A-Za-z0-9_-]{1,32}$/;
+const CLUB_STREAM_RE = /^\/api\/clubs\/([a-z0-9-]{2,20})\/stream$/;
+const CLUB_GET_RE = /^\/api\/clubs\/([a-z0-9-]{2,20})$/;
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "X-Device-Key, Content-Type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "X-Device-Key, X-Club-Key, Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
 };
 
 function text(status: number, body: string, headers: Record<string, string> = {}): Response {
@@ -81,16 +85,17 @@ export function latencyLine(channel: string, body: unknown): string | null {
   return `[latence] canal=${channel} seq=${last.sequence} attente_montre=${wait}ms rtt=${rtt ?? "?"}ms estimé=${est}`;
 }
 
-function stream(store: Store, hub: Hub, channel: string, pingMs: number): Response {
+// Flux SSE d'un sujet du hub : un canal (overlay) ou « club:<slug> » (page
+// club). initial() = messages envoyés tout de suite, avant le prochain point.
+function stream(hub: Hub, topic: string, initial: () => unknown[], pingMs: number): Response {
   const enc = new TextEncoder();
   let cleanup = () => {};
   const body = new ReadableStream<Uint8Array>({
     start(ctrl) {
       const send = (chunk: string) => ctrl.enqueue(enc.encode(chunk));
-      const unsub = hub.subscribe(channel, send);
+      const unsub = hub.subscribe(topic, send);
       if (!unsub) { ctrl.close(); return; }
-      // État courant tout de suite : l'overlay n'attend pas le prochain point.
-      send(`data: ${JSON.stringify(pickScore(store, channel))}\n\n`);
+      for (const m of initial()) send(`data: ${JSON.stringify(m)}\n\n`);
       const ping = setInterval(() => { try { send(": ping\n\n"); } catch { cleanup(); } }, pingMs);
       cleanup = () => { clearInterval(ping); unsub(); };
     },
@@ -112,6 +117,8 @@ export function makeHandler(store: Store, opts: Options = {}): (req: Request) =>
   const namesDb = sqliteNamesDb(store);
   const registerDb = sqliteRegisterDb(store);
   const syncBase = sqliteSyncDb(store);
+  const clubsDb = sqliteClubsDb(store);
+  const clubOf = store.sql.prepare("SELECT c.slug FROM devices d JOIN clubs c ON c.id = d.club_id WHERE d.channel = ?");
 
   async function route(raw: Request): Promise<Response> {
     const url = new URL(raw.url);
@@ -135,7 +142,10 @@ export function makeHandler(store: Store, opts: Options = {}): (req: Request) =>
       const body = await req.clone().json().catch(() => null);
       const res = await handleSync(req, db, sender);
       if (res.status === 200 && channel) {
-        hub.publish(channel, pickScore(store, channel));
+        const score = pickScore(store, channel);
+        hub.publish(channel, score);
+        const club = clubOf.get(channel) as { slug: string } | undefined;
+        if (club) hub.publish(`club:${club.slug}`, { channel, score });
         const lat = latencyLine(channel, body);
         if (lat) console.log(lat);
       }
@@ -159,11 +169,30 @@ export function makeHandler(store: Store, opts: Options = {}): (req: Request) =>
       if (!channel) return text(400, "channel");
       if (path === "/api/stream") {
         if (hub.size >= hub.max) return text(503, "trop de connexions");
-        return stream(store, hub, channel, pingMs);
+        return stream(hub, channel, () => [pickScore(store, channel)], pingMs);
       }
       return new Response(JSON.stringify(pickScore(store, channel)), {
         headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
+    }
+    if (path === "/api/clubs" || path.startsWith("/api/clubs/")) {
+      const sm = path.match(CLUB_STREAM_RE);
+      if (sm && req.method === "GET") {
+        const club = await clubsDb.getClub(sm[1]);
+        if (!club) return text(404, "club");
+        if (hub.size >= hub.max) return text(503, "trop de connexions");
+        // Un terrain créé après la connexion n'apparaît qu'à la reconnexion.
+        return stream(hub, `club:${sm[1]}`, () => club.terrains.map((t) => ({ channel: t.channel, score: pickScore(store, t.channel) })), pingMs);
+      }
+      const res = await handleClubs(req, clubsDb);
+      // Lecture publique enrichie du score de chaque terrain : la page club
+      // n'a besoin que d'une requête.
+      if (req.method === "GET" && res.status === 200 && CLUB_GET_RE.test(path)) {
+        const c = await res.json() as { terrains: { channel: string }[] };
+        for (const t of c.terrains) (t as Record<string, unknown>).score = pickScore(store, t.channel);
+        return new Response(JSON.stringify(c), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+      }
+      return res;
     }
     if (path === "/healthz") {
       store.sql.prepare("SELECT 1").get();
