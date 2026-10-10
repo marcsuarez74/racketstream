@@ -22,8 +22,10 @@ Branche `phase-9-activite`. Maquette de référence : « activité Garmin » (é
 - Pas de pilotage du simulateur par `osascript` (autorisation d'accessibilité refusée) ; `screencapture` échoue depuis la session. Le contrôle visuel des écrans reste à faire à la main.
 - Le preset « 11 points » de l'ancienne app n'existe plus dans la maquette.
 
-## Reste à faire
+## Clôture (2026-10-10)
 
-1. Contrôle visuel des écrans dans le simulateur, surtout sur fr55 (208 px : risques de chevauchement).
-2. Backend et affichages : l'annonce chat déclenchée par la sync gère déjà le padel. Reste à stocker `snapshot.padel` (aujourd'hui `match_state` ne garde que les colonnes à plat, donc `!score` et les affichages ne voient que les points bruts 0..3), puis le rendu padel dans l'overlay, le widget SE et le renderer VPS. La logique de pick est à répercuter partout.
-3. FitContributor (champs score dans le FIT), autres familles de montres, décision sur le fr55.
+Phase 9 terminée pour l'instant, fusionnée dans `main`.
+
+- Contrôle visuel des écrans dans le simulateur (dont fr55) : **fait, OK**.
+- **Padel côté stream reporté** : stocker `snapshot.padel` (`match_state` ne garde que les colonnes à plat, donc `!score` et les affichages ne voient que les points bruts 0..3), puis le rendu dans l'overlay, le widget SE et le renderer VPS (logique de pick à répercuter partout). Sera traité **avec le tennis**, dans un chantier commun « sports à jeux » (tennis / padel). L'annonce chat déclenchée par la sync gère déjà le padel.
+- **Pour plus tard** : FitContributor (champs score dans le FIT), autres familles de montres, décision sur le fr55.
