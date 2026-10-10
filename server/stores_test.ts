@@ -80,6 +80,17 @@ Deno.test("pick : un actif ancien l'emporte sur un terminé récent", async () =
   store.close();
 });
 
+Deno.test("pick : un match entre deux sets (set_result) compte comme en cours", async () => {
+  const store = await seeded();
+  const db = sqliteSyncDb(store);
+  await handleSync(syncReq("ENTRE001", KEY_AMI, 1, [21, 18], "set_result", 1_000), db);
+  await handleSync(syncReq("RECENT01", KEY, 1, [9, 9], "match_finished", 2_000), db);
+  store.sql.exec("UPDATE matches SET channel = 'marc'");
+  const p = pickScore(store, "marc");
+  assertEquals([p?.match_id, p?.status], ["ENTRE001", "set_result"]);
+  store.close();
+});
+
 Deno.test("pick : sans actif, le plus récent tout statut", async () => {
   const store = await seeded();
   const db = sqliteSyncDb(store);

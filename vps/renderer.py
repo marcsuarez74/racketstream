@@ -115,10 +115,10 @@ def _age_s(raw):
 
 
 def pick(channel, base, fetch=fetch_json, on_error=None, stale_s=600):
-    """Match ACTIF le plus récent, mais seulement s'il est FRAIS (sync ≤ stale_s).
+    """Match à afficher (règle commune `evaluate`), via /api/score.
 
-    /api/score renvoie l'actif le plus récent, sinon le plus récent tout statut :
-    on n'affiche que s'il est actif. Un match quitté reste « active » dans la
+    /api/score renvoie le match en cours le plus récent, sinon le plus récent
+    tout statut. Un match quitté reste « active » dans la
     base (la montre purge localement sans prévenir) : sans sync depuis stale_s,
     c'est un « fantôme » — l'overlay doit disparaître. On_error (None ou KEEP)
     si le réseau échoue.
@@ -130,13 +130,20 @@ def pick(channel, base, fetch=fetch_json, on_error=None, stale_s=600):
     return evaluate(row, stale_s)
 
 
+FINISHED_S = 300   # score final affiché 5 min (ou jusqu'au match suivant / « Terminer »)
+
+
 def evaluate(row, stale_s=600):
-    """Ligne de l'API (/api/score ou message /api/stream) → état normalisé si
-    le match est ACTIF et FRAIS, sinon None. Réévaluée à chaque image : un
-    match qui ne synchronise plus devient fantôme sans nouveau message."""
-    if isinstance(row, dict) and row.get("status") == "active":
+    """Ligne de l'API (/api/score ou message /api/stream) → état normalisé, ou
+    None. Règle commune à tous les affichages : match en cours (« active » ou
+    « set_result » entre deux sets) synchronisé depuis ≤ stale_s ; match
+    terminé (« match_finished ») pendant FINISHED_S. Réévaluée à chaque image :
+    un match qui ne synchronise plus devient fantôme sans nouveau message."""
+    status = row.get("status") if isinstance(row, dict) else None
+    limit = stale_s if status in ("active", "set_result") else FINISHED_S if status == "match_finished" else None
+    if limit is not None:
         try:
-            if _age_s(row.get("updated_at")) <= stale_s:
+            if _age_s(row.get("updated_at")) <= limit:
                 return normalize(row)
         except (TypeError, ValueError, OverflowError, KeyError, OSError):
             pass   # updated_at absent/corrompu → traité comme fantôme

@@ -2,12 +2,20 @@
 // Port de overlay/index.html (lecture publique de l'API VPS /api/score).
 // Sonde toutes les 2 s (pas d'EventSource : non garanti dans un Custom Widget
 // SE) : score affiché ≤ 2 s après chaque point. Choix du match fait côté
-// serveur (actif le plus récent, sinon le plus récent : le final reste affiché).
+// serveur (en cours le plus récent, sinon le plus récent : le final reste 5 min).
 window.addEventListener("onWidgetLoad", function (obj) {
   const f = obj.detail.fieldData;
   const API = "https://racket-stream.marc-suarez.fr";
-  // Anti-fantôme (aligné sur l'overlay et le renderer VPS).
+  // Règle commune d'affichage (overlay, renderer VPS, portail) : match en
+  // cours (active / set_result) frais ; score final 5 min.
   const STALE_MS = 600 * 1000;
+  const FINISHED_MS = 300 * 1000;
+  function shown(r) {
+    if (!r) return false;
+    const max = r.status === "active" || r.status === "set_result" ? STALE_MS
+      : r.status === "match_finished" ? FINISHED_MS : 0;
+    return max > 0 && Date.now() - r.updated_at <= max;
+  }
 
   const CHANNEL = (f.channel || "marc").replace(/[^A-Za-z0-9_-]/g, "");
   const NAME1 = f.name1 || "MOI";
@@ -68,8 +76,7 @@ window.addEventListener("onWidgetLoad", function (obj) {
       if (!res.ok) return;                     // erreur serveur : on garde l'affichage
       row = await res.json();
     } catch { return; }                        // hors ligne : idem
-    const ghost = row && row.status === "active" && Date.now() - row.updated_at > STALE_MS;
-    if (row && !ghost) { render(row); return; }
+    if (shown(row)) { render(row); return; }
     document.getElementById("bug").style.display = "none";
     document.getElementById("empty").style.display = "block";
   }

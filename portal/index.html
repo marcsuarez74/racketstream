@@ -1073,14 +1073,19 @@
   let hist = [];             // "a" | "b", du plus ancien au plus récent
   let lastWin = null;
   let ka = 0, kb = 0;
-  const isLive = (r) => !!r && r.status === "active" && Date.now() - r.updated_at <= STALE_MS;
+  // Règle commune (pickScore, overlay, renderer, page club) : « en cours » =
+  // active ou set_result (entre deux sets), frais ; score final visible 5 min.
+  const FINISHED_MS = 300 * 1000;
+  const isLive = (r) => !!r && (r.status === "active" || r.status === "set_result") && Date.now() - r.updated_at <= STALE_MS;
+  const isFinal = (r) => !!r && r.status === "match_finished" && Date.now() - r.updated_at <= FINISHED_MS;
+  let finalShown = false;
   function ago(ms) {
     const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
     if (s < 60) return `il y a ${s} s`;
     return `il y a ${Math.round(s / 60)} min`;
   }
   function onRow(r) {
-    if (r && isLive(r)) {
+    if (isLive(r) || isFinal(r)) {
       const p = seen && seen.id === r.match_id ? seen : null;
       let w = null;
       if (p) {
@@ -1112,14 +1117,15 @@
   }
   function renderLive() {
     const live = isLive(lastRow);
-    const r = live ? lastRow : null;
+    finalShown = isFinal(lastRow);
+    const r = live || finalShown ? lastRow : null;
     document.body.classList.toggle("is-live", live);
     const n1 = names ? teamName(names.name1, names.name1b) || "Équipe 1" : "Équipe 1";
     const n2 = names ? teamName(names.name2, names.name2b) || "Équipe 2" : "Équipe 2";
     const a = r ? r.score_me : 0;
     const b = r ? r.score_opp : 0;
-    $("liveBadge").textContent = live ? "En direct" : "Pas de match";
-    $("liveOff").hidden = live;
+    $("liveBadge").textContent = live ? "En direct" : finalShown ? "Terminé" : "Pas de match";
+    $("liveOff").hidden = live || finalShown;
     $("ln1").textContent = n1;
     $("ln2").textContent = n2;
     $("lp1").textContent = a;
@@ -1197,7 +1203,7 @@
     pollScore();
   }
   setInterval(pollScore, 15000);
-  setInterval(() => { if (lastRow) $("lago").textContent = ago(lastRow.updated_at); if (!isLive(lastRow) && document.body.classList.contains("is-live")) renderLive(); }, 1000);
+  setInterval(() => { if (lastRow) $("lago").textContent = ago(lastRow.updated_at); if (isLive(lastRow) !== document.body.classList.contains("is-live") || isFinal(lastRow) !== finalShown) renderLive(); }, 1000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) pollScore(); });
 
   // --- installation comme une app ---
@@ -1595,7 +1601,8 @@
   function terrainMeta(ch) {
     const r = clubScores[ch];
     if (r === undefined) return { live: false, meta: "État inconnu" };
-    return isLive(r) ? { live: true, meta: `En match · ${r.score_me}–${r.score_opp}, set ${r.current_set}` } : { live: false, meta: "Aucun match" };
+    if (isLive(r)) return { live: true, meta: `En match · ${r.score_me}–${r.score_opp}, set ${r.current_set}` };
+    return isFinal(r) ? { live: false, meta: `Terminé · ${r.sets_me}–${r.sets_opp} en sets` } : { live: false, meta: "Aucun match" };
   }
   function paintTerrainStatus() {
     let n = 0;

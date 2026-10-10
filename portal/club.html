@@ -116,9 +116,12 @@
 <script>
   const API = "https://racket-stream.marc-suarez.fr";
   // Même règle que partout (pickScore, portail, overlay, renderer) : un match
-  // n'est « en direct » que s'il est actif et a bougé il y a moins de 10 min.
+  // est « en cours » (active, ou set_result entre deux sets) s'il a bougé il y
+  // a moins de 10 min ; un match terminé reste visible 5 min (score final).
   const STALE_MS = 600 * 1000;
-  const isLive = (r) => !!r && r.status === "active" && Date.now() - r.updated_at <= STALE_MS;
+  const FINISHED_MS = 300 * 1000;
+  const isLive = (r) => !!r && (r.status === "active" || r.status === "set_result") && Date.now() - r.updated_at <= STALE_MS;
+  const visible = (r) => isLive(r) || (!!r && r.status === "match_finished" && Date.now() - r.updated_at <= FINISHED_MS);
   const $ = (id) => document.getElementById(id);
   const SRV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg>';
 
@@ -213,8 +216,9 @@
     for (const t of terrains) {
       const c = box.querySelector(`[data-ch="${CSS.escape(t.channel)}"]`);
       const r = scores[t.channel];
-      const on = isLive(r);
-      c.classList.toggle("live", on);
+      const on = visible(r);
+      const playing = !!r && r.status === "active" && on;
+      c.classList.toggle("live", isLive(r));
       c.querySelector(".tn").textContent = t.label;
       c.querySelector(".wait").hidden = on;
       c.querySelectorAll(".row").forEach((row) => { row.hidden = !on; });
@@ -227,13 +231,14 @@
       }
       const cfg = r.config || {};
       const word = cfg.sport === "squash" || cfg.sport === 2 ? "Jeu" : "Set";
-      c.querySelector(".sn").textContent = `${word} ${r.current_set}`;
+      c.querySelector(".sn").textContent = r.status === "match_finished" ? "Terminé"
+        : r.status === "set_result" ? `Fin du ${word.toLowerCase()} ${r.current_set}` : `${word} ${r.current_set}`;
       const target = cfg.targetScore || 21;
-      hot.hidden = !(r.score_me >= target - 1 && r.score_opp >= target - 1);
+      hot.hidden = !(playing && r.score_me >= target - 1 && r.score_opp >= target - 1);
       hot.textContent = `${r.score_me}–${r.score_opp}`;
       const n = names[t.channel] || {};
       const pa = pair(n.name1, n.name1b, "Équipe 1"), pb = pair(n.name2, n.name2b, "Équipe 2");
-      const s = serve[t.channel];
+      const s = playing ? serve[t.channel] : null;
       for (const [k, nm, sets, pts] of [["a", pa, r.sets_me, r.score_me], ["b", pb, r.sets_opp, r.score_opp]]) {
         const row = c.querySelector(".row." + k);
         const pn = row.querySelector(".pn");

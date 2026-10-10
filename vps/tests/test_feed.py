@@ -116,6 +116,7 @@ def test_evaluate_actif_frais():
 
 def test_evaluate_fantome_termine_ou_vide():
     assert evaluate(row(seconds_ago=601), stale_s=600) is None
-    assert evaluate(row(status="match_finished")) is None
+    assert evaluate(row(status="match_finished", seconds_ago=301)) is None
+    assert evaluate(row(status="archived")) is None
     assert evaluate(None) is None
     assert evaluate({"status": "active", "updated_at": "pas une date"}) is None

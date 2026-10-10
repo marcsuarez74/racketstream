@@ -1,8 +1,9 @@
 """Tests du pick() du renderer VPS — même logique que l'overlay (phase 5).
 
 pick() interroge /api/score (choix du match fait côté serveur : actif le plus
-récent, sinon le plus récent tout statut). Le renderer n'affiche que le match
-ACTIF et FRAIS (sync récent ≤ stale_s). Un match actif laissé sans sync
+récent, sinon le plus récent tout statut). Le renderer affiche le match en
+cours (active / set_result) s'il est FRAIS (sync ≤ stale_s), et le score final
+(match_finished) pendant 5 min. Un match actif laissé sans sync
 (quitté, montre hors ligne) devient « fantôme » et doit disparaître.
 Contrat : retourne un dict normalisé, ou None (aucun match frais, canal
 inconnu, erreur réseau).
@@ -97,10 +98,18 @@ def test_seuil_stale_parametrable():
                 stale_s=300) is not None
 
 
-def test_match_fini_jamais_affiche():
-    # Fin du contrat « le plus récent tout statut » : un match terminé ou
-    # quitté n'est plus jamais affiché — l'overlay se réinitialise.
+def test_match_fini_affiche_5_min():
+    # Score final visible 5 min, puis l'overlay se vide.
     fetch = FakeFetch([ROW_FINISHED])
+    assert pick("marc", BASE, fetch=fetch)["sets_me"] == 1
+    fetch = FakeFetch([state_row(301, status="match_finished")])
+    assert pick("marc", BASE, fetch=fetch) is None
+
+
+def test_entre_deux_sets_reste_affiche():
+    fetch = FakeFetch([state_row(5, status="set_result")])
+    assert pick("marc", BASE, fetch=fetch)["score_me"] == 5
+    fetch = FakeFetch([state_row(601, status="set_result")])
     assert pick("marc", BASE, fetch=fetch) is None
 
 
@@ -146,9 +155,3 @@ def test_sets_to_win_par_defaut_2_si_config_absent():
 def test_updated_at_iso_accepte():
     fetch = FakeFetch([{**ROW_ACTIVE, "updated_at": iso_ago(5)}])
     assert pick("marc", BASE, fetch=fetch) is not None
-
-
-def test_entre_deux_sets_non_affiche():
-    # set_result n'est pas « active » : même contrat qu'avant (filtre status=active).
-    fetch = FakeFetch([state_row(5, status="set_result")])
-    assert pick("marc", BASE, fetch=fetch) is None

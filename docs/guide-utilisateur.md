@@ -122,6 +122,8 @@ https://racket-stream-portal.marc-suarez.fr/overlay/?channel=TON_CANAL&name1=TOI
 
 Il suit **automatiquement** ton match actif — rien à toucher entre les matchs :
 - un **nouveau match** s'affiche à 0-0 dès son lancement sur la montre ;
+- entre deux sets, le score du set qui vient de finir reste affiché ;
+- à la fin du match, le **score final** reste affiché 5 minutes (ou jusqu'au match suivant) ;
 - en **fin de séance** (Enregistrer) ou en cas d'**abandon**, le bandeau disparaît aussitôt ;
 - si l'app est coupée net (batterie, plantage), il disparaît seul au bout de 10 minutes.
 
@@ -176,7 +178,7 @@ Une montre et un scoreur peuvent servir sur le même terrain : c'est le match la
 
 Dans l'onglet **Club**, la section **Page publique** donne le lien d'une page qui montre **tous les matchs du club en direct**. Elle ne contient aucune clé : elle permet seulement de regarder. Partage-la aux joueurs et aux parents, ou affiche-la sur la TV de la salle. Sur un grand écran, elle passe sur deux colonnes et affiche un QR code pour suivre les scores sur son téléphone.
 
-Comme le bandeau du live, un terrain s'affiche « En attente » entre deux sets, une fois le match terminé, ou si aucun point n'a été marqué depuis 10 minutes.
+Comme le bandeau du live, un terrain affiche « Fin du set » entre deux sets et « Terminé » avec le score final pendant 5 minutes après le match. Il repasse « En attente » ensuite, après « Fin », ou si aucun point n'a été marqué depuis 10 minutes.
 
 ---
 

@@ -105,9 +105,18 @@
   const CHANNEL = q.get("channel") || "marc";
   const SCALE = parseFloat(q.get("scale") || "1");
   const SHOW_PANELS = q.get("bg") !== "0";
-  // Anti-fantôme (aligné sur le renderer VPS) : un match quitté reste « active »
-  // en base ; sans sync depuis STALE_MS on masque l'overlay.
+  // Règle commune d'affichage (renderer VPS, portail, page club) : match en
+  // cours (active, ou set_result entre deux sets) synchronisé depuis ≤ STALE_MS
+  // — un match quitté reste « active » en base, c'est l'anti-fantôme — ; score
+  // final (match_finished) pendant FINISHED_MS.
   const STALE_MS = 600 * 1000;
+  const FINISHED_MS = 300 * 1000;
+  function shown(r) {
+    if (!r) return false;
+    const max = r.status === "active" || r.status === "set_result" ? STALE_MS
+      : r.status === "match_finished" ? FINISHED_MS : 0;
+    return max > 0 && Date.now() - r.updated_at <= max;
+  }
   // Noms : paramètres URL d'abord (rétro-compat), sinon réglages du canal
   // (portail) — c'est ce qui permet de changer d'adversaire sans toucher à OBS.
   const NAME1 = q.get("name1");
@@ -174,8 +183,7 @@
   let last = null;
   function show(row) {
     last = row;
-    const ghost = row && row.status === "active" && Date.now() - row.updated_at > STALE_MS;
-    if (row && !ghost) { render(row); return; }
+    if (shown(row)) { render(row); return; }
     document.getElementById("bug").style.display = "none";
     document.getElementById("empty").style.display = "block";
   }

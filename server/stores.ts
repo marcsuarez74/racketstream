@@ -121,8 +121,8 @@ export async function saveAnnounced(store: Store, channel: string, text: string)
 // ---------------------------------------------------------------------------
 // Pick du match à afficher : UNIQUE implémentation (overlay, widget SE,
 // renderer VPS, score-text et chat-announce passent tous par ici).
-// Match dont l'état est « active » le plus récent du canal, sinon le plus
-// récent tout statut. Tri started_at DESC, NULL en dernier.
+// Match en cours (état « active » ou « set_result » entre deux sets) le plus
+// récent du canal, sinon le plus récent tout statut (score final). Tri started_at DESC, NULL en dernier.
 
 export interface Picked {
   match_id: string;
@@ -140,7 +140,7 @@ function latest(store: Store, channel: string, activeOnly: boolean): Picked | nu
   const r = store.sql.prepare(`
     SELECT m.match_id, m.status AS match_status, s.status, s.current_set, s.score_me, s.score_opp, s.sets_me, s.sets_opp, s.config, s.updated_at
     FROM matches m JOIN match_state s ON s.match_id = m.match_id
-    WHERE m.channel = ? ${activeOnly ? "AND s.status = 'active' AND m.status = 'active'" : ""}
+    WHERE m.channel = ? ${activeOnly ? "AND s.status IN ('active', 'set_result') AND m.status = 'active'" : ""}
     ORDER BY m.started_at IS NULL, m.started_at DESC
     LIMIT 1`).get(channel) as Row | undefined;
   // Match arrêté depuis la montre (fin de séance, abandon) : plus rien à
