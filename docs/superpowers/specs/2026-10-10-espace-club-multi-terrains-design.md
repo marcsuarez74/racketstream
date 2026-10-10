@@ -119,7 +119,7 @@ Nouvelle section (même design « sportif ») :
 
 | Lot | Contenu | Dépend de |
 |---|---|---|
-| 1 | ✅ code fait le 2026-10-10 ([plan](../plans/2026-10-10-phase-10-lot-1-serveur-clubs.md)) — Serveur : table `clubs`, migration 1 → 2, routes clubs/terrains, match supplanté (§ 6), tests | — |
+| 1 | ✅ en production le 2026-10-10 (club d'essai `club-test`, clés dans `.secrets/club-test.env`) ([plan](../plans/2026-10-10-phase-10-lot-1-serveur-clubs.md)) — Serveur : table `clubs`, migration 1 → 2, routes clubs/terrains, match supplanté (§ 6), tests | — |
 | 2 | Portail : espace club (créer, terrains, clés, liens overlay) | 1 |
 | 3 | Moteur JS + tests de parité avec la montre | — |
 | 4 | Scoreur web (écrans, envoi, file hors ligne, QR) | 1, 3 |
