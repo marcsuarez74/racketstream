@@ -133,7 +133,32 @@ Paramètres : `scale` (taille), `bg=0` (fond transparent).
 
 ---
 
-## 6. Dépannage (FAQ)
+## 6. Espace club (plusieurs terrains)
+
+Un club peut diffuser plusieurs terrains en même temps. Chaque terrain a **son propre canal**, donc son bandeau de live et **sa propre clé montre**. La **clé du club** sert seulement à gérer : ajouter et renommer des terrains, créer de nouvelles clés. Elle n'envoie jamais de score.
+
+### Créer le club
+
+Dans le portail, ouvre l'onglet **Club** et remplis « Créer un club » :
+- le nom du club ;
+- un identifiant court (minuscules, chiffres, tirets), qui sert dans les liens ;
+- le **code d'invitation** reçu : il ne sert qu'une fois.
+
+La **clé du club** s'affiche **une seule fois**. Note-la : elle permet d'ouvrir le club sur un autre appareil. Le portail la mémorise aussi sur cet appareil.
+
+### Ajouter les terrains
+
+Dans « Ajouter un terrain », donne un nom (« Terrain 1 », « Central »…). La **clé de la montre** de ce terrain s'affiche : colle-la dans la montre du terrain (Garmin Connect › RacketStream › Réglages), comme à l'étape 4 de l'installation.
+
+Touche un terrain pour l'utiliser : le portail affiche alors son score et sa diffusion, sa clé montre et le **lien du bandeau pour OBS**. Les terrains apparaissent aussi dans le menu des canaux, sous le nom du club.
+
+### Ouvrir le club sur un autre appareil
+
+Onglet **Club** › « Club existant » : saisis l'identifiant et la clé du club. Sur cet appareil, les clés des terrains affichent « pas sur cet appareil » : comme un mot de passe, le serveur ne garde pas les clés, il ne peut donc pas les renvoyer. Si une montre a besoin de sa clé, utilise **Nouvelle clé montre**. L'ancienne clé cesse alors de marcher : colle la nouvelle dans la montre du terrain.
+
+---
+
+## 7. Dépannage (FAQ)
 
 **Le liseré reste rouge.**
 → Lis le code affiché (401 / 404 / t/o / -104 — voir « Le liseré de sync » ci-dessus). Le plus fréquent : **401** = clé mal recopiée ou réglages non re-synchronisés → re-valide les réglages dans GCM **puis redémarre la montre**. La reprise est automatique (backoff jusqu'à 2 min).
@@ -155,7 +180,7 @@ Paramètres : `scale` (taille), `bg=0` (fond transparent).
 
 ---
 
-## 7. Confidentialité
+## 8. Confidentialité
 
 - **Données stockées** : ton canal, les noms que tu choisis, les scores/événements de match, et l'**empreinte** (hash SHA-256) de ta clé — jamais la clé elle-même
 - **Aucun compte, aucune donnée personnelle** (pas d'email, pas de nom réel requis)
@@ -165,7 +190,7 @@ Paramètres : `scale` (taille), `bg=0` (fond transparent).
 
 ---
 
-## 8. Support
+## 9. Support
 
 - Bugs et questions : [GitHub Issues](https://github.com/marcsuarez74/badminton-score/issues)
 - Montre compatible non listée ? Demande — chaque famille d'écran nécessite une validation, ajoutées au fil des demandes.

@@ -81,12 +81,14 @@
   /* --- barre du bas « score au centre » (téléphone) --- */
   .mnav { position: fixed; z-index: 10; left: max(12px, calc(50% - 268px)); right: max(12px, calc(50% - 268px)); bottom: calc(16px + env(safe-area-inset-bottom)); height: 64px; }
   .mnav .bg { position: absolute; inset: 0; background: rgba(26, 31, 38, 0.96); clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%); }
-  .mnav .row { position: relative; height: 100%; display: grid; grid-template-columns: 1fr 96px 1fr; }
+  /* 4 colonnes égales autour du rond Match (validé sur maquette) : le rond
+     est donc un peu à gauche du centre. */
+  .mnav .row { position: relative; height: 100%; display: grid; grid-template-columns: 1fr 96px 1fr 1fr; }
   .mtab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #9AA3AE; font-size: 13px; font-weight: 800; font-style: italic; transition: color .2s; }
   .mtab:hover { color: #FFFFFF; }
   .mtab[aria-current] { color: #FFFFFF; font-weight: 900; }
   .mtab[aria-current]::after { content: ""; position: absolute; bottom: 7px; left: 50%; width: 32px; height: 4px; margin-left: -16px; transform: skewX(-24deg); background: linear-gradient(100deg, #3DD68C, #22D3EE); }
-  .mmatch { position: absolute; left: 50%; top: -28px; width: 78px; height: 78px; margin-left: -39px; border-radius: 50%; border: 4px solid #000000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; color: #04140C; background: linear-gradient(135deg, #3DD68C, #22D3EE); transition: transform .3s cubic-bezier(.3, 1.35, .4, 1); }
+  .mmatch { position: absolute; left: calc((100% - 96px) / 3 + 48px); top: -28px; width: 78px; height: 78px; margin-left: -39px; border-radius: 50%; border: 4px solid #000000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; color: #04140C; background: linear-gradient(135deg, #3DD68C, #22D3EE); transition: transform .3s cubic-bezier(.3, 1.35, .4, 1); }
   .mmatch:hover { color: #04140C; transform: scale(1.06); }
   .mmatch[aria-current] { box-shadow: 0 0 24px rgba(61, 214, 140, 0.55); }
   .ring0 { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
@@ -270,6 +272,35 @@
   .okcard .t svg { flex: none; animation: stamp .35s cubic-bezier(.2, .9, .25, 1.3); }
   .okcard p { font-size: 14px; color: #C9D1DA; line-height: 1.45; }
   .okcard .kbox { padding: 14px; background: #000000; font-size: 15px; font-weight: 700; color: #3DD68C; word-break: break-all; }
+
+  /* ================= CLUB ================= */
+  .clubhead { padding: 24px 16px 0; display: flex; align-items: flex-end; gap: 12px; }
+  .clubhead .cw { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .clubhead .sl { font-size: 13px; font-weight: 800; font-style: italic; color: #4DABF7; letter-spacing: .04em; }
+  .clubhead .cn { font-size: 34px; font-weight: 900; font-style: italic; font-stretch: 68%; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .clubhead .lv { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; font-size: 14px; font-weight: 800; font-style: italic; color: #3DD68C; white-space: nowrap; }
+  .clubhead .lv::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .clubhead .lv.off { color: #9AA3AE; }
+  .terrains { padding: 16px 16px 0; display: flex; flex-direction: column; gap: 8px; }
+  .tpanel { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 12px; animation: inUp .4s cubic-bezier(.2, .9, .25, 1) both; }
+  .tpanel .tt { display: none; }
+  .tpanel .dk { display: none; font-size: 14px; font-weight: 700; color: #C9D1DA; }
+  .tpanel .acts { display: flex; gap: 22px; }
+  .codebox .kv.none { font-size: 14px; font-weight: 600; color: #9AA3AE; font-style: italic; letter-spacing: 0; }
+  .linkcyan { align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: transparent; color: #22D3EE; font-size: 14px; font-weight: 800; }
+  .clubkey { padding: 30px 16px 0; display: flex; flex-direction: column; gap: 10px; }
+  .clubkey p { font-size: 14px; color: #9AA3AE; line-height: 1.45; }
+  .addrow { display: flex; flex-direction: column; gap: 12px; }
+  .chanmenu .mh { padding: 6px 14px 4px; font-size: 12px; font-weight: 800; font-style: italic; letter-spacing: .06em; text-transform: uppercase; color: #9AA3AE; }
+  .chanmenu .mh.c { margin-top: 4px; padding-top: 12px; border-top: 1px solid #2A313B; color: #4DABF7; }
+  .chanmenu a + a { margin-top: 0; border-top: 0; }
+  /* Téléphone : une seule colonne, « Ajouter un terrain » avant la clé du club. */
+  @media (max-width: 1023.98px) {
+    #v-club:not([hidden]) { display: flex; flex-direction: column; }
+    #v-club .ccol, #clubOpen:not([hidden]) { display: contents; }
+    #clubKeySec { order: 1; }
+    #tSlot { display: none; }
+  }
   .chanst { padding: 16px 16px 0; }
 
   /* --- animations --- */
@@ -410,6 +441,21 @@
     .card, .card.c2 { padding: 26px 28px 30px; background: rgba(26, 31, 38, 0.55); border-top: 3px solid #3DD68C; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%); }
     .card.c2 { border-top-color: #4DABF7; }
     .chanst { grid-column: 1 / -1; padding: 0; }
+    .cards.one { grid-template-columns: minmax(0, 1fr); }
+    .clubhead { padding: 26px 0 0; }
+    .clubhead .cn { font-size: 40px; }
+    .clubhead .lv { font-size: 15px; }
+    .terrains { padding: 18px 0 0; }
+    .clubkey { padding: 26px 0 0; }
+    .tcard { gap: 12px; }
+    .tpanel { padding: 0; gap: 12px; }
+    .tpanel .tt { display: flex; align-items: baseline; gap: 12px; order: -1; }
+    .tpanel .tt h2 { flex-grow: 1; min-width: 0; font-size: 32px; font-weight: 900; font-style: italic; font-stretch: 72%; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tpanel .dk { display: block; }
+    .tpanel .codebox .k, .tpanel .acts .ren { display: none; }
+    .addrow { flex-direction: row; gap: 6px; }
+    .addrow .ci { width: auto; flex-grow: 1; min-width: 0; }
+    .addrow .cta { flex: none; min-width: 150px; height: 52px; font-size: 18px; clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -439,6 +485,7 @@
     <a href="#diffusion" class="tn" data-tab="diffusion">Diffusion</a>
     <a href="#match" class="tnMatch" data-tab="match" data-score-label><span class="ring0" aria-hidden="true"></span><span class="sc" data-score>0–0</span><span class="lb">Match</span></a>
     <a href="#canaux" class="tn" data-tab="canaux">Canaux</a>
+    <a href="#club" class="tn" data-tab="club">Club</a>
   </nav>
   <div class="chanwrap"><button class="chanpill" id="chanM" aria-haspopup="true" aria-expanded="false"><span class="dot"></span><span class="nm">Ajouter un canal</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA3AE" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="chanmenu" role="menu" hidden></div></div>
 </header>
@@ -659,6 +706,82 @@
       <p class="status chanst" id="chanStatus" role="status"></p>
     </div>
   </div>
+
+  <!-- ============ CLUB ============ -->
+  <div id="v-club" data-view="club" class="grid c club" hidden>
+    <div class="ccol">
+      <header class="vh col">
+        <h1 class="h1">Club</h1>
+        <p class="lead" id="clubLead"></p>
+      </header>
+      <div id="clubOpen" hidden>
+        <section class="clubhead">
+          <div class="cw">
+            <span class="sl" id="clubSlug"></span>
+            <h2 class="cn" id="clubName"></h2>
+          </div>
+          <span class="lv" id="clubLive"></span>
+        </section>
+        <section class="terrains" id="terrains" aria-label="Terrains du club"></section>
+        <p class="nochans" id="noTerrains">Aucun terrain pour l'instant : ajoute le premier ci-dessous.</p>
+        <section class="clubkey" id="clubKeySec">
+          <h2 class="h2">Clé du club</h2>
+          <p>Elle sert à gérer les terrains, pas à envoyer des points. Garde-la pour ouvrir le club sur un autre appareil.</p>
+          <div class="copyrow">
+            <div class="codebox"><span class="k">Clé</span><span class="kv" id="clubKeyShown"></span></div>
+            <button class="cbtn" id="copyClubKey"><span>Copier</span></button>
+          </div>
+          <button class="linkdanger" id="removeClub">Retirer ce club de l'appareil</button>
+        </section>
+      </div>
+    </div>
+    <div class="cards" id="clubNone">
+      <section class="card">
+        <h2 class="h2">Créer un club</h2>
+        <label for="clubNewName">Nom du club</label>
+        <input id="clubNewName" class="ci" maxlength="48" placeholder="BC Paris 15" autocomplete="off">
+        <label for="clubNewSlug">Identifiant court, utilisé dans les liens</label>
+        <input id="clubNewSlug" class="ci" maxlength="20" placeholder="bcparis" autocomplete="off" autocapitalize="none" spellcheck="false">
+        <label for="clubInvite">Code d'invitation</label>
+        <input id="clubInvite" class="ci" maxlength="64" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button class="cta m" id="createClub">Créer le club</button>
+        <div class="okcard" id="clubOut" role="status" hidden>
+          <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span>Club <span id="clubOutName"></span> créé</span></span>
+          <p>Voici la clé du club : elle sert à gérer les terrains depuis un autre appareil. Note-la en lieu sûr, elle n'est affichée en entier qu'une fois.</p>
+          <div class="kbox" id="clubOutKey"></div>
+          <button class="cbtn big" id="copyClubOut"><span>Copier la clé</span></button>
+          <button class="ghost" id="clubContinue">J'ai noté la clé, continuer</button>
+        </div>
+      </section>
+      <section class="card c2">
+        <h2 class="h2">Club existant</h2>
+        <label for="clubSlugIn">Identifiant du club</label>
+        <input id="clubSlugIn" class="ci" maxlength="20" placeholder="bcparis" autocomplete="off" autocapitalize="none" spellcheck="false">
+        <label for="clubKeyIn">Clé du club</label>
+        <input id="clubKeyIn" class="ci" type="password" placeholder="la clé notée à la création" autocomplete="off">
+        <button class="ghost" id="openClub">Ajouter</button>
+      </section>
+      <p class="status chanst" id="clubStatus0" role="status"></p>
+    </div>
+    <div class="cards one" id="clubCards" hidden>
+      <section class="card tcard" id="tSlot" hidden></section>
+      <section class="card c2 addt">
+        <h2 class="h2">Ajouter un terrain</h2>
+        <label for="newTerrain">Nom affiché</label>
+        <div class="addrow">
+          <input id="newTerrain" class="ci" maxlength="24" placeholder="Terrain 1" autocomplete="off">
+          <button class="cta m" id="addTerrain"><span class="mob">Ajouter le terrain</span><span class="desk">Ajouter</span></button>
+        </div>
+        <div class="okcard" id="terrainOut" role="status" hidden>
+          <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span><span id="terrainOutName"></span> ajouté</span></span>
+          <p>Colle cette clé dans la montre du terrain (Garmin Connect › RacketStream › Réglages). Elle reste mémorisée sur cet appareil.</p>
+          <div class="kbox" id="terrainOutKey"></div>
+          <button class="cbtn big" id="copyTerrainOut"><span>Copier la clé</span></button>
+        </div>
+      </section>
+      <p class="status chanst" id="clubStatus" role="status"></p>
+    </div>
+  </div>
 </main>
 
 <nav class="mnav" aria-label="Navigation">
@@ -667,6 +790,7 @@
     <a href="#diffusion" class="mtab" data-tab="diffusion"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>Diffusion</a>
     <span></span>
     <a href="#canaux" class="mtab" data-tab="canaux"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Canaux</a>
+    <a href="#club" class="mtab" data-tab="club"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12h6M12 9v6"/></svg>Club</a>
   </div>
   <a href="#match" class="mmatch" data-tab="match" data-score-label><span class="ring0" aria-hidden="true"></span><span class="sc" data-score>0–0</span><span class="lb">Match</span></a>
 </nav>
@@ -697,6 +821,8 @@
     if (!Array.isArray(s.channels)) {
       s = s.channel ? { channels: [{ channel: s.channel, key: s.key || "" }], active: s.channel } : { channels: [], active: null };
     }
+    // Club géré depuis cet appareil (phase 10) : { slug, name, key }.
+    if (!s.club || !s.club.slug) s.club = null;
     if (!s.channels.some((c) => c.channel === s.active)) s.active = s.channels.length ? s.channels[0].channel : null;
     return s;
   }
@@ -713,6 +839,8 @@
     channelChanged();
   }
   const mask = (k) => k ? "•••• " + k.slice(-4).toUpperCase() : "pas de clé";
+  // Un terrain de club s'affiche sous son nom (« Terrain 1 »), pas son canal.
+  const chanName = (c) => c.label || c.channel;
 
   function setStatus(id, msg, cls) {
     const s = $(id);
@@ -735,8 +863,8 @@
     return ok;
   }
 
-  // --- navigation (#match, #diffusion, #canaux) ---
-  const TABS = ["match", "diffusion", "canaux"];
+  // --- navigation (#match, #diffusion, #canaux, #club) ---
+  const TABS = ["match", "diffusion", "canaux", "club"];
   function route() {
     let tab = location.hash.slice(1);
     if (!TABS.includes(tab)) tab = active() ? "match" : "canaux";
@@ -746,6 +874,7 @@
       if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     if (tab === "canaux") renderChannels();
+    if (tab === "club") renderClub(true); else closeClubStream();
     if (tab === "diffusion") fitPreview();
     syncTwitch();
     window.scrollTo(0, 0);
@@ -756,8 +885,8 @@
   function renderHeader() {
     const c = active();
     for (const id of ["chanM", "chanD"]) {
-      $(id).querySelector(".nm").textContent = c ? c.channel : "Ajouter un canal";
-      $(id).setAttribute("aria-label", c ? `Canal ${c.channel}, changer de canal` : "Aucun canal, en ajouter un");
+      $(id).querySelector(".nm").textContent = c ? chanName(c) : "Ajouter un canal";
+      $(id).setAttribute("aria-label", c ? `Canal ${chanName(c)}, changer de canal` : "Aucun canal, en ajouter un");
     }
     closeMenus();
     $("noChan").hidden = !!c;
@@ -772,30 +901,47 @@
   function openMenu(btn) {
     const menu = btn.nextElementSibling;
     menu.textContent = "";
-    store.channels.forEach((c) => {
-      const on = c.channel === store.active;
-      const it = document.createElement("button");
-      it.setAttribute("role", "menuitemradio");
-      it.setAttribute("aria-checked", String(on));
-      it.innerHTML = "<i></i><span></span><em></em>";
-      it.querySelector("span").textContent = c.channel;
-      it.querySelector("em").textContent = on ? "Actif" : "";
-      it.addEventListener("click", () => {
-        closeMenus();
-        if (on) return;
-        store.active = c.channel;
-        saveStore();
-        channelChanged();
-        if (document.body.dataset.view === "canaux") paintChannels();
+    // Avec un club : deux groupes, « Mes montres » puis les terrains du club.
+    const club = store.club;
+    const groups = [{ name: club ? "Mes montres" : "", items: store.channels.filter((c) => !c.club) }];
+    if (club) groups.push({ name: club.name, items: store.channels.filter((c) => c.club === club.slug), c: true });
+    groups.filter((g) => g.items.length).forEach((g, gi) => {
+      if (g.name) {
+        const h = document.createElement("span");
+        h.className = "mh" + (g.c && gi ? " c" : "");
+        h.textContent = g.name;
+        menu.appendChild(h);
+      }
+      g.items.forEach((c) => {
+        const on = c.channel === store.active;
+        const it = document.createElement("button");
+        it.setAttribute("role", "menuitemradio");
+        it.setAttribute("aria-checked", String(on));
+        it.innerHTML = "<i></i><span></span><em></em>";
+        it.querySelector("span").textContent = chanName(c);
+        it.querySelector("em").textContent = on ? "Actif" : "";
+        it.addEventListener("click", () => {
+          closeMenus();
+          if (on) return;
+          store.active = c.channel;
+          saveStore();
+          channelChanged();
+          if (document.body.dataset.view === "canaux") paintChannels();
+          if (document.body.dataset.view === "club") paintClub();
+        });
+        menu.appendChild(it);
       });
-      menu.appendChild(it);
     });
-    const manage = document.createElement("a");
-    manage.href = "#canaux";
-    manage.setAttribute("role", "menuitem");
-    manage.textContent = "Gérer les canaux";
-    manage.addEventListener("click", closeMenus);
-    menu.appendChild(manage);
+    const links = [["#canaux", "Gérer les canaux"]];
+    if (club) links.push(["#club", "Gérer le club"]);
+    for (const [href, txt] of links) {
+      const a = document.createElement("a");
+      a.href = href;
+      a.setAttribute("role", "menuitem");
+      a.textContent = txt;
+      a.addEventListener("click", closeMenus);
+      menu.appendChild(a);
+    }
     menu.hidden = false;
     btn.setAttribute("aria-expanded", "true");
     menu.querySelector("button, a").focus();
@@ -1159,16 +1305,18 @@
     } catch { statusCache[ch] = null; }
     paintChannels();
   }
+  // Les terrains de club ont leur page : la page Canaux ne liste que les montres.
+  const watches = () => store.channels.filter((c) => !c.club);
   let fresh = null; // canal tout juste créé ou ajouté : arrive avec un « claquement »
   function renderChannels() {
     paintChannels(true);
-    store.channels.forEach((c) => fetchStatus(c.channel));
+    watches().forEach((c) => fetchStatus(c.channel));
   }
   function paintChannels(anim) {
     const box = $("chans");
     box.textContent = "";
-    $("noChans").hidden = store.channels.length > 0;
-    store.channels.forEach((c, i) => {
+    $("noChans").hidden = watches().length > 0;
+    watches().forEach((c, i) => {
       const on = c.channel === store.active;
       const st = statusCache[c.channel];
       const b = document.createElement("button");
@@ -1189,7 +1337,8 @@
       box.appendChild(b);
     });
     fresh = null;
-    const c = active();
+    // Un terrain de club actif se gère dans la page Club.
+    const c = active() && !active().club ? active() : null;
     $("keyCard").hidden = !c;
     if (c) { $("keyShown").textContent = mask(c.key); $("twitch").value = c.twitch || ""; }
   }
@@ -1266,6 +1415,395 @@
     sending($("create"), false, "Créer le canal");
   });
   $("copyReg").addEventListener("click", () => copy($("regKey").textContent, $("copyReg"), "Copier la clé"));
+
+  // ================= CLUB =================
+  // Un club possède des terrains ; chaque terrain est un canal avec sa propre
+  // clé (la seule qui envoie des points). La clé du club ne sert qu'à gérer.
+  // POST  /api/clubs                          (code d'invitation) → création
+  // GET   /api/clubs/:slug                    (public)      → terrains + scores
+  // GET   /api/clubs/:slug/auth               (X-Club-Key)  → vérifie la clé
+  // POST  /api/clubs/:slug/terrains           (X-Club-Key)  → nouveau terrain
+  // PATCH /api/clubs/:slug/terrains/:canal    (X-Club-Key)  → renommer
+  // POST  /api/clubs/:slug/terrains/:canal/key (X-Club-Key) → nouvelle clé
+  // GET   /api/clubs/:slug/stream (SSE)                     → scores en direct
+  const clubScores = {};        // canal → dernière ligne de score (null : pas de match)
+  let clubEs = null;
+  let clubJustCreated = false;  // la clé du club reste affichée jusqu'à « continuer »
+  let renaming = null;          // terrain dont le nom est en cours de modification
+  let regen = null;             // { channel, key } : nouvelle clé tout juste créée
+  let freshTerrain = null;      // terrain tout juste ajouté : arrive avec un « claquement »
+  const desk = matchMedia("(min-width: 1024px)");
+  const terrains = () => store.club ? store.channels.filter((c) => c.club === store.club.slug) : [];
+  const clubPath = (...seg) => "/" + [store.club.slug, ...seg].map(encodeURIComponent).join("/");
+
+  async function clubApi(path, opt = {}, key = store.club && store.club.key) {
+    const headers = {};
+    if (opt.body) headers["Content-Type"] = "application/json";
+    if (key) headers["X-Club-Key"] = key;
+    const res = await fetch(`${API}/api/clubs${path}`, { ...opt, headers, cache: "no-store" });
+    let data = null;
+    try { data = await res.json(); } catch { /* corps vide */ }
+    return { status: res.status, data };
+  }
+  function clubError(status, id = "clubStatus") {
+    setStatus(id, status === 401
+      ? "Clé du club refusée : retire le club de l'appareil puis rouvre-le avec la bonne clé"
+      : status === 409 ? "Limite de 16 terrains atteinte" : "Erreur " + status + " : réessaie", "err");
+  }
+
+  // Fusionne la liste du serveur dans les canaux mémorisés : on garde les clés
+  // déjà connues (y compris celle d'un terrain ajouté comme simple montre).
+  function mergeTerrains(list) {
+    const slug = store.club.slug;
+    const ids = new Set(list.map((t) => t.channel));
+    const prev = {};
+    store.channels.forEach((c) => { if (ids.has(c.channel)) prev[c.channel] = c; });
+    const before = store.active;
+    store.channels = store.channels
+      .filter((c) => !ids.has(c.channel) && c.club !== slug)
+      .concat(list.map((t) => ({ ...(prev[t.channel] || {}), channel: t.channel, key: (prev[t.channel] && prev[t.channel].key) || "", club: slug, label: t.label })));
+    if (!store.channels.some((c) => c.channel === store.active)) store.active = store.channels.length ? store.channels[0].channel : null;
+    saveStore();
+    if (store.active !== before) channelChanged(); else renderHeader();
+  }
+
+  async function loadClub() {
+    const slug = store.club.slug;
+    try {
+      const { status, data } = await clubApi(clubPath(), {}, null);
+      if (!store.club || store.club.slug !== slug) return;
+      if (status === 200 && data) {
+        store.club.name = data.name;
+        data.terrains.forEach((t) => { clubScores[t.channel] = t.score; });
+        mergeTerrains(data.terrains);
+        paintClub();
+      } else if (status === 404) setStatus("clubStatus", "Ce club n'existe pas sur le serveur", "err");
+      else setStatus("clubStatus", "Erreur " + status + " : la liste des terrains n'est peut-être pas à jour", "err");
+    } catch {
+      setStatus("clubStatus", "Pas de réseau : la liste des terrains n'est peut-être pas à jour", "err");
+    }
+  }
+
+  // Flux du club : ouvert seulement quand la page Club est affichée.
+  function openClubStream() {
+    closeClubStream();
+    if (!store.club) return;
+    const slug = store.club.slug;
+    clubEs = new EventSource(`${API}/api/clubs/${encodeURIComponent(slug)}/stream`);
+    clubEs.onmessage = (e) => {
+      let m;
+      try { m = JSON.parse(e.data); } catch { return; /* message invalide */ }
+      if (!m || !m.channel || !store.club || store.club.slug !== slug) return;
+      clubScores[m.channel] = m.score;
+      paintTerrainStatus();
+    };
+  }
+  function closeClubStream() { if (clubEs) { clubEs.close(); clubEs = null; } }
+  // Sans point depuis 10 min, un match n'est plus « en cours » : on relit l'heure.
+  setInterval(() => { if (clubEs) paintTerrainStatus(); }, 30000);
+
+  function renderClub(anim) {
+    paintClub(anim);
+    if (store.club && !clubJustCreated) {
+      loadClub();
+      if (!clubEs) openClubStream();
+    }
+  }
+
+  function paintClub(anim) {
+    const club = store.club;
+    const open = !!club && !clubJustCreated;
+    $("clubLead").innerHTML = open
+      ? 'Les terrains de ton club. <span class="mob">Touche</span><span class="desk">Clique sur</span> un terrain pour l’utiliser et voir sa clé et son lien OBS.'
+      : "Un club regroupe plusieurs terrains, chacun avec son bandeau de live.";
+    $("clubOpen").hidden = !open;
+    $("clubNone").hidden = open;
+    $("clubCards").hidden = !open;
+    if (!open) return;
+    $("clubSlug").textContent = "CLUB · " + club.slug;
+    $("clubName").textContent = club.name;
+    $("clubKeyShown").textContent = mask(club.key);
+    const box = $("terrains");
+    box.textContent = "";
+    const list = terrains();
+    $("noTerrains").hidden = list.length > 0;
+    $("newTerrain").placeholder = "Terrain " + (list.length + 1);
+    const cur = active() && active().club === club.slug ? active() : null;
+    list.forEach((c, i) => {
+      const on = c === cur;
+      const b = document.createElement("button");
+      b.className = "chan" + (c.channel === freshTerrain ? " slamIn" : "");
+      b.dataset.channel = c.channel;
+      if (anim) b.style.animationDelay = (i * 0.08) + "s"; else if (c.channel !== freshTerrain) b.style.animation = "none";
+      b.setAttribute("aria-pressed", String(on));
+      b.innerHTML = `<span class="bar"></span><span class="txt"><span class="nm"></span><span class="meta"></span></span><span class="tag"></span>`;
+      b.querySelector(".nm").textContent = chanName(c);
+      b.querySelector(".tag").textContent = on ? "Actif" : "";
+      b.addEventListener("click", () => {
+        if (store.active !== c.channel) {
+          store.active = c.channel;
+          saveStore();
+          channelChanged();
+          renaming = null;
+          regen = null;
+        }
+        paintClub();
+      });
+      box.appendChild(b);
+      // Téléphone : le détail se déplie sous le terrain actif.
+      if (on && !desk.matches) box.appendChild(terrainPanel(c));
+    });
+    freshTerrain = null;
+    // Ordinateur : le détail est une carte dans la colonne de droite.
+    $("tSlot").textContent = "";
+    $("tSlot").hidden = !cur;
+    if (cur && desk.matches) $("tSlot").appendChild(terrainPanel(cur));
+    paintTerrainStatus();
+  }
+  desk.addEventListener("change", () => { if (document.body.dataset.view === "club") paintClub(); });
+
+  function terrainMeta(ch) {
+    const r = clubScores[ch];
+    if (r === undefined) return { live: false, meta: "État inconnu" };
+    return isLive(r) ? { live: true, meta: `En match · ${r.score_me}–${r.score_opp}, set ${r.current_set}` } : { live: false, meta: "Aucun match" };
+  }
+  function paintTerrainStatus() {
+    let n = 0;
+    document.querySelectorAll("#terrains .chan").forEach((b) => {
+      const st = terrainMeta(b.dataset.channel);
+      if (st.live) n++;
+      b.querySelector(".bar").classList.toggle("on", st.live);
+      b.querySelector(".meta").textContent = st.meta;
+    });
+    $("clubLive").textContent = n ? `${n} en match` : "Aucun match";
+    $("clubLive").classList.toggle("off", !n);
+  }
+
+  // Détail du terrain actif : clé de la montre, lien OBS, renommer, nouvelle clé.
+  // La clé n'est connue que de l'appareil qui l'a créée (le serveur n'en garde
+  // qu'une empreinte) : ailleurs, seule une nouvelle clé est possible.
+  function terrainPanel(c) {
+    const p = document.createElement("div");
+    p.className = "tpanel";
+    p.innerHTML = `
+      <div class="tt"><h2></h2><button class="linkcyan" data-act="rename">Renommer</button></div>
+      <div class="copyrow rrow" hidden><input class="ci" maxlength="24" aria-label="Nouveau nom du terrain" autocomplete="off"><button class="cbtn wide" data-act="save"><span>Enregistrer</span></button></div>
+      <span class="dk">Clé de la montre de ce terrain</span>
+      <div class="copyrow"><div class="codebox"><span class="k">Clé montre</span><span class="kv"></span></div><button class="cbtn" data-act="copyKey"><span>Copier</span></button></div>
+      <span class="dk">Lien du bandeau pour OBS</span>
+      <div class="copyrow"><div class="codebox"><span class="k">OBS</span><span class="obs"></span></div><button class="cbtn" data-act="copyObs"><span>Copier</span></button></div>
+      <div class="okcard" role="status" hidden>
+        <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span>Nouvelle clé</span></span>
+        <p>Colle-la dans la montre du terrain (Garmin Connect › RacketStream › Réglages). L'ancienne clé ne marche plus.</p>
+        <div class="kbox"></div>
+        <button class="cbtn big" data-act="copyNew"><span>Copier la clé</span></button>
+      </div>
+      <div class="acts"><button class="linkcyan ren" data-act="rename">Renommer</button><button class="linkdanger" data-act="newKey"><span class="mob">Nouvelle clé montre</span><span class="desk">Nouvelle clé montre (l'ancienne ne marchera plus)</span></button></div>`;
+    p.querySelector(".tt h2").textContent = chanName(c);
+    const kv = p.querySelector(".kv");
+    kv.textContent = c.key ? mask(c.key) : "pas sur cet appareil";
+    kv.classList.toggle("none", !c.key);
+    p.querySelector('[data-act="copyKey"]').disabled = !c.key;
+    p.querySelector(".obs").textContent = overlayUrl(c.channel).replace(/^https?:\/\//, "");
+    const input = p.querySelector(".rrow input");
+    if (renaming === c.channel) {
+      p.querySelector(".rrow").hidden = false;
+      input.value = chanName(c);
+    }
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") saveLabel(c, input.value.trim(), p.querySelector('[data-act="save"]')); });
+    if (regen && regen.channel === c.channel) {
+      p.querySelector(".okcard").hidden = false;
+      p.querySelector(".kbox").textContent = regen.key;
+    }
+    p.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-act]");
+      if (!b) return;
+      const act = b.dataset.act;
+      if (act === "copyKey" && c.key) { kv.textContent = c.key; copy(c.key, b, "Copier"); }
+      else if (act === "copyObs") copy(overlayUrl(c.channel), b, "Copier");
+      else if (act === "copyNew" && regen) copy(regen.key, b, "Copier la clé");
+      else if (act === "rename") {
+        renaming = renaming === c.channel ? null : c.channel;
+        paintClub();
+        const i = document.querySelector(".tpanel .rrow:not([hidden]) input");
+        if (i) { i.focus(); i.select(); }
+      }
+      else if (act === "save") saveLabel(c, input.value.trim(), b);
+      else if (act === "newKey") renewKey(c, b);
+    });
+    return p;
+  }
+
+  async function saveLabel(c, label, btn) {
+    if (!label) { setStatus("clubStatus", "Donne un nom au terrain", "err"); return; }
+    setStatus("clubStatus", "");
+    btn.disabled = true;
+    try {
+      const { status } = await clubApi(clubPath("terrains", c.channel), { method: "PATCH", body: JSON.stringify({ label }) });
+      if (status === 200) {
+        c.label = label;
+        saveStore();
+        renaming = null;
+        renderHeader();
+        paintClub();
+        setStatus("clubStatus", "Terrain renommé", "ok");
+      } else clubError(status);
+    } catch {
+      setStatus("clubStatus", "Pas de réseau : réessaie", "err");
+    }
+    btn.disabled = false;
+  }
+
+  async function renewKey(c, btn) {
+    if (!confirm(`Créer une nouvelle clé pour « ${chanName(c)} » ?\n\nL'ancienne clé ne marchera plus : il faudra coller la nouvelle dans la montre du terrain.`)) return;
+    setStatus("clubStatus", "");
+    btn.disabled = true;
+    try {
+      const { status, data } = await clubApi(clubPath("terrains", c.channel, "key"), { method: "POST" });
+      if (status === 200 && data && data.key) {
+        c.key = data.key;
+        saveStore();
+        regen = { channel: c.channel, key: data.key };
+        renaming = null;
+        paintClub();
+      } else clubError(status);
+    } catch {
+      setStatus("clubStatus", "Pas de réseau : réessaie", "err");
+    }
+    btn.disabled = false;
+  }
+
+  $("addTerrain").addEventListener("click", async () => {
+    const label = $("newTerrain").value.trim();
+    if (!label) { setStatus("clubStatus", "Donne un nom au terrain", "err"); return; }
+    const btn = $("addTerrain");
+    btn.disabled = true;
+    setStatus("clubStatus", "");
+    try {
+      const { status, data } = await clubApi(clubPath("terrains"), { method: "POST", body: JSON.stringify({ label }) });
+      if (status === 200 && data && data.key) {
+        store.channels.push({ channel: data.channel, key: data.key, club: store.club.slug, label: data.label });
+        store.active = data.channel;
+        saveStore();
+        channelChanged();
+        $("terrainOutName").textContent = data.label;
+        $("terrainOutKey").textContent = data.key;
+        $("terrainOut").hidden = false;
+        $("newTerrain").value = "";
+        freshTerrain = data.channel;
+        renaming = null;
+        regen = null;
+        paintClub();
+        // Un terrain créé après la connexion n'arrive dans le flux qu'à la reconnexion.
+        openClubStream();
+      } else clubError(status);
+    } catch {
+      setStatus("clubStatus", "Pas de réseau : réessaie", "err");
+    }
+    btn.disabled = false;
+  });
+  $("copyTerrainOut").addEventListener("click", () => copy($("terrainOutKey").textContent, $("copyTerrainOut"), "Copier la clé"));
+
+  // Identifiant du club : minuscules, chiffres et tirets (comme dans les liens).
+  for (const id of ["clubNewSlug", "clubSlugIn"]) {
+    $(id).addEventListener("input", (e) => {
+      const v = e.target.value;
+      const clean = v.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      if (v !== clean) e.target.value = clean;
+    });
+  }
+
+  $("createClub").addEventListener("click", async () => {
+    const name = $("clubNewName").value.trim();
+    const slug = $("clubNewSlug").value.trim();
+    const invite = $("clubInvite").value.trim();
+    if (!name || !slug || !invite) { setStatus("clubStatus0", "Nom, identifiant et code d'invitation requis", "err"); return; }
+    sending($("createClub"), true, "Création…");
+    setStatus("clubStatus0", "");
+    try {
+      const { status, data } = await clubApi("", { method: "POST", body: JSON.stringify({ slug, name, invite }) }, null);
+      if (status === 200 && data && data.clubKey) {
+        // Mémorisé tout de suite : la clé n'est pas perdue si on quitte la page.
+        store.club = { slug: data.slug, name, key: data.clubKey };
+        saveStore();
+        clubJustCreated = true;
+        $("clubOutName").textContent = name;
+        $("clubOutKey").textContent = data.clubKey;
+        $("clubOut").hidden = false;
+        $("clubOut").scrollIntoView({ behavior: "smooth", block: "center" });
+        for (const id of ["clubNewName", "clubNewSlug", "clubInvite"]) $(id).value = "";
+        renderHeader();
+      } else if (status === 403) {
+        setStatus("clubStatus0", "Code d'invitation inconnu ou déjà utilisé", "err");
+      } else if (status === 409) {
+        setStatus("clubStatus0", "Cet identifiant est déjà pris : choisis-en un autre", "err");
+      } else if (status === 400 && data && data.error === "slug") {
+        setStatus("clubStatus0", "Identifiant : 2 à 20 caractères, lettres minuscules, chiffres ou tirets (pas au début ni à la fin)", "err");
+      } else {
+        setStatus("clubStatus0", "Erreur " + status + " : réessaie", "err");
+      }
+    } catch {
+      setStatus("clubStatus0", "Pas de réseau : réessaie", "err");
+    }
+    sending($("createClub"), false, "Créer le club");
+  });
+  $("copyClubOut").addEventListener("click", () => copy($("clubOutKey").textContent, $("copyClubOut"), "Copier la clé"));
+  $("clubContinue").addEventListener("click", () => {
+    clubJustCreated = false;
+    $("clubOut").hidden = true;
+    renderClub(true);
+  });
+
+  $("openClub").addEventListener("click", async () => {
+    const slug = $("clubSlugIn").value.trim();
+    const key = $("clubKeyIn").value.trim();
+    if (!slug || !key) { setStatus("clubStatus0", "Identifiant et clé du club requis", "err"); return; }
+    const btn = $("openClub");
+    btn.disabled = true;
+    setStatus("clubStatus0", "");
+    try {
+      const { status, data } = await clubApi("/" + encodeURIComponent(slug) + "/auth", {}, key);
+      if (status === 200 && data) {
+        store.club = { slug, name: data.name, key };
+        saveStore();
+        $("clubSlugIn").value = "";
+        $("clubKeyIn").value = "";
+        renderHeader();
+        renderClub(true);
+        setStatus("clubStatus", `Club « ${data.name} » ajouté`, "ok");
+      } else if (status === 401) {
+        setStatus("clubStatus0", "Identifiant ou clé du club incorrect", "err");
+      } else {
+        setStatus("clubStatus0", "Erreur " + status + " : réessaie", "err");
+      }
+    } catch {
+      setStatus("clubStatus0", "Pas de réseau : réessaie", "err");
+    }
+    btn.disabled = false;
+  });
+
+  // Un clic affiche la clé du club en entier et la copie.
+  $("copyClubKey").addEventListener("click", () => {
+    if (!store.club) return;
+    $("clubKeyShown").textContent = store.club.key;
+    copy(store.club.key, $("copyClubKey"), "Copier");
+  });
+  $("removeClub").addEventListener("click", () => {
+    const club = store.club;
+    if (!club) return;
+    if (!confirm(`Retirer le club « ${club.name} » de cet appareil ?\n\nLe club et ses terrains ne sont pas supprimés, mais leurs clés ne seront plus mémorisées ici : note la clé du club avant si tu n'en as pas de copie.`)) return;
+    closeClubStream();
+    store.channels = store.channels.filter((c) => c.club !== club.slug);
+    store.club = null;
+    store.active = store.channels.length ? store.channels[0].channel : null;
+    saveStore();
+    renaming = null;
+    regen = null;
+    $("terrainOut").hidden = true;
+    channelChanged();
+    paintClub();
+    setStatus("clubStatus0", "Club retiré de cet appareil", "ok");
+  });
 
   // --- changement de canal actif : tout se recharge ---
   function channelChanged() {
