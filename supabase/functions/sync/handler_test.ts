@@ -3,12 +3,13 @@ import { handleSync, sha256Hex, type Db, type Validated } from "./handler.ts";
 
 const URL_MATCH = "https://fn.test/functions/v1/sync/matches/B7K2QM9X/events";
 
-function makeDb(opts: { devices?: { hash: string; channel: string }[]; ownerId?: number | null; announce?: { seChannelId: string | null; last?: string } } = {}): Db {
+function makeDb(opts: { devices?: { hash: string; channel: string }[]; ownerId?: number | null; newer?: boolean; announce?: { seChannelId: string | null; last?: string } } = {}): Db {
   const events = new Map<string, Record<string, unknown>>();
   const devices = opts.devices ?? [];
   let matchOwner: number | null = opts.ownerId ?? null;
   let matchChannel: string | null = null;
   let matchStartedAt: number | null = null;
+  let matchStatus: string | null = null;
   const state = { finishedOthers: [] as string[] };
   const announce = { saved: [] as string[], last: opts.announce?.last ?? null };
   return {
@@ -17,13 +18,15 @@ function makeDb(opts: { devices?: { hash: string; channel: string }[]; ownerId?:
       return { ownerId: i < 0 ? null : i + 1, channel: i < 0 ? null : devices[i].channel, error: null };
     },
     async getMatchOwner(_matchId) { return { ownerId: matchOwner, error: null }; },
-    async upsertMatch(_m, ownerId, _d, _c, startedAt, _st, channel) { matchOwner = ownerId; matchChannel = channel; matchStartedAt = startedAt; return { error: null }; },
+    async upsertMatch(_m, ownerId, _d, _c, startedAt, st, channel) { matchOwner = ownerId; matchChannel = channel; matchStartedAt = startedAt; matchStatus = st; return { error: null }; },
+    async newerMatchExists() { return { newer: opts.newer ?? false, error: null }; },
     async finishOtherActiveMatches(ownerId, matchId) {
       state.finishedOthers.push(ownerId + ':' + matchId);
       return { error: null };
     },
     channelUsed() { return matchChannel; },
     get startedAtUsed() { return matchStartedAt; },
+    get statusUsed() { return matchStatus; },
     get finishedOthers() { return state.finishedOthers; },
     async upsertEvents(matchId, rows) {
       for (const e of rows) {
@@ -175,6 +178,37 @@ Deno.test("re-POST d'un match existant ne clôture rien", async () => {
   const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerId: 1 }) as Db & { finishedOthers: string[] };
   await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
   assertEquals(db.finishedOthers.length, 0);
+});
+
+// Un match supplanté (un match plus récent existe pour la même clé, ex. montre
+// et téléphone sur le même terrain) ne redevient jamais actif : sinon il
+// reviendrait à l'écran dès que le match récent est arrêté.
+type StatusDb = Db & { statusUsed: string | null; finishedOthers: string[] };
+
+Deno.test("match supplanté : ses points sont acceptés mais il reste finished", async () => {
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerId: 1, newer: true }) as StatusDb;
+  const res = await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
+  assertEquals(res.status, 200);
+  assertEquals(db.statusUsed, "finished");
+});
+
+Deno.test("match supplanté : stop le passe quand même en archived", async () => {
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerId: 1, newer: true }) as StatusDb;
+  await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, { ...GOOD_BODY, events: [], stop: true }), db);
+  assertEquals(db.statusUsed, "archived");
+});
+
+Deno.test("match ancien arrivé en retard : ne clôture pas le plus récent", async () => {
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), newer: true }) as StatusDb;
+  await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
+  assertEquals(db.finishedOthers.length, 0);
+  assertEquals(db.statusUsed, "finished");
+});
+
+Deno.test("match le plus récent : reste active (undo après fin de match compris)", async () => {
+  const db = makeDb({ ...oneDevice(await sha256Hex(KEY)), ownerId: 1 }) as StatusDb;
+  await handleSync(req("POST", URL_MATCH, { "X-Device-Key": KEY }, GOOD_BODY), db);
+  assertEquals(db.statusUsed, "active");
 });
 
 Deno.test("403 si le match appartient à une autre clé", async () => {

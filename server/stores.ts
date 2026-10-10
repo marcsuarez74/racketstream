@@ -45,6 +45,16 @@ export function sqliteSyncDb(store: Store): SyncDb {
         return { error: null };
       } catch (e) { return { error: errMsg(e) }; }
     },
+    async newerMatchExists(ownerId, matchId, startedAt) {
+      try {
+        const r = q.prepare(`SELECT EXISTS (
+                     SELECT 1 FROM matches o
+                     WHERE o.owner_id = ? AND o.match_id <> ?
+                       AND o.started_at > COALESCE((SELECT started_at FROM matches WHERE match_id = ?), ?)
+                   ) AS newer`).get(ownerId, matchId, matchId, startedAt) as Row;
+        return { newer: Number(r.newer) === 1, error: null };
+      } catch (e) { return { newer: false, error: errMsg(e) }; }
+    },
     async finishOtherActiveMatches(ownerId, matchId) {
       try {
         q.prepare("UPDATE matches SET status = 'finished', updated_at = ? WHERE owner_id = ? AND status = 'active' AND match_id <> ?")

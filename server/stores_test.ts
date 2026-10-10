@@ -154,3 +154,29 @@ Deno.test("pick : match arrêté sur la montre → plus rien à afficher, même 
   assertEquals(count(store, "SELECT COUNT(*) AS n FROM events WHERE match_id = ?", "ARRET003"), 1);
   store.close();
 });
+
+function status(store: Store, matchId: string): string {
+  return String((store.sql.prepare("SELECT status FROM matches WHERE match_id = ?").get(matchId) as Record<string, unknown>).status);
+}
+
+Deno.test("sync : match supplanté qui renvoie un point → reste finished, ne revient pas après stop du récent", async () => {
+  const store = await seeded();
+  const db = sqliteSyncDb(store);
+  await handleSync(syncReq("ANCIEN01", KEY, 1, [1, 0], "active", 1_000), db);
+  await handleSync(syncReq("RECENT01", KEY, 1, [0, 1], "active", 2_000), db);
+  const r = await handleSync(syncReq("ANCIEN01", KEY, 2, [2, 0], "active", 1_000), db);
+  assertEquals(r.status, 200);
+  assertEquals([status(store, "ANCIEN01"), status(store, "RECENT01")], ["finished", "active"]);
+  assertEquals(count(store, "SELECT COUNT(*) AS n FROM events WHERE match_id = 'ANCIEN01'"), 2);
+  await handleSync(bareReq("RECENT01", KEY, true, 2_000), db);
+  assertEquals(pickScore(store, "marc"), null);
+});
+
+Deno.test("sync : match ancien arrivé en retard → ne clôture pas le récent", async () => {
+  const store = await seeded();
+  const db = sqliteSyncDb(store);
+  await handleSync(syncReq("RECENT01", KEY, 1, [0, 1], "active", 2_000), db);
+  await handleSync(syncReq("RETARD01", KEY, 1, [5, 0], "active", 1_000), db);
+  assertEquals([status(store, "RETARD01"), status(store, "RECENT01")], ["finished", "active"]);
+  assertEquals(pickScore(store, "marc")?.match_id, "RECENT01");
+});

@@ -22,6 +22,11 @@ export interface Db {
   // clôture les précédents jamais terminés (sinon ils concurrencent le pick
   // « actif le plus récent » de l'overlay et du bot chat).
   finishOtherActiveMatches(ownerId: number, matchId: string): Promise<{ error: string | null }>;
+  // Un match plus récent (started_at) existe-t-il pour cette clé ? Le match
+  // de matchId est alors supplanté : il ne clôture personne et ne redevient
+  // jamais actif. started_at inconnu → pas supplanté. Optionnel : absent
+  // (backend Supabase) = jamais supplanté, comportement d'avant.
+  newerMatchExists?(ownerId: number, matchId: string, startedAt: number | null): Promise<{ newer: boolean; error: string | null }>;
   upsertEvents(matchId: string, events: Record<string, unknown>[]): Promise<{ error: string | null }>;
   upsertState(matchId: string, snapshot: Record<string, unknown>, config: Record<string, unknown>): Promise<{ error: string | null }>;
   // Optionnel : exécute fn dans une transaction (rollback si fn lève). Absent
@@ -138,12 +143,14 @@ export async function handleSync(req: Request, db: Db, sender?: Announcer): Prom
     const owner = await db.getMatchOwner(matchId);
     if (owner.error) throw new SyncAbort(500, owner.error);
     if (owner.ownerId !== null && owner.ownerId !== ownerId) throw new SyncAbort(403, "owner");
-    if (owner.ownerId === null) {
+    const nw = db.newerMatchExists ? await db.newerMatchExists(ownerId, matchId, v.startedAt) : { newer: false, error: null };
+    if (nw.error) throw new SyncAbort(500, nw.error);
+    if (owner.ownerId === null && !nw.newer) {
       const cl = await db.finishOtherActiveMatches(ownerId, matchId);
       if (cl.error) throw new SyncAbort(500, cl.error);
     }
     // archived : match arrêté sur la montre → l'overlay se vide aussitôt.
-    const status = v.stop ? "archived" : v.snapshot.status === "match_finished" ? "finished" : "active";
+    const status = v.stop ? "archived" : v.snapshot.status === "match_finished" || nw.newer ? "finished" : "active";
     const up = await db.upsertMatch(matchId, ownerId, v.deviceId, v.config, v.startedAt, status, channel);
     if (up.error) throw new SyncAbort(500, up.error);
     if (v.events.length > 0) {
