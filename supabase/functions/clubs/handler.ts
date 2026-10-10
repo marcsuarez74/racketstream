@@ -109,7 +109,7 @@ async function renewKey(clubId: number, channel: string, db: ClubsDb): Promise<R
   return r.found ? json(200, { channel, key }) : json(404, { error: "terrain" });
 }
 
-// Routes sous /api/clubs (le flux SSE /api/clubs/:slug/stream est servi par
+// Routes sous /api/clubs (GET /:slug/auth vérifie une clé club ; le flux SSE /api/clubs/:slug/stream est servi par
 // server/main.ts, qui détient le hub).
 export async function handleClubs(req: Request, db: ClubsDb): Promise<Response> {
   const path = new URL(req.url).pathname.replace(/^\/api\/clubs\/?/, "");
@@ -119,6 +119,14 @@ export async function handleClubs(req: Request, db: ClubsDb): Promise<Response> 
   if (seg.length === 0) return m === "POST" ? createClub(req, db) : json(405, { error: "method" });
   const slug = seg[0];
   if (seg.length === 1) return m === "GET" ? getClub(slug, db) : json(405, { error: "method" });
+  // Vérification d'une clé club par le portail (« Club existant ») : ne modifie rien.
+  if (seg.length === 2 && seg[1] === "auth") {
+    if (m !== "GET") return json(405, { error: "method" });
+    const k = req.headers.get("X-Club-Key");
+    const c = k ? await db.getClub(slug) : null;
+    if (!c || await db.clubIdByKey(slug, await sha256Hex(k!)) === null) return json(401, { error: "key" });
+    return json(200, { slug, name: c.name });
+  }
   if (seg[1] !== "terrains" || seg.length > 4 || (seg.length === 4 && seg[3] !== "key")) return json(404, { error: "route" });
 
   const wanted = seg.length === 2 ? "POST" : seg.length === 3 ? "PATCH" : "POST";

@@ -194,6 +194,16 @@ Deno.test("régénération : nouvelle clé, nouveau hash", async () => {
   assertEquals(db.clubs[0].terrains[0].keyHash, await sha256Hex(r.key));
 });
 
+Deno.test("auth : bonne clé → 200 avec le nom ; fausse, absente ou club inconnu → 401", async () => {
+  const { db, clubKey } = await withClub();
+  const ok = await call(db, "GET", "/bcparis/auth", undefined, clubKey);
+  assertEquals([ok.status, await ok.json()], [200, { slug: "bcparis", name: "BC Paris 15" }]);
+  assertEquals((await call(db, "GET", "/bcparis/auth", undefined, "mauvaise")).status, 401);
+  assertEquals((await call(db, "GET", "/bcparis/auth")).status, 401);
+  assertEquals((await call(db, "GET", "/inconnu/auth", undefined, clubKey)).status, 401);
+  assertEquals((await call(db, "POST", "/bcparis/auth", undefined, clubKey)).status, 405);
+});
+
 Deno.test("méthode ou chemin inconnus → 405 / 404", async () => {
   const { db, clubKey } = await withClub();
   assertEquals((await call(db, "GET", "")).status, 405);
