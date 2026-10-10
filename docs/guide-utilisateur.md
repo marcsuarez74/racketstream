@@ -172,6 +172,14 @@ Sans réseau, le scoreur continue de compter : les points sont envoyés dès que
 
 ⚠️ Le QR code contient la clé du terrain : toute personne qui le scanne peut marquer des points sur ce terrain. Ne le donne qu'aux personnes qui marquent. S'il circule trop, utilise **Nouvelle clé montre** : l'ancien QR ne marche plus (le scoreur affiche « Ce QR code n'est plus valable »). Pense à remettre la nouvelle clé dans la montre du terrain s'il y en a une, puis imprime le nouveau QR.
 
+Si un match est déjà en cours sur le terrain au moment du scan (compté par un autre téléphone ou une montre), le scoreur affiche son score et propose :
+
+- **Reprendre ce match** : on continue au même score (relais en cas de batterie à plat, de montre qui lâche ou de changement d'arbitre). L'appareil précédent ne compte plus. **↶ Annuler** ne revient pas avant le score repris. Impossible pour un match de padel compté sur la montre ;
+- **Nouveau match** : le match en cours est terminé au lancement et on repart à 0-0 ;
+- **Juste regarder le live** : ouvre la page publique du club.
+
+Le téléphone qui comptait jusque-là est prévenu à son point suivant (« Un autre téléphone a pris la main ») : ses points ne partent plus au live, et il peut **Reprendre la main**. Une montre, elle, n'est pas prévenue : arrête-la à la main.
+
 Une montre et un scoreur peuvent servir sur le même terrain : c'est le match lancé le plus récemment qui s'affiche.
 
 ### Page publique du club
