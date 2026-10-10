@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 HOST="${HOST:-racketstream-vps}"
 DEST=/opt/racketstream-api
 
-deno test --allow-all server/ supabase/functions/ >/dev/null
+deno test --allow-all server/ supabase/functions/ portal/engine/ >/dev/null
 
 # Options compatibles avec l'openrsync de macOS (pas de --chmod D/F ni --relative).
 ssh "$HOST" "sudo install -d -m 755 $DEST/server $DEST/supabase/functions"

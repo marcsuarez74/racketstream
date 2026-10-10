@@ -27,16 +27,19 @@ Montre (score local, offline-first) ──HTTP batch──► API VPS (Deno + SQ
 - **`server/`** (Deno + `node:sqlite`) — l'API de production. `main.ts` **importe les handlers de `supabase/functions/*/handler.ts`** (pas de duplication) et les câble sur les implémentations SQLite de `stores.ts` (interfaces `Db` injectées) ; ajoute `/api/score`, `/api/stream` (SSE via `hub.ts`, publié après chaque sync 200) et `/healthz`. Routes de la montre conservées sous `/functions/v1/…` (compatibilité URL). `pickScore` (stores.ts) = choix du match à afficher côté serveur. Schéma : `schema.sql` (base v1, appliqué si `user_version = 0`) puis migrations numérotées `server/migrations/NNN_*.sql` listées dans `db.ts` (chaque fichier finit par `PRAGMA user_version`). Clubs : `/api/clubs…` (handler `supabase/functions/clubs/`, servi par le VPS seulement), SSE par club `/api/clubs/:slug/stream` (sujet `club:<slug>` du hub). `server/admin.ts` : commandes `invite` / `club-key`, lancées sur le VPS. Un match supplanté (match plus récent pour la même clé) reste `finished` : montre et téléphone peuvent partager un terrain. Env : `RS_DB`, `RS_HOST`, `RS_PORT` (8790), `CHAT_ANNOUNCE_KEY`, `SE_JWT`. Unités systemd dans `server/deploy/` (API + sauvegarde quotidienne).
 - **`supabase/functions/`** — source des handlers, chacun découpé en `handler.ts` (logique pure, `Db` injectée), `index.ts` (câblage supabase-js, ancien backend), `handler_test.ts` (Db en mémoire). `sync` : idempotence `UNIQUE(match_id, sequence)`, un nouveau match passe les autres matchs actifs du device en `finished`. `_shared/announce.ts` : annonce StreamElements (JWT par canal `devices.se_jwt`, sinon `SE_JWT`). Le projet Supabase est **en sursis** (anciennes versions store) : sa mise en pause est une décision de l'utilisateur. `SyncService.mc` réécrit automatiquement une URL `supabase.co` vers le VPS.
 - **`portal/`** — PWA en une page HTML sans build (`index.html`, `sw.js` avec nom de cache versionné à incrémenter, `manifest.webmanifest`), publiée sur `https://racket-stream-portal.marc-suarez.fr/` avec `overlay/` (Caddy `file_server`, plus GitHub Pages). Design « sportif » validé au pixel près, breakpoint desktop 1024 px.
+- **`portal/engine/`** — moteur de score en JS (modules ES sans build, importables par le portail et par `deno test`) pour le scoreur web : port de `watch/connect-iq/source/engine/` (badminton, squash ; pas de padel) + cœur de sync (`sync.js` : corps du POST `/functions/v1/sync/…`, lots ≤ 10 events). `engine_test.js` porte à l'identique les tests moteur de la montre.
 - **`vps/renderer.py`** — Python + Pillow. Doit reproduire **à l'identique** le design de `overlay/index.html` (palette dupliquée en constantes). Contrat : pas de match actif *frais* (`updated_at` > `--stale`, 600 s) → frame transparente (anti-« fantôme ») ; API injoignable → garder la dernière frame. Noms du canal relus toutes les 60 s. Lancé à la main sur le VPS (voir `docs/tuto-relais-rtmp-vps.md`).
 - **`prototypes/`** — POC des phases 0-1, non maintenus.
 
 La logique de « pick » du match à afficher (match actif le plus récent du canal, fraîcheur 10 min) existe côté serveur (`pickScore`) et côté clients (portail, overlay, widget SE, renderer) : une modification doit être répercutée partout.
 
+De même, **toute règle de score modifiée (formats, fin de set, undo, journal d'events) doit l'être côté Monkey C (`source/engine/`) ET côté `portal/engine/`**, tests de parité compris (`EngineTest.mc` ↔ `engine_test.js`).
+
 ## Commandes
 
 ```bash
-# Tests backend (Deno) — tout (c'est ce que lance deploy-vps.sh)
-deno test --allow-all server/ supabase/functions/
+# Tests backend (Deno) + moteur JS — tout (c'est ce que lance deploy-vps.sh)
+deno test --allow-all server/ supabase/functions/ portal/engine/
 deno test --allow-all supabase/functions/sync/handler_test.ts --filter "nom du test"
 deno test --allow-all server/main_test.ts --filter "nom du test"
 
