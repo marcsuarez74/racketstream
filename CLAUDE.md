@@ -9,8 +9,10 @@ Le projet est entièrement en français (code commenté, docs, messages de commi
 RacketStream : app Garmin Connect IQ de score (badminton, padel) dont chaque point est synchronisé vers un backend sur VPS, puis affiché en direct (portail PWA, overlay OBS, widget StreamElements, incrustation vidéo VPS) et annoncé dans le chat Twitch.
 
 ```
-Montre (score local, offline-first) ──HTTP batch──► API VPS (Deno + SQLite) ──► racket-stream.marc-suarez.fr
-   ├─ portal/index.html        (PWA : /api/score + SSE /api/stream ; register, names)
+Montre (score local, offline-first) ─┐
+portal/scoreur.html (scoreur web) ───┴─HTTP batch─► API VPS (Deno + SQLite) ──► racket-stream.marc-suarez.fr
+   ├─ portal/index.html        (PWA : /api/score + SSE /api/stream ; register, names ; onglet Club)
+   ├─ portal/club.html         (page publique du club : GET + SSE /api/clubs/:slug[/stream])
    ├─ overlay/index.html       (/api/score + SSE /api/stream)
    ├─ overlay/se-widget/       (polling /api/score, Custom Widget StreamElements)
    ├─ vps/renderer.py          (SSE /api/stream → frames RGBA sur stdout → ffmpeg → Twitch)
@@ -80,10 +82,16 @@ scripts/build-store-iq.sh           # paquet .iq pour le store → beta-store/v-
 - **VPS** : ne jamais afficher `/etc/racketstream/*.env` ; Caddy = sauvegarde, `caddy validate` puis `reload` (jamais `restart`) ; ne pas redéployer l'API pendant un live (le restart coupe les flux SSE). Base : `/var/lib/racketstream-api/racketstream.db` (lecture via `sqlite3 -readonly`).
 - Le simulateur Connect IQ refuse le `http://` (code -1001) même si la requête part : pour tester la sync contre un faux serveur local, le prendre en compte.
 - `docs/local/` (IP réelles, docs d'exploitation) est gitignoré ; ne rien y référencer depuis les docs commitées.
+- **Statut du score** : `/api/score` et le flux renvoient `status` = `active` | `set_result` | `match_finished`. Seul `active` (et frais) compte comme « en direct » partout : entre deux sets, un terrain apparaît vide. `config.sport` y est une **chaîne** (`"badminton"`, `"squash"`), alors que le moteur (Monkey C et `portal/engine/`) utilise des nombres (`Sports.BADMINTON = 0`…).
+- **Lots d'envoi** : le serveur accepte ≤ 10 events par POST (`MAX_BATCH` de `sync.js`) ; la montre se limite à 5 à cause du BT. Un POST à 0 event démarre le match à 0-0 ; `stop: true` l'archive.
+- **QR scoreur** = `scoreur.html#c=<canal>&k=<clé terrain>` : la clé reste dans le fragment (jamais envoyée au serveur de pages) et le scoreur l'efface de l'adresse. « Nouvelle clé montre » invalide aussi tous les QR imprimés.
+- **Portail** : un nouveau fichier doit être ajouté à `PORTAL_FILES` de `deploy-portal.sh` **et** au `SHELL` de `sw.js` (puis incrémenter `CACHE`), sinon il n'est pas publié ou pas disponible hors ligne. `deploy-portal.sh` exclut `*_test.js`.
+- **Captures du portail** : Chrome headless `--screenshot` se bloque indéfiniment à cause des flux SSE ; utiliser `agent-browser` (`set viewport`, `open`, `eval`, `screenshot`, `errors`, `set offline on|off`). Tester l'envoi réel sur le club d'essai `club-test` (clés dans `.secrets/club-test.env`, à charger avec `set -a; . fichier` sans les afficher), puis arrêter le match (`stop`).
 - `README.md` décrit encore l'architecture Supabase/GitHub Pages (obsolète côté backend) ; ce fichier et `docs/superpowers/plans/2026-10-09-phase-8-backend-vps.md` font foi.
 
 ## Docs
 
 - `docs/superpowers/specs/` (designs), `plans/` (plans d'implémentation par phase), `notes/` (résultats et constats de chaque phase — à consulter avant de toucher la sync ou les builds).
 - `docs/guide-utilisateur.md` : guide utilisateur de référence (fiche store) — à mettre à jour quand un comportement visible change.
+- `docs/superpowers/notes/2026-10-10-capacite-100-clubs.md` : dimensionnement (limite SSE `Hub(max = 200)`, `MemoryMax=256M`, coût de la vidéo incrustée).
 - `docs/tuto-relais-rtmp-vps.md` : relais téléphone → VPS (ffmpeg + renderer) → Twitch, avec la liste des pièges rencontrés en conditions réelles.
