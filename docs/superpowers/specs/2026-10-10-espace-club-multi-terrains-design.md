@@ -59,7 +59,7 @@ Nouveau handler `supabase/functions/clubs/handler.ts` (logique pure, `Db` inject
 
 | Route | Auth | Effet |
 |---|---|---|
-| `POST /api/clubs` `{slug, name}` | aucune en beta (comme `register`) | crée le club, renvoie `{slug, clubKey}` une seule fois ; 409 si `slug` pris |
+| `POST /api/clubs` `{slug, name, invite}` | code d'invitation à usage unique | crée le club, renvoie `{slug, clubKey}` une seule fois ; 403 si invitation invalide ou déjà utilisée ; 409 si `slug` pris |
 | `GET /api/clubs/:slug` | public | `{name, terrains: [{channel, label, position}]}` |
 | `POST /api/clubs/:slug/terrains` `{label}` | `X-Club-Key` | crée le terrain (canal `<slug>-t<n>`), renvoie `{channel, key}` une seule fois |
 | `PATCH /api/clubs/:slug/terrains/:channel` `{label?, position?}` | `X-Club-Key` | renomme / réordonne |
@@ -74,9 +74,9 @@ Nouveau handler `supabase/functions/clubs/handler.ts` (logique pure, `Db` inject
 
 Comme la clé est partagée, une montre et un téléphone peuvent saisir sur le même terrain. Règle voulue : **le match démarré le plus récemment est celui qui s'affiche.**
 
-**Défaut actuel à corriger (vérifié dans `stores.ts`)** : `upsertMatch` réécrit `status` à chaque envoi, et `finishOtherActiveMatches` termine tous les autres matchs actifs du canal. Si l'ancien appareil continue d'envoyer, son match redevient `active` et termine le nouveau : les deux se renvoient la balle (« ping-pong »).
+**Défaut actuel à corriger (vérifié dans `sync/handler.ts` et `stores.ts`)** : `finishOtherActiveMatches` n'est appelé qu'au premier envoi d'un nouveau match, mais `upsertMatch` réécrit `status` à chaque envoi. Si l'ancien appareil continue d'envoyer, son match redevient `active`. Tant que le nouveau match est actif, l'affichage reste correct (le pick prend le `started_at` le plus récent). Mais dès que le nouveau match est arrêté (`stop` → `archived`) ou terminé, **l'ancien match revient à l'écran**.
 
-Correction : `finishOtherActiveMatches` ne termine que les matchs **démarrés avant** (`started_at` plus ancien), et un envoi pour un match plus ancien que le match actif du canal ne le réactive pas. Tests dédiés dans `sync/handler_test.ts` et `server/main_test.ts`. `pickScore` (et les « pick » clients) restent cohérents puisqu'ils prennent déjà le match actif le plus récent.
+Correction : un match qui n'est plus le plus récent du canal (un match plus récent existe pour le même `owner_id`) ne peut plus redevenir `active` : ses envois sont acceptés (points enregistrés, idempotence inchangée) mais son statut reste `finished` (ou `archived` sur `stop`). Tests dédiés dans `sync/handler_test.ts` et `server/main_test.ts`.
 
 ## 7. Scoreur web (sans montre)
 
@@ -131,7 +131,7 @@ Les lots 1 et 3 sont indépendants et peuvent avancer en parallèle.
 
 ## 12. Questions ouvertes
 
-1. **Clé club ou vrai compte (email) ?** Proposition : clé club en v1 (cohérent avec l'existant, rien à envoyer par email). Inconvénient : clé perdue = club perdu ; on peut la régénérer à la main sur le VPS en attendant.
-2. **Création de club ouverte ou sur invitation pendant la beta ?** Ouverte = comme `register` aujourd'hui ; sur invitation = un code à fournir, évite les clubs fantômes.
+1. ~~Clé club ou compte email ?~~ **Décidé (2026-10-10) : clé club.** Clé perdue → régénération à la main sur le VPS (`server/admin.ts club-key`).
+2. ~~Création ouverte ou sur invitation ?~~ **Décidé (2026-10-10) : sur invitation**, codes à usage unique générés par Marc (`scripts/club-invite.sh`), stockés hachés (table `club_invites`).
 3. **Prix** : par club ou par terrain ? (voir la note offre clubs) — n'impacte pas le code v1.
 4. **Validation terrain** : la note offre clubs prévoyait de montrer l'overlay à un ou deux clubs avant de coder. Le scoreur web rend la démo plus facile (un téléphone suffit).
