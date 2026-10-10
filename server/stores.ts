@@ -7,6 +7,7 @@ import { teamName, type Db as ScoreDb, type Names, type ScoreRow } from "../supa
 import type { AnnounceDb, ChannelCfg } from "../supabase/functions/chat-announce/handler.ts";
 import type { NamesDb } from "../supabase/functions/names/handler.ts";
 import type { RegisterDb } from "../supabase/functions/register/handler.ts";
+import type { ClubsDb, Terrain } from "../supabase/functions/clubs/handler.ts";
 import { sha256Hex } from "../supabase/functions/sync/handler.ts";
 
 type Row = Record<string, unknown>;
@@ -244,6 +245,76 @@ export function sqliteRegisterDb(store: Store): RegisterDb {
         if (/UNIQUE constraint failed/.test(errMsg(e))) return { error: "taken" };
         return { error: errMsg(e) };
       }
+    },
+  };
+}
+
+// Clubs (phase 10) : un terrain est une ligne devices rattachée au club.
+export function sqliteClubsDb(store: Store): ClubsDb {
+  const q = store.sql;
+  return {
+    async createClub(slug, name, keyHash, inviteHash) {
+      try {
+        await store.atomic(async () => {
+          const now = Date.now();
+          const inv = q.prepare("UPDATE club_invites SET used_at = ? WHERE code_hash = ? AND used_at IS NULL").run(now, inviteHash);
+          if (Number(inv.changes) !== 1) throw new Error("invite");
+          const c = q.prepare("INSERT INTO clubs (slug, name, club_key_hash) VALUES (?, ?, ?)").run(slug, name, keyHash);
+          q.prepare("UPDATE club_invites SET club_id = ? WHERE code_hash = ?").run(Number(c.lastInsertRowid), inviteHash);
+        });
+        return { error: null };
+      } catch (e) {
+        const m = errMsg(e);
+        if (m === "invite") return { error: "invite" };
+        // UNIQUE(slug) : rollback, l'invitation reste libre.
+        if (/UNIQUE constraint failed: clubs\.slug/.test(m)) return { error: "taken" };
+        return { error: m };
+      }
+    },
+    async getClub(slug) {
+      const c = q.prepare("SELECT id, name FROM clubs WHERE slug = ?").get(slug) as Row | undefined;
+      if (!c) return null;
+      const rows = q.prepare(`SELECT channel, label, position FROM devices WHERE club_id = ?
+                              ORDER BY position IS NULL, position, id`).all(Number(c.id)) as Row[];
+      const terrains: Terrain[] = rows.map((r) => ({
+        channel: String(r.channel), label: String(r.label ?? r.channel), position: Number(r.position ?? 0),
+      }));
+      return { id: Number(c.id), name: String(c.name), terrains };
+    },
+    async clubIdByKey(slug, keyHash) {
+      const c = q.prepare("SELECT id FROM clubs WHERE slug = ? AND club_key_hash = ?").get(slug, keyHash) as Row | undefined;
+      return c ? Number(c.id) : null;
+    },
+    async createTerrain(clubId, slug, label, keyHash) {
+      try {
+        const channel = await store.exclusive(() => {
+          const r = q.prepare("SELECT COUNT(*) AS n, MAX(position) AS p FROM devices WHERE club_id = ?").get(clubId) as Row;
+          const taken = q.prepare("SELECT 1 FROM devices WHERE channel = ?");
+          let n = Number(r.n) + 1;
+          while (taken.get(`${slug}-t${n}`) !== undefined) n++;
+          const ch = `${slug}-t${n}`;
+          q.prepare("INSERT INTO devices (channel, device_key_hash, label, club_id, position) VALUES (?, ?, ?, ?, ?)")
+            .run(ch, keyHash, label, clubId, r.p === null ? 1 : Number(r.p) + 1);
+          return ch;
+        });
+        return { channel, error: null };
+      } catch (e) { return { channel: null, error: errMsg(e) }; }
+    },
+    async updateTerrain(clubId, channel, f) {
+      return await store.exclusive(() => {
+        const sets: string[] = [];
+        const args: (string | number)[] = [];
+        if (f.label !== undefined) { sets.push("label = ?"); args.push(f.label); }
+        if (f.position !== undefined) { sets.push("position = ?"); args.push(f.position); }
+        const r = q.prepare(`UPDATE devices SET ${sets.join(", ")} WHERE channel = ? AND club_id = ?`).run(...args, channel, clubId);
+        return { found: Number(r.changes) === 1 };
+      });
+    },
+    async setTerrainKey(clubId, channel, keyHash) {
+      return await store.exclusive(() => {
+        const r = q.prepare("UPDATE devices SET device_key_hash = ? WHERE channel = ? AND club_id = ?").run(keyHash, channel, clubId);
+        return { found: Number(r.changes) === 1 };
+      });
     },
   };
 }

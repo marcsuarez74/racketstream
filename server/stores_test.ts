@@ -1,6 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import type { Store } from "./db.ts";
-import { pickScore, sqliteNamesDb, sqliteRegisterDb, sqliteSyncDb } from "./stores.ts";
+import { pickScore, sqliteClubsDb, sqliteNamesDb, sqliteRegisterDb, sqliteSyncDb } from "./stores.ts";
 import { handleNamesGet, handleNamesPost } from "../supabase/functions/names/handler.ts";
 import { handleRegisterPost } from "../supabase/functions/register/handler.ts";
 import { handleSync, sha256Hex } from "../supabase/functions/sync/handler.ts";
@@ -179,4 +179,64 @@ Deno.test("sync : match ancien arrivé en retard → ne clôture pas le récent"
   await handleSync(syncReq("RETARD01", KEY, 1, [5, 0], "active", 1_000), db);
   assertEquals([status(store, "RETARD01"), status(store, "RECENT01")], ["finished", "active"]);
   assertEquals(pickScore(store, "marc")?.match_id, "RECENT01");
+});
+
+// ---------------------------------------------------------------------------
+// Clubs (phase 10)
+
+async function addInvite(store: Store, code: string): Promise<string> {
+  const h = await sha256Hex(code);
+  store.sql.prepare("INSERT INTO club_invites (code_hash) VALUES (?)").run(h);
+  return h;
+}
+
+Deno.test("clubs : l'invitation est consommée une fois ; slug pris → taken sans la consommer", async () => {
+  const store = await seeded();
+  const db = sqliteClubsDb(store);
+  const i1 = await addInvite(store, "i1");
+  const i2 = await addInvite(store, "i2");
+  assertEquals(await db.createClub("bcparis", "BC Paris", "k1", i1), { error: null });
+  assertEquals(await db.createClub("autre", "Autre", "k2", i1), { error: "invite" });
+  assertEquals(await db.createClub("bcparis", "Doublon", "k3", i2), { error: "taken" });
+  assertEquals(count(store, "SELECT COUNT(*) AS n FROM club_invites WHERE used_at IS NULL"), 1);
+  const used = store.sql.prepare("SELECT club_id FROM club_invites WHERE code_hash = ?").get(i1) as Record<string, unknown>;
+  assertEquals(used.club_id, (await db.getClub("bcparis"))!.id);
+  assertEquals(await db.createClub("autre", "Autre", "k2", "inconnue"), { error: "invite" });
+});
+
+Deno.test("clubs : terrains — canal libre suivant, tri par position, clé club vérifiée", async () => {
+  const store = await seeded();
+  const db = sqliteClubsDb(store);
+  await db.createClub("bcparis", "BC Paris", "hk", await addInvite(store, "i"));
+  const id = (await db.clubIdByKey("bcparis", "hk"))!;
+  assertEquals(await db.clubIdByKey("bcparis", "faux"), null);
+  assertEquals(await db.clubIdByKey("inconnu", "hk"), null);
+  // Un canal perso porte déjà le nom du premier terrain : on passe au suivant.
+  store.sql.prepare("INSERT INTO devices (device_key_hash, channel) VALUES ('perso', 'bcparis-t1')").run();
+  assertEquals(await db.createTerrain(id, "bcparis", "Terrain 1", "t1"), { channel: "bcparis-t2", error: null });
+  assertEquals(await db.createTerrain(id, "bcparis", "Terrain 2", "t2"), { channel: "bcparis-t3", error: null });
+  assertEquals(await db.updateTerrain(id, "bcparis-t3", { position: 0 }), { found: true });
+  assertEquals(await db.updateTerrain(id, "bcparis-t2", { label: "Central" }), { found: true });
+  assertEquals((await db.getClub("bcparis"))!.terrains, [
+    { channel: "bcparis-t3", label: "Terrain 2", position: 0 },
+    { channel: "bcparis-t2", label: "Central", position: 1 },
+  ]);
+  // Canal perso ou d'un autre club : introuvable pour ce club.
+  assertEquals(await db.updateTerrain(id, "bcparis-t1", { label: "Volé" }), { found: false });
+  assertEquals(await db.setTerrainKey(id, "marc", "x"), { found: false });
+  assertEquals(await db.getClub("inconnu"), null);
+});
+
+Deno.test("clubs : clé de terrain régénérée → l'ancienne refusée par sync, la nouvelle acceptée", async () => {
+  const store = await seeded();
+  const db = sqliteClubsDb(store);
+  await db.createClub("bcparis", "BC Paris", "hk", await addInvite(store, "i"));
+  const id = (await db.clubIdByKey("bcparis", "hk"))!;
+  await db.createTerrain(id, "bcparis", "Terrain 1", await sha256Hex("ancienne"));
+  const sync = sqliteSyncDb(store);
+  assertEquals((await handleSync(syncReq("TERRAIN1", "ancienne", 1, [1, 0]), sync)).status, 200);
+  assertEquals(pickScore(store, "bcparis-t1")?.score_me, 1);
+  assertEquals(await db.setTerrainKey(id, "bcparis-t1", await sha256Hex("nouvelle")), { found: true });
+  assertEquals((await handleSync(syncReq("TERRAIN1", "ancienne", 2, [2, 0]), sync)).status, 401);
+  assertEquals((await handleSync(syncReq("TERRAIN1", "nouvelle", 2, [2, 0]), sync)).status, 200);
 });
