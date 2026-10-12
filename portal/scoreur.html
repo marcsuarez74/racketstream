@@ -98,6 +98,32 @@
   .recap span { flex-grow: 1; font-size: 15px; font-weight: 800; font-style: italic; color: #9AA3AE; }
   .recap b { font-size: 26px; font-weight: 900; font-style: italic; font-stretch: 70%; }
 
+  /* --- terrain occupé --- */
+  .busyTag { align-self: flex-start; padding: 7px 14px; background: #FFD43B; color: #1A1200; font-size: 14px; font-weight: 900; font-style: italic; text-transform: uppercase; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  .live { display: flex; flex-direction: column; gap: 4px; }
+  .lrow { display: flex; align-items: center; gap: 10px; height: 46px; padding-right: 14px; background: #1A1F26; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  .lrow i { width: 8px; align-self: stretch; background: #3DD68C; }
+  .lrow i.b { background: #4DABF7; }
+  .lrow .ln { flex-grow: 1; min-width: 0; font-size: 20px; font-weight: 900; font-style: italic; font-stretch: 72%; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lrow .ls { font-size: 14px; font-weight: 800; color: #9AA3AE; }
+  .lrow .lp { min-width: 38px; font-size: 32px; font-weight: 900; font-style: italic; font-stretch: 62%; text-align: right; font-variant-numeric: tabular-nums; }
+  .lmeta { display: flex; align-items: center; gap: 7px; margin-top: 2px; font-size: 13px; color: #9AA3AE; }
+  .lmeta::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: #E8453C; animation: pulse 1.6s ease-in-out infinite; }
+  .choice { display: flex; flex-direction: column; gap: 3px; padding: 14px 18px; border: 2px solid #333333; background: #12161B; color: #FFFFFF; text-align: left; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+  .choice b { font-size: 22px; font-weight: 900; font-style: italic; font-stretch: 72%; }
+  .choice span { font-size: 13px; color: #9AA3AE; line-height: 1.35; }
+  .choice.main { border: 0; background: linear-gradient(100deg, #3DD68C 0%, #2EDBB0 55%, #22D3EE 100%); color: #04140C; }
+  .choice.main span { color: #0B3A27; }
+  .choice:disabled { filter: grayscale(1) brightness(.55); }
+  .mini { padding: 10px 14px; background: #2A1F05; border-left: 5px solid #FFD43B; font-size: 13px; color: #E6DCC0; line-height: 1.4; }
+  .mini b { color: #FFD43B; }
+  .badge.off { background: #333333; color: #C9D1DA; }
+  .badge.off .d { display: none; }
+  .zones.dim .zone { filter: grayscale(.8) brightness(.45); }
+  .setcard.warn { background: #2A1F05; }
+  .setcard.warn .t { color: #FFD43B; }
+  .setcard .cs { font-size: 14px; color: #E6DCC0; line-height: 1.4; }
+
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
   @keyframes pop { from { transform: scale(1.3); } to { transform: none; } }
   @keyframes inUp { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -122,6 +148,24 @@
     </div>
   </section>
 
+  <!-- 0. Terrain déjà occupé : reprendre, nouveau match ou regarder -->
+  <section class="scr" id="sBusy" hidden>
+    <div class="head">
+      <span class="eyebrow" id="busyClub">Scoreur</span>
+      <h1 class="h1" id="busyTerrain">Terrain</h1>
+    </div>
+    <div class="form">
+      <div class="busyTag">⚠ Match déjà en cours sur ce terrain</div>
+      <div class="live" id="busyLive"></div>
+      <span class="lbl" style="margin-top: 8px;">Que veux-tu faire ?</span>
+      <button class="choice main" id="takeOver"><b>Reprendre ce match</b><span id="takeOverTxt"></span></button>
+      <button class="choice" id="newOver"><b>Nouveau match</b><span>Ce match est fini ou abandonné : on repart à 0–0.</span></button>
+    </div>
+    <div class="foot">
+      <a class="linkbtn" id="watchLive" style="display: flex; align-items: center; text-decoration: none;">Juste regarder le live →</a>
+    </div>
+  </section>
+
   <!-- 1. Préparation -->
   <section class="scr" id="sPrep" hidden>
     <div class="head">
@@ -129,6 +173,7 @@
       <h1 class="h1" id="prepTerrain">Terrain</h1>
     </div>
     <div class="form">
+      <div class="mini" id="prepBusy" hidden></div>
       <span class="lbl" id="lSport">Sport</span>
       <div class="segs two" id="sports" role="group" aria-labelledby="lSport"></div>
       <span class="lbl" id="lFmt">Format</span>
@@ -143,6 +188,7 @@
       <p class="status" id="prepStatus" role="status"></p>
       <span class="note">L'écran reste allumé pendant le match.</span>
       <button class="cta" id="start">Lancer le match</button>
+      <button class="linkbtn" id="prepBack" hidden>← Retour</button>
       <nav class="legalnav" aria-label="Informations légales"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgu.html">Conditions d'utilisation</a></nav>
     </div>
   </section>
@@ -150,7 +196,7 @@
   <!-- 2. Score -->
   <section class="scr" id="sPlay" hidden>
     <div class="bar">
-      <span class="badge"><span class="d"></span>EN DIRECT</span>
+      <span class="badge" id="badge"><span class="d"></span><span id="badgeT">EN DIRECT</span></span>
       <span class="where" id="where">Set 1</span>
       <span class="sync" id="sync" role="status"></span>
     </div>
@@ -164,6 +210,13 @@
         <span class="s" id="setS">21–17</span>
         <button class="cta" id="nextSet">Set suivant</button>
         <button class="linkbtn" id="setUndo">Annuler le dernier point</button>
+      </div>
+      <div class="setcard warn" id="lostCard" role="alertdialog" aria-labelledby="lostT" hidden>
+        <span class="t" id="lostT">Un autre téléphone a pris la main</span>
+        <span class="cs">Tes points ne sont plus envoyés au live. Le score continue sur l'autre appareil.</span>
+        <a class="cta" id="lostLive" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Voir le live</a>
+        <button class="ghost" id="lostTake">Reprendre la main</button>
+        <button class="linkbtn" id="lostQuit">Quitter</button>
       </div>
     </div>
     <div class="tools">
@@ -202,7 +255,8 @@
   const $ = (id) => document.getElementById(id);
 
   // État mémorisé (le match reprend après un rechargement ou une coupure) :
-  // { deviceId, channel, key, terrain, club, sport, fmt, n1, n2, match, acked, rev, sentRev, swap, stop }
+  // { deviceId, channel, key, terrain, club, sport, fmt, n1, n2, match, acked, rev, sentRev, swap, stop,
+  //   resumed (match repris en cours), lost (un autre scoreur a repris la main) }
   let st = {};
   try { st = JSON.parse(localStorage.getItem(LS)) || {}; } catch { st = {}; }
   if (!st.deviceId) st.deviceId = newDeviceId();
@@ -233,7 +287,7 @@
   const setW = () => Sports.setWord(engine ? engine.config.sport : st.sport) === "JEU" ? "Jeu" : "Set";
 
   function show(id) {
-    for (const s of ["sNoKey", "sPrep", "sPlay", "sEnd"]) $(s).hidden = s !== id;
+    for (const s of ["sNoKey", "sBusy", "sPrep", "sPlay", "sEnd"]) $(s).hidden = s !== id;
     keepAwake(id === "sPlay");
   }
 
@@ -256,8 +310,8 @@
     } catch { /* hors ligne : noms mémorisés */ }
   }
   function paintTerrain() {
-    $("prepClub").textContent = (st.club ? st.club + " · " : "") + "Scoreur";
-    $("prepTerrain").textContent = st.terrain || st.channel;
+    $("prepClub").textContent = $("busyClub").textContent = (st.club ? st.club + " · " : "") + "Scoreur";
+    $("prepTerrain").textContent = $("busyTerrain").textContent = st.terrain || st.channel;
     document.title = (st.terrain || st.channel) + " — Scoreur";
   }
 
@@ -308,6 +362,112 @@
     } catch { /* noms non envoyés : le score part quand même */ }
   }
 
+  // ---------- terrain déjà occupé ----------
+  // Au scan, si un autre appareil compte déjà ce terrain (même règle
+  // d'affichage que le live : en cours et synchronisé depuis ≤ 10 min), on
+  // propose de reprendre son match, d'en lancer un nouveau ou de regarder.
+  // Hors ligne : pas de vérification, on ne bloque jamais.
+  const STALE_MS = 600 * 1000;
+  let busy = null, busyNew = false;
+  async function checkBusy() {
+    if (!st.key || (engine && !st.stop)) return;
+    try {
+      const res = await fetch(`${API}/api/score?channel=${encodeURIComponent(st.channel)}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const r = await res.json();
+      const live = !!r && (r.status === "active" || r.status === "set_result") && Date.now() - r.updated_at <= STALE_MS;
+      busy = live && !(engine && engine.matchId === r.match_id) ? r : null;
+      if (!busy) busyNew = false;
+      if (!engine || st.stop) render();
+    } catch { /* hors ligne */ }
+  }
+  // Sport et format du moteur web correspondant au match en cours (null : padel, format inconnu).
+  function busyFormat(r) {
+    const c = r.config || {};
+    const s = Sports.WEB_SPORTS.find((x) => Sports.key(x) === c.sport);
+    if (s === undefined) return null;
+    for (let f = 0; f < Sports.formatCount(s); f++) {
+      const k = Sports.config(s, f);
+      if (["targetScore", "winBy", "cap", "setsToWin"].every((x) => k[x] === c[x])) return [s, f];
+    }
+    return null;
+  }
+  const busyNames = () => [$("n1").value.trim() || "Équipe 1", $("n2").value.trim() || "Équipe 2"];
+  function paintBusy() {
+    const r = busy;
+    const [a, b] = busyNames();
+    const sw = r.config && r.config.sport === "squash" ? "Jeu" : "Set";
+    const ago = Math.max(0, Math.round((Date.now() - r.updated_at) / 1000));
+    $("busyLive").textContent = "";
+    for (const [n, sets, pts, cls] of [[a, r.sets_me, r.score_me, ""], [b, r.sets_opp, r.score_opp, "b"]]) {
+      const d = document.createElement("div");
+      d.className = "lrow";
+      d.innerHTML = `<i class="${cls}"></i><span class="ln"></span><span class="ls"></span><span class="lp"></span>`;
+      d.querySelector(".ln").textContent = n;
+      d.querySelector(".ls").textContent = sets;
+      d.querySelector(".lp").textContent = pts;
+      $("busyLive").appendChild(d);
+    }
+    const m = document.createElement("span");
+    m.className = "lmeta";
+    m.textContent = `${sw} ${r.current_set} · dernier point il y a ${ago < 60 ? ago + " s" : Math.round(ago / 60) + " min"}`;
+    $("busyLive").appendChild(m);
+    const fmt = busyFormat(r);
+    $("takeOver").disabled = !fmt;
+    $("takeOverTxt").textContent = fmt
+      ? `On continue à ${r.score_me}–${r.score_opp}. L'autre téléphone (ou la montre) ne compte plus.`
+      : r.config && r.config.sport === "padel" ? "Indisponible : le padel ne se compte que sur la montre."
+      : "Indisponible : ce format n'existe pas sur le scoreur web.";
+  }
+  // Live : page publique du club (tous ses terrains), sinon l'overlay du canal.
+  function liveUrl() {
+    const slug = st.channel.replace(/-t\d+$/, "");
+    return slug !== st.channel ? "club.html?c=" + encodeURIComponent(slug) : "overlay/?channel=" + encodeURIComponent(st.channel);
+  }
+  $("watchLive").addEventListener("click", () => { location.href = liveUrl(); });
+  $("lostLive").addEventListener("click", () => { location.href = liveUrl(); });
+  $("newOver").addEventListener("click", () => { busyNew = true; render(); });
+  $("prepBack").addEventListener("click", () => { busyNew = false; render(); });
+  // Reprise : nouveau match (le serveur clôt l'ancien) qui part du score
+  // affiché sur le live. L'annulation ne remonte pas avant ce score.
+  $("takeOver").addEventListener("click", () => {
+    const fmt = busy && busyFormat(busy);
+    if (!fmt) return;
+    const r = busy;
+    st.sport = fmt[0];
+    st.fmt = fmt[1];
+    st.n1 = $("n1").value.trim();
+    st.n2 = $("n2").value.trim();
+    engine = new ScoreEngine(Sports.config(st.sport, st.fmt), newMatchId());
+    const res = r.status === "set_result";
+    engine.restore([res ? ScorePhase.SET_RESULT : ScorePhase.PLAYING, r.score_me, r.score_opp, r.sets_me, r.sets_opp,
+      r.current_set, res ? r.score_me : 0, res ? r.score_opp : 0], []);
+    st.acked = 0;
+    st.stop = false;
+    st.swap = false;
+    st.lost = false;
+    st.resumed = true;
+    busy = null;
+    busyNew = false;
+    changed();
+    render();
+    toast("Tu as la main");
+  });
+  // Écarté par un autre scoreur : reprendre la main relance un match au score courant.
+  $("lostTake").addEventListener("click", () => {
+    const e = engine;
+    busy = { status: ScorePhase.SET_RESULT === e.phase ? "set_result" : "active", score_me: e.scoreMe, score_opp: e.scoreOpp,
+      sets_me: e.setsMe, sets_opp: e.setsOpp, current_set: e.setNumber, config: { ...e.config, sport: Sports.key(e.config.sport) } };
+    $("takeOver").click();
+  });
+  $("lostQuit").addEventListener("click", () => {
+    engine = null;
+    st.lost = false;
+    save();
+    render();
+    checkBusy();
+  });
+
   $("start").addEventListener("click", () => {
     st.n1 = $("n1").value.trim().replace(/\s*\/\s*/g, " / ");
     st.n2 = $("n2").value.trim().replace(/\s*\/\s*/g, " / ");
@@ -316,6 +476,10 @@
     st.acked = 0;
     st.stop = false;
     st.swap = false;
+    st.lost = false;
+    st.resumed = false;
+    busy = null;
+    busyNew = false;
     changed();        // un envoi sans point ouvre le match à 0-0 (comme la montre)
     render();
   });
@@ -357,6 +521,7 @@
     st.stop = false;
     save();
     render();
+    checkBusy();
   });
   // « Fin » : le match passe en archivé (comme « fin de séance » sur la montre).
   function finish() {
@@ -388,8 +553,18 @@
       show("sNoKey");
       return;
     }
+    // Terrain compté par un autre appareil : écran de choix.
+    if ((!engine || st.stop) && busy && !busyNew) {
+      paintBusy();
+      show("sBusy");
+      return;
+    }
     // Match arrêté (en attente d'envoi) ou pas de match : préparation.
     if (!engine || st.stop) {
+      const [a, b] = busy ? busyNames() : [];
+      $("prepBusy").hidden = $("prepBack").hidden = !busy;
+      if (busy) $("prepBusy").innerHTML = `⚠ Le match <b></b> sera terminé au lancement.`;
+      if (busy) $("prepBusy").querySelector("b").textContent = `${a} ${busy.score_me}–${busy.score_opp} ${b}`;
       paintPrep();
       show("sPrep");
       paintSync();
@@ -406,13 +581,13 @@
       rows.forEach((r, i) => {
         const d = document.createElement("div");
         d.innerHTML = "<span></span><b></b>";
-        d.querySelector("span").textContent = setW() + " " + (i + 1);
+        d.querySelector("span").textContent = setW() + " " + (i + e.baseState()[5]);
         d.querySelector("b").textContent = setText(r).replace("-", " – ");
         $("recap").appendChild(d);
       });
       const n = points(e.events)[1];
       const last = e.events.length ? e.events[e.events.length - 1][3] : e.startedAtMs;
-      $("endMeta").textContent = `Durée ${Math.max(1, Math.round((last - e.startedAtMs) / 60000))} min · ${n} points`;
+      $("endMeta").textContent = `Durée ${Math.max(1, Math.round((last - e.startedAtMs) / 60000))} min · ${n} points` + (st.resumed ? " (depuis la reprise)" : "");
       show("sEnd");
       paintSync();
       return;
@@ -437,16 +612,23 @@
     $("zones").classList.toggle("swap", !!st.swap);
     $("where").textContent = (st.terrain || st.channel) + " · " + setW() + " " + e.setNumber;
     const res = e.phase === ScorePhase.SET_RESULT;
-    $("setCard").hidden = !res;
-    $("zA").disabled = res;
-    $("zB").disabled = res;
+    const lost = !!st.lost;
+    $("setCard").hidden = !res || lost;
+    $("lostCard").hidden = !lost;
+    $("zones").classList.toggle("dim", lost);
+    $("badge").classList.toggle("off", lost);
+    $("badgeT").textContent = lost ? "HORS LIVE" : "EN DIRECT";
+    $("swap").disabled = lost;
+    $("zA").disabled = res || lost;
+    $("zB").disabled = res || lost;
+    $("setUndo").hidden = e.events.length === 0;
     if (res) {
       const aWon = e.lastSetScoreMe > e.lastSetScoreOpp;
       $("setT").textContent = `${setW()} ${e.setNumber} pour ${aWon ? nameA() : nameB()}`;
       $("setS").textContent = `${e.lastSetScoreMe}–${e.lastSetScoreOpp}`;
       $("nextSet").textContent = setW() + " suivant";
     }
-    $("undo").disabled = e.events.length === 0;
+    $("undo").disabled = e.events.length === 0 || lost;
     paintSync();
   }
 
@@ -487,6 +669,11 @@
         if (!res.ok) throw new Error("HTTP " + res.status);
         const d = await res.json().catch(() => ({}));
         if (engine !== e) continue;       // nouveau match lancé entre-temps
+        if (d.superseded && !st.lost) {
+          st.lost = true;
+          document.querySelectorAll(".toast").forEach((t) => t.remove());
+          if (navigator.vibrate) navigator.vibrate([60, 60, 60]);
+        }
         if (batch.length) st.acked = Math.max(st.acked, d.lastAcceptedSequence || batch[batch.length - 1][2]);
         if (last) st.sentRev = rev;
         if (stop && st.rev === rev) { engine = null; st.stop = false; }
@@ -503,7 +690,7 @@
     render();
   }
   addEventListener("online", () => { retryMs = 2000; flush(); });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) { flush(); keepAwake(!$("sPlay").hidden); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { flush(); checkBusy(); keepAwake(!$("sPlay").hidden); } });
 
   function paintSync() {
     const n = pending();
@@ -534,6 +721,7 @@
   }
   render();
   flush();
+  checkBusy();
 </script>
 </body>
 </html>
