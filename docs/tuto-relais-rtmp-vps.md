@@ -24,7 +24,7 @@ Téléphone (VDO.Ninja, WebRTC/WHIP)
 │                                                         │
 │  MediaMTX (:1935 RTMP, :8554 RTSP, :8889 WHIP,          │
 │   metrics localhost)                                    │
-│   └─ runOnInit : lance le composite à la publication,   │
+│   └─ runOnAvailable : lance le composite à la publication,│
 │      le tue à la déconnexion                            │
 │                                                         │
 │  ffmpeg-relay                                           │
@@ -132,7 +132,7 @@ sudo chmod 640 /etc/racketstream/env                 # ⚠️ 640 : sans ça, le
 ```
 
 > 🔴 **Le piège n°2** : `/etc/racketstream/env` doit appartenir à `root:<groupe du user>`
-> en mode **640**. En `600`, le runOnInit de MediaMTX échoue avec `Permission denied`.
+> en mode **640**. En `600`, le runOnAvailable de MediaMTX échoue avec `Permission denied`.
 
 La configuration `/etc/mediamtx/mediamtx.yml` :
 
@@ -153,8 +153,8 @@ webrtcICEUDPMuxAddress: :8188
 
 paths:
   live/<VPS_KEY>:
-    runOnInit: /usr/local/bin/ffmpeg-relay
-    runOnInitRestart: yes
+    runOnAvailable: /usr/local/bin/ffmpeg-relay        # démarre quand le téléphone publie
+    runOnAvailableRestart: yes
     runOnUnavailable: /usr/local/bin/kill-composite   # anti-fantôme, cf. §4 (piège n°12)
 ```
 
@@ -162,7 +162,7 @@ paths:
 sudo systemctl daemon-reload && sudo systemctl enable --now mediamtx
 ```
 
-> 🔴 **Le piège n°3** : `runOnInitRestart: yes` relance le composite tant que la session vit —
+> 🔴 **Le piège n°3** : `runOnAvailableRestart: yes` relance le composite tant que la session vit —
 > mais si le composite ne meurt **pas** à la déconnexion (zombie), le suivant ne démarre jamais.
 > Le script du §4 gère ça avec un `trap` qui tue tout le groupe de processus.
 
@@ -242,8 +242,8 @@ sudo systemctl restart mediamtx
 > script : le composite reste vivant et retente lui-même toutes les 2 s ; MediaMTX n'a plus
 > qu'à le tuer/le laisser vivre.
 >
-> 🔴 **Le piège n°9 — le fantôme Twitch** : sur un path statique, MediaMTX **ne tue pas** le
-> runOnInit quand la publication s'arrête. Sans protection, le ffmpeg reste branché à Twitch
+> 🔴 **Le piège n°9 — le fantôme Twitch** : avec l'ancien `runOnInit`, MediaMTX **ne tuait pas** le
+> composite quand la publication s'arrête. Sans protection, le ffmpeg reste branché à Twitch
 > **indéfiniment** après ton Stop — le direct reste « live » avec une image figée.
 > Deux protections **cumulées** :
 > 1. `-timeout 5000000` dans le script (cf. piège n°11 : l'ancien `-rw_timeout` n'existe plus)
@@ -377,7 +377,7 @@ Twitch prend la moitié, on travaille sur les 2-3 premières secondes (créneau 
 | Composite actif mais 0 octet consommé (`outbound_bytes=0`) | RTSP négocié en UDP | `-rtsp_transport tcp` avant le `-i` RTSP |
 | Le direct affiche une image figée | écran du téléphone éteint / app en fond (piège n°6) | écran allumé, app en premier plan, chargeur |
 | La « source » du direct ne change pas après relance | ancienne session toujours accrochée (piège n°7) | `sudo systemctl restart mediamtx`, relancer l'app |
-| `404 Not Found` RTSP au lancement du composite | composite démarré avant le flux du téléphone | bénin : `runOnInitRestart` le relance quand la source arrive |
+| `404 Not Found` RTSP en boucle dans le journal (des centaines de milliers de lignes/jour) | ancien réglage `runOnInit` : le composite tourne et échoue toutes les 2 s même sans live | utiliser `runOnAvailable` (corrigé le 2026-10-12) ; journal plafonné par `/etc/systemd/journald.conf.d/racketstream.conf` (6 mois, 500 Mo) |
 | Le direct reste « live »/figé après le Stop | ffmpeg survit au SIGTERM (accroché au réseau) | trap durci : TERM puis `kill -9` 1 s après (cf. §4) — sinon `sudo pkill -9 -f "ffmpeg -hide"` |
 | Erreurs NAL au décodage du test | lecture du `.flv` pendant l'écriture | copier le fichier, ou attendre la fin |
 | Direct noir sur Twitch, composite actif | clé Twitch refusée | le journal : `journalctl -u mediamtx -f` — vérifie la clé |
