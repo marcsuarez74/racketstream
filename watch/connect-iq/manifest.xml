@@ -1,9 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
-    <iq:application id="59EEABC33F1813AE142E338E63007E53" version="0.3.2" minSdkVersion="3.4.0" minApiLevel="3.4.0" entry="BadmintonApp" type="watch-app" name="@Strings.AppName" launcherIcon="@Drawables.LauncherIcon">
+    <iq:application id="9EDFE498FB3F415C8ECAB83E62D0766C" version="1.0.0" minSdkVersion="3.4.0" minApiLevel="3.4.0" entry="BadmintonApp" type="watch-app" name="@Strings.AppName" launcherIcon="@Drawables.LauncherIcon">
         <iq:products>
+            <iq:product id="epix2"/>
+            <iq:product id="epix2pro42mm"/>
+            <iq:product id="epix2pro47mm"/>
             <iq:product id="epix2pro51mm"/>
+            <iq:product id="enduro3"/>
+            <iq:product id="fenix7"/>
+            <iq:product id="fenix7s"/>
+            <iq:product id="fenix7x"/>
+            <iq:product id="fenix7pro"/>
+            <iq:product id="fenix7spro"/>
+            <iq:product id="fenix7xpro"/>
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fenix847mm"/>
+            <iq:product id="fenix8solar47mm"/>
+            <iq:product id="fenix8solar51mm"/>
+            <iq:product id="fenix8pro47mm"/>
             <iq:product id="fr55"/>
+            <iq:product id="fr165"/>
+            <iq:product id="fr255"/>
+            <iq:product id="fr255s"/>
+            <iq:product id="fr255m"/>
+            <iq:product id="fr255sm"/>
+            <iq:product id="fr265"/>
+            <iq:product id="fr265s"/>
+            <iq:product id="fr57042mm"/>
+            <iq:product id="fr57047mm"/>
+            <iq:product id="fr955"/>
+            <iq:product id="fr965"/>
+            <iq:product id="fr970"/>
         </iq:products>
         <iq:permissions>
             <iq:uses-permission id="Communications"/>
