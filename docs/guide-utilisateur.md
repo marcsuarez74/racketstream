@@ -219,5 +219,6 @@ Le détail est dans la [politique de confidentialité](https://racket-stream-por
 
 ## 9. Support
 
+- Contact (suppression de données, signalement, accessibilité) : racketstream-contact@marc-suarez.fr
 - Bugs et questions : [GitHub Issues](https://github.com/marcsuarez74/badminton-score/issues)
 - Montre compatible non listée ? Demande — chaque famille d'écran nécessite une validation, ajoutées au fil des demandes.
