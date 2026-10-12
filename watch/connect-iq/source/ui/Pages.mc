@@ -16,16 +16,18 @@ module Pages {
         var hr = v.mAct.heartRate();
         Ui.t(dc, Sports.name(sp).toUpper(), 227, 110, 52, Sports.color(sp), null);
         if (v.mResumed) {
-            Ui.t(dc, "Reprise du match", 227, 165, 36, WHITE, null);
-            Ui.t(dc, setsLabel(v) + "  ·  " + v.scoreLine(), 227, 205, 28, Ui.C_SOFT, null);
+            Ui.fit(dc, "Reprise du match", 227, 165, 36, WHITE, null, 400);
+            Ui.fit(dc, setsLabel(v) + "  ·  " + v.scoreLine(), 227, 205, 28, Ui.C_SOFT, null, 400);
         } else {
-            Ui.t(dc, Sports.formatLabel(sp, v.mFormat), 227, 165, 36, WHITE, null);
+            Ui.fit(dc, Sports.formatLabel(sp, v.mFormat), 227, 165, 36, WHITE, null, 400);
         }
         var blink = (System.getTimer() / 1000) % 2 == 0;
         Ui.heart(dc, 167, 255, 26, hr != null ? 0x33C46B : (blink ? 0x8E96A3 : Ui.C_LINE));
         Ui.t(dc, hr != null ? "FC  " + hr : "Recherche FC...", 192, 255, 34, hr != null ? WHITE : Ui.C_LABEL, Ui.LEFT);
-        Ui.t(dc, v.mResumed ? "START pour reprendre" : "START pour démarrer", 227, 320, 32, WHITE, null);
-        Ui.t(dc, v.mResumed ? "BACK  abandonner le match" : "Intérieur · sans GPS", 227, 365, 24, Ui.C_FAINT, null);
+        Ui.fit(dc, v.mResumed ? "START pour reprendre" : "START pour démarrer", 227, 320, 32, WHITE, null, 380);
+        // Polices larges (fr265s…) : version courte si la longue ne tient pas.
+        var back = Ui.fits(dc, "BACK  abandonner le match", 320) ? "BACK  abandonner le match" : "BACK  abandon";
+        Ui.fit(dc, v.mResumed ? back : "Intérieur · sans GPS", 227, 365, 24, Ui.C_FAINT, null, 320);
     }
 
     function setsLabel(v) as String {
