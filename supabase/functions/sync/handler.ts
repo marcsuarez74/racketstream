@@ -139,12 +139,16 @@ export async function handleSync(req: Request, db: Db, sender?: Announcer): Prom
   if (dev.ownerId === null) return json(500, { error: "device" });
   const ownerId = dev.ownerId;
   const channel = dev.channel;
+  // Un match plus récent existe sur la clé (un autre scoreur a repris la
+  // main) : les points sont acceptés mais le match reste hors live.
+  let superseded = false;
   const write = async () => {
     const owner = await db.getMatchOwner(matchId);
     if (owner.error) throw new SyncAbort(500, owner.error);
     if (owner.ownerId !== null && owner.ownerId !== ownerId) throw new SyncAbort(403, "owner");
     const nw = db.newerMatchExists ? await db.newerMatchExists(ownerId, matchId, v.startedAt) : { newer: false, error: null };
     if (nw.error) throw new SyncAbort(500, nw.error);
+    superseded = nw.newer && !v.stop;
     if (owner.ownerId === null && !nw.newer) {
       const cl = await db.finishOtherActiveMatches(ownerId, matchId);
       if (cl.error) throw new SyncAbort(500, cl.error);
@@ -184,7 +188,9 @@ export async function handleSync(req: Request, db: Db, sender?: Announcer): Prom
     } catch { /* l'annonce ne doit jamais casser la sync */ }
   }
   // Sans event, rien à acquitter (la montre ignore l'absence d'ACK).
-  if (v.events.length === 0) return json(200, { matchId });
+  // superseded : lu par le scoreur web, ignoré par la montre.
+  const extra = superseded ? { superseded: true } : {};
+  if (v.events.length === 0) return json(200, { matchId, ...extra });
   const last = Math.max(...v.events.map((e) => e.sequence as number));
-  return json(200, { matchId, lastAcceptedSequence: last });
+  return json(200, { matchId, lastAcceptedSequence: last, ...extra });
 }

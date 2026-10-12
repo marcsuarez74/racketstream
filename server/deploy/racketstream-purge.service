@@ -1,0 +1,23 @@
+# Durées de conservation annoncées dans portal/confidentialite.html : matchs
+# de plus de 12 mois, canaux perso sans match depuis 24 mois (server/admin.ts purge).
+# Lancée avant la sauvegarde de 04:00 pour que les copies suivent la purge.
+[Unit]
+Description=Purge des données RacketStream (durées de conservation)
+
+[Service]
+Type=oneshot
+User=rs-api
+Group=rs-api
+WorkingDirectory=/opt/racketstream-api
+Environment=RS_DB=/var/lib/racketstream-api/racketstream.db
+Environment=DENO_DIR=/var/lib/racketstream-api/deno
+Environment=DENO_NO_UPDATE_CHECK=1
+ExecStart=/usr/local/bin/deno run --no-prompt \
+  --allow-read=/opt/racketstream-api,/var/lib/racketstream-api \
+  --allow-write=/var/lib/racketstream-api --allow-env=RS_DB \
+  server/admin.ts purge
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/racketstream-api
+ProtectHome=true
+PrivateTmp=true

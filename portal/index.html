@@ -12,9 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&display=swap" rel="stylesheet">
+<link href="fonts/archivo.css" rel="stylesheet">
 <style>
   /* Design « version sportive » : reprise à l'identique des maquettes du
      canevas (téléphone 390 px, ordinateur ≥ 1024 px). Les valeurs propres à
@@ -70,6 +68,7 @@
   .chanmenu button em { font-size: 13px; font-weight: 900; color: #3DD68C; font-stretch: 100%; }
   .chanmenu a { margin-top: 4px; border-top: 1px solid #2A313B; clip-path: none; font-size: 15px; font-weight: 800; font-stretch: 90%; color: #22D3EE; }
   .chanmenu a:hover { color: #22D3EE; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .vh { display: flex; align-items: center; gap: 10px; padding: calc(18px + env(safe-area-inset-top)) 16px 10px; }
   .vh.col { flex-direction: column; align-items: stretch; gap: 6px; padding-bottom: 0; }
   .h1 { font-size: 40px; font-weight: 900; font-style: italic; font-stretch: 68%; line-height: 1; }
@@ -156,7 +155,7 @@
   .flabel i.b { background: #4DABF7; }
   .pi { width: 100%; height: 54px; border: 0; border-radius: 0; border-bottom: 3px solid #3DD68C; background: #1A1F26; color: #FFFFFF; padding: 0 16px; font-size: 19px; font-weight: 800; font-style: italic; font-stretch: 80%; text-transform: uppercase; letter-spacing: .02em; clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%); transition: background .2s, padding-left .25s; }
   .pi.b { border-bottom-color: #4DABF7; }
-  .pi::placeholder { color: #6B737D; text-transform: none; font-weight: 600; }
+  .pi::placeholder { color: #8A929C; text-transform: none; font-weight: 600; }
   .pi:focus { outline: none; background: #222933; padding-left: 22px; }
   .pi.dbl:not(.b) { animation: inL .55s cubic-bezier(.2, .9, .25, 1) both; }
   .pi.dbl.b { animation: inR .55s .08s cubic-bezier(.2, .9, .25, 1) both; }
@@ -226,6 +225,8 @@
   .tw.on { opacity: 1; pointer-events: auto; }
   .tw iframe { display: block; width: 100%; height: 100%; border: 0; }
   .twnote { margin-top: 12px; font-size: 13px; color: #9AA3AE; line-height: 1.45; }
+  .twconsent { margin: 0; font-size: 13px; line-height: 1.45; color: #9AA3AE; }
+  .twconsent a { color: #C9D1DA; }
   .twlab { margin-top: 8px; font-size: 14px; font-weight: 700; color: #C9D1DA; }
   .cbtn.wide { min-width: 120px; }
   .copyrow .ci { width: auto; flex-grow: 1; min-width: 0; }
@@ -265,7 +266,7 @@
   .card h2 { line-height: 1; }
   .card label { font-size: 14px; font-weight: 700; color: #C9D1DA; }
   .ci { width: 100%; height: 52px; border: 0; border-radius: 0; border-bottom: 3px solid #333333; background: #1A1F26; color: #FFFFFF; padding: 0 14px; font-size: 17px; font-weight: 700; }
-  .ci::placeholder { color: #6B737D; font-weight: 600; }
+  .ci::placeholder { color: #8A929C; font-weight: 600; }
   .ci:focus { outline: none; background: #222933; border-bottom-color: #22D3EE; }
   .okcard { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px 20px; background: #0F2A1D; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%); animation: inUp .4s cubic-bezier(.2, .9, .25, 1) both; }
   .okcard .t { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 900; font-style: italic; font-stretch: 75%; color: #3DD68C; }
@@ -481,6 +482,9 @@
     .mmatch, .mmatch:hover, .tnMatch, .tnMatch:hover { transition: none; transform: none; }
     .chan, .cta { transition: none; }
   }
+  .legalnav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; padding: 28px 16px 8px; font-size: 13px; }
+  .legalnav a { color: #9AA3AE; text-underline-offset: 2px; }
+  .legalnav a:hover { color: #FFFFFF; }
 </style>
 </head>
 <body data-view="match">
@@ -510,6 +514,7 @@
 <main>
   <!-- ============ MATCH ============ -->
   <div id="v-match" data-view="match" class="grid m" hidden>
+    <h1 class="sr-only">Match en direct</h1>
     <section class="live-sec" aria-label="Score en direct" aria-live="polite">
       <div class="lhead">
         <span class="badge"><span class="d"></span><span id="liveBadge">Pas de match</span></span>
@@ -547,7 +552,7 @@
 
     <section class="next">
       <div class="nochan" id="noChan" hidden>
-        <h3 class="h2">Aucun canal sur cet appareil</h3>
+        <h2 class="h2">Aucun canal sur cet appareil</h2>
         <p>Un canal relie ta montre au bandeau du live. Crée-le ou ajoute celui que tu as déjà.</p>
         <a class="ghost" href="#canaux">Configurer un canal</a>
       </div>
@@ -696,6 +701,7 @@
           <input id="twitch" class="ci" placeholder="ex. marcoleroc74" autocomplete="off" autocapitalize="none" spellcheck="false">
           <button class="cbtn wide" id="saveTwitch"><span>Enregistrer</span></button>
         </div>
+        <p class="twconsent" id="twConsent">En enregistrant une chaîne, tu acceptes que le lecteur de Twitch (Twitch Interactive, États-Unis) soit chargé sur la page Diffusion de cet appareil : Twitch peut alors déposer ses propres cookies. Vide le champ et enregistre pour retirer ton accord. <a href="confidentialite.html#twitch">En savoir plus</a></p>
         <button class="linkdanger" id="removeChan">Retirer ce canal de l'appareil</button>
       </section>
     </div>
@@ -808,6 +814,7 @@
       <p class="status chanst" id="clubStatus" role="status"></p>
     </div>
   </div>
+  <nav class="legalnav" aria-label="Informations légales"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgu.html">Conditions d'utilisation</a></nav>
 </main>
 
 <nav class="mnav" aria-label="Navigation">
@@ -1286,7 +1293,9 @@
   setInterval(checkTwitch, 5000);
   async function syncTwitch() {
     const c = active();
-    const want = document.body.dataset.view === "diffusion" && c && c.twitch ? c.twitch : null;
+    // Lecteur tiers (cookies Twitch) : chargé seulement après l'accord donné en
+    // enregistrant la chaîne (twOk), retiré quand la chaîne est vidée.
+    const want = document.body.dataset.view === "diffusion" && c && c.twitch && c.twOk ? c.twitch : null;
     if (want === twFor) return;
     twFor = want;
     twPl = null;
@@ -1313,6 +1322,7 @@
     const v = $("twitch").value.trim().replace(/^.*twitch\.tv\//i, "").replace(/[/?#].*$/, "").toLowerCase();
     if (v && !/^[a-z0-9_]{3,25}$/.test(v)) { setStatus("chanStatus", "Nom de chaîne Twitch invalide", "err"); return; }
     c.twitch = v;
+    c.twOk = !!v;
     saveStore();
     $("twitch").value = v;
     label($("saveTwitch"), "Enregistré");

@@ -172,6 +172,14 @@ Sans réseau, le scoreur continue de compter : les points sont envoyés dès que
 
 ⚠️ Le QR code contient la clé du terrain : toute personne qui le scanne peut marquer des points sur ce terrain. Ne le donne qu'aux personnes qui marquent. S'il circule trop, utilise **Nouvelle clé montre** : l'ancien QR ne marche plus (le scoreur affiche « Ce QR code n'est plus valable »). Pense à remettre la nouvelle clé dans la montre du terrain s'il y en a une, puis imprime le nouveau QR.
 
+Si un match est déjà en cours sur le terrain au moment du scan (compté par un autre téléphone ou une montre), le scoreur affiche son score et propose :
+
+- **Reprendre ce match** : on continue au même score (relais en cas de batterie à plat, de montre qui lâche ou de changement d'arbitre). L'appareil précédent ne compte plus. **↶ Annuler** ne revient pas avant le score repris. Impossible pour un match de padel compté sur la montre ;
+- **Nouveau match** : le match en cours est terminé au lancement et on repart à 0-0 ;
+- **Juste regarder le live** : ouvre la page publique du club.
+
+Le téléphone qui comptait jusque-là est prévenu à son point suivant (« Un autre téléphone a pris la main ») : ses points ne partent plus au live, et il peut **Reprendre la main**. Une montre, elle, n'est pas prévenue : arrête-la à la main.
+
 Une montre et un scoreur peuvent servir sur le même terrain : c'est le match lancé le plus récemment qui s'affiche.
 
 ### Page publique du club
@@ -194,7 +202,7 @@ Comme le bandeau du live, un terrain affiche « Fin du set » entre deux sets et
 → Garmin Connect n'envoie les réglages à la montre qu'à la validation du formulaire **et** au redémarrage : re-valide les Réglages (sans rien changer) puis redémarre la montre. Vérifie aussi que la clé fait bien 64 caractères, sans espace.
 
 **Je ne trouve plus ma clé.**
-→ Un canal ne peut pas être recréé (le nom est réservé). Demande une nouvelle clé via la page support — l'ancienne sera invalidée et une nouvelle clé générée pour ton canal.
+→ L'empreinte seule est conservée : personne ne peut retrouver ta clé. Pour un terrain de club, génère une nouvelle clé dans l'onglet Club. Pour un canal perso, écris à l'adresse de contact des [mentions légales](https://racket-stream-portal.marc-suarez.fr/mentions-legales.html) : on supprime le canal et tu peux le recréer avec une nouvelle clé. N'envoie jamais ta clé par e-mail.
 
 **Deux matchs s'affichent en même temps ?**
 → Impossible par design : créer un nouveau match **clôture automatiquement** le précédent de ta montre.
@@ -206,15 +214,19 @@ Comme le bandeau du live, un terrain affiche « Fin du set » entre deux sets et
 
 ## 8. Confidentialité
 
-- **Données stockées** : ton canal, les noms que tu choisis, les scores/événements de match, et l'**empreinte** (hash SHA-256) de ta clé — jamais la clé elle-même
-- **Aucun compte, aucune donnée personnelle** (pas d'email, pas de nom réel requis)
-- **Scores publics par design** : c'est ce qui permet aux viewers de les afficher ; ton canal est consultable par quiconque connaît son nom
-- **Suppression** : demande via la page support — les matchs de ton canal sont supprimés, ta clé révoquée
+Le détail est dans la [politique de confidentialité](https://racket-stream-portal.marc-suarez.fr/confidentialite.html) ; les règles d'usage dans les [conditions d'utilisation](https://racket-stream-portal.marc-suarez.fr/cgu.html).
+
+- **Aucun compte** : pas d'e-mail ni de mot de passe. Le serveur garde ton canal, les noms affichés, les points des matchs et l'**empreinte** (SHA-256) de ta clé — jamais la clé elle-même
+- **Scores publics par design** : c'est ce qui permet aux viewers de les afficher ; ton canal est consultable par quiconque connaît son nom. N'affiche que des noms que les joueurs acceptent de voir publiés (un prénom ou un surnom suffit), et pour un mineur, avec l'accord de ses parents
+- **Conservation** : les matchs sont effacés automatiquement après 12 mois, un canal perso sans match depuis 24 mois aussi
+- **Suppression** : écris à l'adresse de contact des [mentions légales](https://racket-stream-portal.marc-suarez.fr/mentions-legales.html) — ton canal (ou ton club), ses matchs et sa clé sont supprimés
+- **Aucun cookie** sur le portail ; le lecteur Twitch de la page Diffusion n'est chargé que si tu enregistres ta chaîne
 - L'app ne lit ni contacts, ni position, ni santé ; elle n'envoie rien hors de ton action (un point marqué)
 
 ---
 
 ## 9. Support
 
+- Contact (suppression de données, signalement, accessibilité) : racketstream-contact@marc-suarez.fr
 - Bugs et questions : [GitHub Issues](https://github.com/marcsuarez74/badminton-score/issues)
 - Montre compatible non listée ? Demande — chaque famille d'écran nécessite une validation, ajoutées au fil des demandes.
