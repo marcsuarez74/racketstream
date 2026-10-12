@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Club en direct — RacketStream</title>
+<script src="i18n.js"></script>
 <meta name="theme-color" content="#000000">
-<meta name="description" content="Tous les matchs du club en direct.">
+<meta name="description" content="Tous les matchs du club en direct." data-en-content="Every club match, live.">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link href="fonts/archivo.css" rel="stylesheet">
@@ -23,6 +24,8 @@
   .glow { display: none; }
   header { position: relative; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
   .hw { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .ey { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ey [data-langsw] { margin-left: auto; }
   .eyebrow { font-size: 13px; font-weight: 900; font-style: italic; color: #4DABF7; }
   h1 { font-size: 44px; font-weight: 900; font-style: italic; font-stretch: 66%; line-height: 1; overflow-wrap: anywhere; }
   .badge { align-self: flex-start; display: flex; align-items: center; gap: 7px; padding: 5px 12px 5px 10px; background: #E8453C; font-size: 13px; font-weight: 900; font-style: italic; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
@@ -64,6 +67,8 @@
     header { padding: 0; flex-direction: row; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
     .hw { flex-grow: 1; }
     .eyebrow { font-size: 16px; }
+    .ey { gap: 20px; }
+    .ey [data-langsw] { margin-left: 0; }
     h1 { font-size: 72px; font-stretch: 64%; line-height: .95; }
     .badge { align-self: auto; gap: 9px; padding: 8px 16px 8px 14px; font-size: 17px; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
     .badge .d { width: 9px; height: 9px; }
@@ -100,19 +105,19 @@
   <div class="glow"></div>
   <header>
     <div class="hw">
-      <span class="eyebrow">RACKETSTREAM · EN DIRECT</span>
+      <div class="ey"><span class="eyebrow" data-en="RACKETSTREAM · LIVE">RACKETSTREAM · EN DIRECT</span><span data-langsw></span></div>
       <h1 id="name">Club</h1>
     </div>
-    <span class="badge off" id="badge" role="status"><span class="d"></span><span id="badgeTxt">CHARGEMENT…</span></span>
-    <div class="tvqr" id="tvqr" hidden><div class="q" id="tvqrImg" role="img" aria-label="QR code de cette page"></div><span>Suis les scores sur ton téléphone</span></div>
+    <span class="badge off" id="badge" role="status"><span class="d"></span><span id="badgeTxt"></span></span>
+    <div class="tvqr" id="tvqr" hidden><div class="q" id="tvqrImg" role="img" aria-label="QR code de cette page" data-en-aria-label="QR code for this page"></div><span data-en="Follow the scores on your phone">Suis les scores sur ton téléphone</span></div>
   </header>
-  <section class="cards" id="cards" aria-label="Terrains" aria-live="polite"></section>
+  <section class="cards" id="cards" aria-label="Terrains" data-en-aria-label="Courts" aria-live="polite"></section>
   <p class="msg" id="msg" hidden></p>
   <div class="foot" id="foot" hidden>
-    <p>Mis à jour en direct. Aucun compte nécessaire : partage simplement ce lien.</p>
-    <div class="share"><span class="u" id="url"></span><button id="share">Partager</button></div>
+    <p data-en="Updated live. No account needed: just share this link.">Mis à jour en direct. Aucun compte nécessaire : partage simplement ce lien.</p>
+    <div class="share"><span class="u" id="url"></span><button id="share"></button></div>
   </div>
-  <nav class="legalnav" aria-label="Informations légales"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgu.html">Conditions d'utilisation</a></nav>
+  <nav class="legalnav" aria-label="Informations légales" data-en-aria-label="Legal information"><a href="mentions-legales.html" data-en="Legal notice">Mentions légales</a><a href="confidentialite.html" data-en="Privacy">Confidentialité</a><a href="cgu.html" data-en="Terms of use">Conditions d'utilisation</a></nav>
 </div>
 
 <script>
@@ -125,7 +130,9 @@
   const isLive = (r) => !!r && (r.status === "active" || r.status === "set_result") && Date.now() - r.updated_at <= STALE_MS;
   const visible = (r) => isLive(r) || (!!r && r.status === "match_finished" && Date.now() - r.updated_at <= FINISHED_MS);
   const $ = (id) => document.getElementById(id);
-  const SRV = '<svg role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg>';
+  const t = I18N.t;
+  document.title = t("Club en direct", "Club live") + " — RacketStream";
+  const SRV = '<svg role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="' + t("au service", "serving") + '"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg>';
 
   const slug = (new URLSearchParams(location.search).get("c") || "").trim().toLowerCase();
   const pageUrl = location.origin + location.pathname + "?c=" + encodeURIComponent(slug);
@@ -139,33 +146,33 @@
     $("cards").textContent = "";
     $("msg").textContent = msg;
     $("msg").hidden = false;
-    $("badgeTxt").textContent = "HORS LIGNE";
+    $("badgeTxt").textContent = t("HORS LIGNE", "OFFLINE");
   }
 
   async function load() {
     try {
       const res = await fetch(`${API}/api/clubs/${encodeURIComponent(slug)}`, { cache: "no-store" });
-      if (res.status === 404) { fail("Ce club n'existe pas. Vérifie le lien."); return false; }
+      if (res.status === 404) { fail(t("Ce club n'existe pas. Vérifie le lien.", "This club doesn't exist. Check the link.")); return false; }
       if (!res.ok) throw new Error();
       const d = await res.json();
       $("name").textContent = d.name;
-      document.title = d.name + " en direct — RacketStream";
-      terrains = d.terrains.map((t) => ({ channel: t.channel, label: t.label }));
-      for (const t of d.terrains) note(t.channel, t.score);
+      document.title = d.name + t(" en direct", " live") + " — RacketStream";
+      terrains = d.terrains.map((x) => ({ channel: x.channel, label: x.label }));
+      for (const x of d.terrains) note(x.channel, x.score);
       $("msg").hidden = true;
       render();
       return true;
     } catch {
-      if (!terrains.length) fail("Pas de réseau : la page se met à jour dès que la connexion revient.");
+      if (!terrains.length) fail(t("Pas de réseau : la page se met à jour dès que la connexion revient.", "No network: the page updates as soon as you're back online."));
       return null;
     }
   }
 
   async function loadNames() {
-    await Promise.all(terrains.map(async (t) => {
+    await Promise.all(terrains.map(async (x) => {
       try {
-        const res = await fetch(`${API}/functions/v1/names?channel=${encodeURIComponent(t.channel)}`, { cache: "no-store" });
-        if (res.ok) names[t.channel] = await res.json();
+        const res = await fetch(`${API}/functions/v1/names?channel=${encodeURIComponent(x.channel)}`, { cache: "no-store" });
+        if (res.ok) names[x.channel] = await res.json();
       } catch { /* garder les noms connus */ }
     }));
     render();
@@ -188,59 +195,62 @@
   const pair = (a, b, dflt) => [a, b].filter(Boolean).join(" / ") || dflt;
 
   function render() {
-    const live = terrains.filter((t) => isLive(scores[t.channel])).length;
+    const live = terrains.filter((x) => isLive(scores[x.channel])).length;
     $("badge").className = live ? "badge" : "badge off";
-    $("badgeTxt").textContent = live ? `${live} TERRAIN${live > 1 ? "S" : ""} EN MATCH` : "AUCUN MATCH EN COURS";
+    $("badgeTxt").textContent = live
+      ? t(`${live} TERRAIN${live > 1 ? "S" : ""} EN MATCH`, `${live} COURT${live > 1 ? "S" : ""} IN PLAY`)
+      : t("AUCUN MATCH EN COURS", "NO MATCH IN PROGRESS");
     if (!terrains.length) {
       $("cards").textContent = "";
-      $("msg").textContent = "Ce club n'a pas encore de terrain.";
+      $("msg").textContent = t("Ce club n'a pas encore de terrain.", "This club has no courts yet.");
       $("msg").hidden = false;
       return;
     }
     const box = $("cards");
     // Les cartes sont recréées seulement si la liste des terrains change :
     // sinon on met à jour sur place (pas de clignotement sur la TV).
-    if (box.dataset.list !== terrains.map((t) => t.channel).join()) {
+    if (box.dataset.list !== terrains.map((x) => x.channel).join()) {
       box.textContent = "";
-      for (const t of terrains) {
+      for (const x of terrains) {
         const c = document.createElement("article");
         c.className = "card";
-        c.dataset.ch = t.channel;
+        c.dataset.ch = x.channel;
         c.innerHTML = `<span class="bar"></span><div class="in">
           <div class="top"><span class="tn"></span><span class="hot" hidden></span><span class="sn"></span></div>
           <div class="row a"><i></i><span class="pn"><span></span></span><span class="ps"></span><span class="pt"></span></div>
           <div class="row b"><i></i><span class="pn"><span></span></span><span class="ps"></span><span class="pt"></span></div>
-          <span class="wait">Aucun match pour l'instant</span></div>`;
+          <span class="wait">${t("Aucun match pour l'instant", "No match yet")}</span></div>`;
         box.appendChild(c);
       }
-      box.dataset.list = terrains.map((t) => t.channel).join();
+      box.dataset.list = terrains.map((x) => x.channel).join();
     }
-    for (const t of terrains) {
-      const c = box.querySelector(`[data-ch="${CSS.escape(t.channel)}"]`);
-      const r = scores[t.channel];
+    for (const tr of terrains) {
+      const c = box.querySelector(`[data-ch="${CSS.escape(tr.channel)}"]`);
+      const r = scores[tr.channel];
       const on = visible(r);
       const playing = !!r && r.status === "active" && on;
       c.classList.toggle("live", isLive(r));
-      c.querySelector(".tn").textContent = t.label;
+      c.querySelector(".tn").textContent = tr.label;
       c.querySelector(".wait").hidden = on;
       c.querySelectorAll(".row").forEach((row) => { row.hidden = !on; });
       const hot = c.querySelector(".hot");
       if (!on) {
-        c.querySelector(".sn").textContent = "En attente";
+        c.querySelector(".sn").textContent = t("En attente", "Waiting");
         hot.hidden = true;
-        c.setAttribute("aria-label", `${t.label} : aucun match`);
+        c.setAttribute("aria-label", t(`${tr.label} : aucun match`, `${tr.label}: no match`));
         continue;
       }
       const cfg = r.config || {};
-      const word = cfg.sport === "squash" || cfg.sport === 2 ? "Jeu" : "Set";
-      c.querySelector(".sn").textContent = r.status === "match_finished" ? "Terminé"
-        : r.status === "set_result" ? `Fin du ${word.toLowerCase()} ${r.current_set}` : `${word} ${r.current_set}`;
+      const squash = cfg.sport === "squash" || cfg.sport === 2;
+      const word = squash ? t("Jeu", "Game") : "Set";
+      c.querySelector(".sn").textContent = r.status === "match_finished" ? t("Terminé", "Final")
+        : r.status === "set_result" ? t(`Fin du ${word.toLowerCase()} ${r.current_set}`, `End of ${word.toLowerCase()} ${r.current_set}`) : `${word} ${r.current_set}`;
       const target = cfg.targetScore || 21;
       hot.hidden = !(playing && r.score_me >= target - 1 && r.score_opp >= target - 1);
       hot.textContent = `${r.score_me}–${r.score_opp}`;
-      const n = names[t.channel] || {};
-      const pa = pair(n.name1, n.name1b, "Équipe 1"), pb = pair(n.name2, n.name2b, "Équipe 2");
-      const s = playing ? serve[t.channel] : null;
+      const n = names[tr.channel] || {};
+      const pa = pair(n.name1, n.name1b, t("Équipe 1", "Team 1")), pb = pair(n.name2, n.name2b, t("Équipe 2", "Team 2"));
+      const s = playing ? serve[tr.channel] : null;
       for (const [k, nm, sets, pts] of [["a", pa, r.sets_me, r.score_me], ["b", pb, r.sets_opp, r.score_opp]]) {
         const row = c.querySelector(".row." + k);
         const pn = row.querySelector(".pn");
@@ -250,14 +260,14 @@
         else if (!(s && s.who === k) && hasSrv) pn.querySelector("svg").remove();
         row.querySelector(".ps").textContent = sets;
         const pt = row.querySelector(".pt");
-        const key = t.channel + k;
+        const key = tr.channel + k;
         if (pt.textContent !== String(pts)) {
           pt.textContent = pts;
           if (shown[key] !== undefined) { pt.classList.remove("pop"); void pt.offsetWidth; pt.classList.add("pop"); }
           shown[key] = pts;
         }
       }
-      c.setAttribute("aria-label", `${t.label}, ${word.toLowerCase()} ${r.current_set} : ${pa} ${r.score_me}, ${pb} ${r.score_opp}`);
+      c.setAttribute("aria-label", `${tr.label}, ${word.toLowerCase()} ${r.current_set}${t(" : ", ": ")}${pa} ${r.score_me}, ${pb} ${r.score_opp}`);
     }
   }
 
@@ -270,7 +280,7 @@
     es.onmessage = (ev) => {
       try {
         const m = JSON.parse(ev.data);
-        if (!terrains.some((t) => t.channel === m.channel)) return;
+        if (!terrains.some((x) => x.channel === m.channel)) return;
         note(m.channel, m.score);
         render();
       } catch { /* message illisible : ignoré */ }
@@ -296,21 +306,23 @@
     } catch { /* pas de QR : la page reste utilisable */ }
   }
 
+  $("badgeTxt").textContent = t("CHARGEMENT…", "LOADING…");
+  $("share").textContent = t("Partager", "Share");
   $("url").textContent = pageUrl.replace(/^https?:\/\//, "");
   $("share").addEventListener("click", async () => {
     const b = $("share");
     if (navigator.share) {
-      try { await navigator.share({ title: $("name").textContent + " en direct", url: pageUrl }); return; }
+      try { await navigator.share({ title: $("name").textContent + t(" en direct", " live"), url: pageUrl }); return; }
       catch (e) { if (e.name === "AbortError") return; }
     }
     try { await navigator.clipboard.writeText(pageUrl); } catch { return; }
-    b.textContent = "Copié ✓";
+    b.textContent = t("Copié ✓", "Copied ✓");
     b.classList.add("done");
-    setTimeout(() => { b.textContent = "Partager"; b.classList.remove("done"); }, 1800);
+    setTimeout(() => { b.textContent = t("Partager", "Share"); b.classList.remove("done"); }, 1800);
   });
 
   (async () => {
-    if (!slug) { fail("Lien incomplet : demande au club le lien de sa page."); return; }
+    if (!slug) { fail(t("Lien incomplet : demande au club le lien de sa page.", "Incomplete link: ask the club for its page link.")); return; }
     let ok;
     while ((ok = await load()) === null) await new Promise((r) => setTimeout(r, 10000));
     if (ok === false) return;

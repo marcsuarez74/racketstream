@@ -21,7 +21,7 @@ Aucun ordinateur, aucune manipulation pendant que tu joues : la montre fait tout
 |---|---|
 | Montre Garmin compatible | Voir familles supportées sur la fiche store (v1.0 : epix2 Pro 51 mm, Forerunner 55 — d'autres familles suivent) |
 | Garmin Connect Mobile | Installé et connecté à ta montre (c'est le relais internet de la montre) |
-| Pour streamer | Un compte Twitch + streameur ou téléphone (l'overlay est un simple lien web) |
+| Pour streamer | Un compte Twitch ou YouTube + OBS sur un ordinateur, ou l'app gratuite PRISM Live Studio sur un téléphone (l'overlay est un simple lien web) |
 
 Pas besoin de compte ailleurs : le backend est **fourni et gratuit**.
 
@@ -42,7 +42,7 @@ Pas besoin de compte ailleurs : le backend est **fourni et gratuit**.
 2. Page **Canaux**, carte **« Nouvelle montre »** : choisis un nom unique (ex. ton pseudo Twitch — c'est ce qui identifie tes matchs) puis **Créer le canal**
 3. Ta **clé personnelle** s'affiche — ⚠️ elle n'est montrée en entier **qu'une seule fois** : touche **Copier la clé** tout de suite (elle reste mémorisée sur ce téléphone, page Canaux)
 4. Page **Match** (le rond au centre de la barre du bas) : choisis Simple / Double / Mixte, tape les **noms des joueurs** puis **Envoyer les noms**. Pendant un match, cette page affiche aussi le score en direct
-5. Page **Diffusion** : un aperçu de ce que voient tes spectateurs, et le lien du bandeau à coller dans OBS
+5. Page **Diffusion** : un aperçu de ce que voient tes spectateurs, et le lien du bandeau à coller dans OBS (avec un ordinateur) ou dans l'app PRISM Live Studio (téléphone seul, voir § 5)
 
 ### Étape 4 — Configurer Garmin Connect
 1. GCM → ta montre → **Activités & Apps** → RacketStream → **Réglages**
@@ -119,6 +119,13 @@ Un simple lien web à mettre en browser source (OBS) ou à incruster via ton out
 ```
 https://racket-stream-portal.marc-suarez.fr/overlay/?channel=TON_CANAL&name1=TOI&name2=ADVERSAIRE
 ```
+
+**Depuis un téléphone, sans ordinateur** (onglet Diffusion › Téléphone seul du portail) :
+1. installe l'app gratuite **PRISM Live Studio** (App Store, Google Play) ;
+2. dans PRISM : **Widget › Web**, colle le lien du bandeau, puis étire le cadre sur tout l'écran ;
+3. connecte ton compte Twitch ou YouTube dans PRISM et lance le live.
+
+Le téléphone filme, ajoute le bandeau et diffuse lui-même : le serveur RacketStream ne reçoit que le score. Pour un club, un téléphone par terrain, chacun avec le lien de son terrain.
 
 Il suit **automatiquement** ton match actif — rien à toucher entre les matchs :
 - un **nouveau match** s'affiche à 0-0 dès son lancement sur la montre ;

@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="i18n.js"></script>
 <title>RacketStream</title>
-<meta name="description" content="Noms des joueurs, canaux et diffusion du score de ta montre.">
+<meta name="description" content="Noms des joueurs, canaux et diffusion du score de ta montre." data-en-content="Player names, channels and live broadcast of your watch score.">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -53,6 +54,8 @@
   .chanwrap { position: relative; margin-left: auto; min-width: 0; }
   .chanpill { border: 0; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 18px 0 16px; background: #1A1F26; color: #FFFFFF; text-decoration: none; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); white-space: nowrap; min-width: 0; }
   .chanpill:hover { color: #FFFFFF; }
+  /* Un bouton ne s'étire pas : sans limite, la pastille déborderait de l'en-tête. */
+  .chanwrap .chanpill { max-width: 100%; }
   .chanpill .dot { width: 8px; height: 8px; border-radius: 50%; background: #6B737D; flex: none; }
   body.is-live .chanpill .dot { background: #3DD68C; animation: pulse 1.6s ease-in-out infinite; }
   .chanpill .nm { font-size: 16px; font-weight: 800; font-style: italic; font-stretch: 85%; overflow: hidden; text-overflow: ellipsis; }
@@ -68,6 +71,23 @@
   .chanmenu button em { font-size: 13px; font-weight: 900; color: #3DD68C; font-stretch: 100%; }
   .chanmenu a { margin-top: 4px; border-top: 1px solid #2A313B; clip-path: none; font-size: 15px; font-weight: 800; font-stretch: 90%; color: #22D3EE; }
   .chanmenu a:hover { color: #22D3EE; }
+  /* Sélecteur de langue (i18n.js) : en-tête de chaque vue sur téléphone,
+     barre du haut sur ordinateur ; la pastille du canal reste à droite. */
+  .top [data-langsw], .vh [data-langsw] { margin-left: auto; }
+  .top [data-langsw] + .chanwrap, .vh [data-langsw] + .chanwrap { margin-left: 0; }
+  .vrow { display: flex; align-items: center; gap: 10px; }
+  /* Téléphone étroit : titre/logo + sélecteur + pastille sur une ligne ; on
+     gagne la place sur le logo (décoratif) et les marges de la pastille. */
+  @media (max-width: 430px) {
+    .top .logo { display: none; }
+    .chanpill { padding: 0 12px; gap: 6px; }
+    .vh:not(.col) .h1 { font-size: 36px; }
+  }
+  @media (max-width: 374px) {
+    .brand { font-size: 20px; }
+    .top, .vh { gap: 8px; }
+    .vh:not(.col) .h1 { font-size: 32px; }
+  }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .vh { display: flex; align-items: center; gap: 10px; padding: calc(18px + env(safe-area-inset-top)) 16px 10px; }
   .vh.col { flex-direction: column; align-items: stretch; gap: 6px; padding-bottom: 0; }
@@ -242,6 +262,19 @@
   .cbtn.done > span { display: inline-block; animation: stamp .35s cubic-bezier(.2, .9, .25, 1.3); }
   .cbtn:disabled { opacity: .4; }
   .cbtn.big { width: 100%; height: 52px; font-size: 17px; clip-path: var(--cut); }
+  /* Liens tronqués par le début : la fin (le canal) reste visible. */
+  .codebox .url { direction: rtl; text-align: left; }
+  /* Téléphone seul : guide PRISM Live Studio en 3 étapes. */
+  .tlh { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+  .free { padding: 4px 10px; background: #0F2A1D; color: #3DD68C; font-size: 12px; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: .04em; clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%); }
+  .steps { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+  .steps li { display: flex; align-items: flex-start; gap: 12px; }
+  .sn { flex: none; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: linear-gradient(100deg, #3DD68C, #22D3EE); color: #04140C; font-size: 16px; font-weight: 900; font-style: italic; clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%); }
+  .sb { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .sb h3 { padding-top: 4px; font-size: 17px; font-weight: 800; font-style: italic; line-height: 1.2; color: #FFFFFF; }
+  .pane .sb p { font-size: 14px; color: #C9D1DA; line-height: 1.45; }
+  .sb .copyrow { margin-top: 8px; }
+  .pane .tbox { padding: 12px 14px; background: #1A1F26; font-size: 13px; color: #9AA3AE; line-height: 1.45; }
 
   /* ================= CANAUX ================= */
   .chans { padding: 20px 16px 0; display: flex; flex-direction: column; gap: 8px; }
@@ -389,7 +422,7 @@
     .chanpill { padding: 0 20px 0 18px; }
     .chanpill .nm { font-size: 17px; }
     .mnav { display: none; }
-    .vh .chanwrap { display: none; }
+    .vh .chanwrap, .vh [data-langsw] { display: none; }
     .vh, .vh.col { padding: 0; }
     .h1 { font-size: 56px; }
     .lead { font-size: 16px; }
@@ -503,19 +536,20 @@
   </svg>
   <a class="brand" href="#match">RacketStream</a>
   <nav class="dnav" aria-label="Navigation">
-    <a href="#diffusion" class="tn" data-tab="diffusion">Diffusion</a>
+    <a href="#diffusion" class="tn" data-tab="diffusion" data-en="Broadcast">Diffusion</a>
     <a href="#match" class="tnMatch" data-tab="match" data-score-label><span class="ring0" aria-hidden="true"></span><span class="sc" data-score>0–0</span><span class="lb">Match</span></a>
-    <a href="#canaux" class="tn" data-tab="canaux">Canaux</a>
+    <a href="#canaux" class="tn" data-tab="canaux" data-en="Channels">Canaux</a>
     <a href="#club" class="tn" data-tab="club">Club</a>
   </nav>
+  <span data-langsw></span>
   <div class="chanwrap"><button class="chanpill" id="chanM" aria-haspopup="true" aria-expanded="false"><span class="dot"></span><span class="nm">Ajouter un canal</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA3AE" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="chanmenu" role="menu" hidden></div></div>
 </header>
 
 <main>
   <!-- ============ MATCH ============ -->
   <div id="v-match" data-view="match" class="grid m" hidden>
-    <h1 class="sr-only">Match en direct</h1>
-    <section class="live-sec" aria-label="Score en direct" aria-live="polite">
+    <h1 class="sr-only" data-en="Live match">Match en direct</h1>
+    <section class="live-sec" aria-label="Score en direct" data-en-aria-label="Live score" aria-live="polite">
       <div class="lhead">
         <span class="badge"><span class="d"></span><span id="liveBadge">Pas de match</span></span>
         <span class="lset" id="lset">Set 1</span>
@@ -544,56 +578,57 @@
         </div>
       </div>
       <div class="histrow" id="histRow" hidden>
-        <span>Derniers points</span>
+        <span data-en="Last points">Derniers points</span>
         <span class="hist" id="hist" aria-hidden="true"></span>
       </div>
-      <p class="liveoff" id="liveOff">Aucun match en cours. Lance un match sur la montre : le score s'affiche ici.</p>
+      <p class="liveoff" id="liveOff" data-en="No match in progress. Start a match on the watch: the score shows up here.">Aucun match en cours. Lance un match sur la montre : le score s'affiche ici.</p>
     </section>
 
     <section class="next">
       <div class="nochan" id="noChan" hidden>
-        <h2 class="h2">Aucun canal sur cet appareil</h2>
-        <p>Un canal relie ta montre au bandeau du live. Crée-le ou ajoute celui que tu as déjà.</p>
-        <a class="ghost" href="#canaux">Configurer un canal</a>
+        <h2 class="h2" data-en="No channel on this device">Aucun canal sur cet appareil</h2>
+        <p data-en="A channel links your watch to the live score bar. Create one or add the one you already have.">Un canal relie ta montre au bandeau du live. Crée-le ou ajoute celui que tu as déjà.</p>
+        <a class="ghost" href="#canaux" data-en="Set up a channel">Configurer un canal</a>
       </div>
       <div class="hd">
-        <h2>Prochain match</h2>
-        <p>Les noms s'affichent sur le bandeau du live et sur la montre.</p>
+        <h2 data-en="Next match">Prochain match</h2>
+        <p data-en="Names show on the live score bar and on the watch.">Les noms s'affichent sur le bandeau du live et sur la montre.</p>
       </div>
-      <div class="segs" id="fmt" role="group" aria-label="Type de match">
+      <div class="segs" id="fmt" role="group" aria-label="Type de match" data-en-aria-label="Match type">
         <span aria-hidden="true" class="seg-ind"></span>
-        <button class="seg tile" data-format="simple" aria-pressed="true">Simple</button>
-        <button class="seg tile" data-format="double" aria-pressed="false">Double</button>
-        <button class="seg tile" data-format="mixte" aria-pressed="false">Mixte</button>
+        <button class="seg tile" data-format="simple" aria-pressed="true" data-en="Singles">Simple</button>
+        <button class="seg tile" data-format="double" aria-pressed="false" data-en="Doubles">Double</button>
+        <button class="seg tile" data-format="mixte" aria-pressed="false" data-en="Mixed">Mixte</button>
       </div>
       <div class="field">
-        <label class="flabel" for="name1"><i></i>Équipe 1</label>
-        <input id="name1" class="pi" maxlength="24" placeholder="Joueur" autocomplete="off">
-        <input id="name1b" class="pi dbl" maxlength="24" placeholder="Partenaire" aria-label="Équipe 1, partenaire" autocomplete="off">
+        <label class="flabel" for="name1" data-en-html="&lt;i&gt;&lt;/i&gt;Team 1"><i></i>Équipe 1</label>
+        <input id="name1" class="pi" maxlength="24" placeholder="Joueur" data-en-placeholder="Player" autocomplete="off">
+        <input id="name1b" class="pi dbl" maxlength="24" placeholder="Partenaire" data-en-placeholder="Partner" aria-label="Équipe 1, partenaire" data-en-aria-label="Team 1, partner" autocomplete="off">
       </div>
       <div class="field">
-        <label class="flabel" for="name2"><i class="b"></i>Équipe 2</label>
-        <input id="name2" class="pi b" maxlength="24" placeholder="Joueur" autocomplete="off">
-        <input id="name2b" class="pi b dbl" maxlength="24" placeholder="Partenaire" aria-label="Équipe 2, partenaire" autocomplete="off">
+        <label class="flabel" for="name2" data-en-html="&lt;i class=&quot;b&quot;&gt;&lt;/i&gt;Team 2"><i class="b"></i>Équipe 2</label>
+        <input id="name2" class="pi b" maxlength="24" placeholder="Joueur" data-en-placeholder="Player" autocomplete="off">
+        <input id="name2b" class="pi b dbl" maxlength="24" placeholder="Partenaire" data-en-placeholder="Partner" aria-label="Équipe 2, partenaire" data-en-aria-label="Team 2, partner" autocomplete="off">
       </div>
-      <button class="cta" id="validate">Envoyer les noms</button>
+      <button class="cta" id="validate" data-en="Send names">Envoyer les noms</button>
       <p class="status" id="status" role="status"></p>
       <div class="install" id="install" hidden>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22D3EE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
         <span id="installTxt">Garde RacketStream sur ton écran d'accueil</span>
-        <button id="installBtn" hidden>Installer</button>
+        <button id="installBtn" hidden data-en="Install">Installer</button>
       </div>
     </section>
   </div>
 
   <!-- ============ DIFFUSION ============ -->
   <div id="v-diffusion" data-view="diffusion" class="grid d" hidden>
-    <section aria-label="Aperçu du live">
+    <section aria-label="Aperçu du live" data-en-aria-label="Live preview">
       <header class="vh">
-        <h1 class="h1">Diffusion</h1>
+        <h1 class="h1" data-en="Broadcast">Diffusion</h1>
+        <span data-langsw></span>
         <div class="chanwrap"><button class="chanpill" id="chanD" aria-haspopup="true" aria-expanded="false"><span class="dot"></span><span class="nm">Ajouter un canal</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA3AE" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="chanmenu" role="menu" hidden></div></div>
       </header>
-      <p class="lead pad">Ce que voient tes spectateurs : ta vidéo, avec le score par-dessus.</p>
+      <p class="lead pad" data-en="What your viewers see: your video, with the score on top.">Ce que voient tes spectateurs : ta vidéo, avec le score par-dessus.</p>
       <div class="pv-sec">
         <div class="pv" id="screen">
           <div class="tw" id="tw"></div>
@@ -648,11 +683,11 @@
             <span aria-hidden="true" class="eqs"><i></i><i></i><i></i><i></i></span>
           </div>
         </div>
-        <p class="twnote" id="twNote" hidden>Ton live Twitch, avec environ 10 s de décalage. Le son est coupé : touche le lecteur pour l'activer.</p>
-        <div class="path" aria-label="Chemin du live">
-          <span class="st"><i></i>Montre</span>
+        <p class="twnote" id="twNote" hidden data-en="Your Twitch live, about 10 s behind. Sound is muted: tap the player to turn it on.">Ton live Twitch, avec environ 10 s de décalage. Le son est coupé : touche le lecteur pour l'activer.</p>
+        <div class="path" aria-label="Chemin du live" data-en-aria-label="Live path">
+          <span class="st" data-en-html="&lt;i&gt;&lt;/i&gt;Watch"><i></i>Montre</span>
           <span aria-hidden="true" class="fl"></span>
-          <span class="st"><i></i>Serveur</span>
+          <span class="st" data-en-html="&lt;i&gt;&lt;/i&gt;Server"><i></i>Serveur</span>
           <span aria-hidden="true" class="fl c"></span>
           <span class="st"><i></i><span id="dest">Ton live</span></span>
         </div>
@@ -660,24 +695,32 @@
     </section>
 
     <section class="set-sec">
-      <div class="segs two" id="mode" role="group" aria-label="Comment tu filmes">
+      <div class="segs two" id="mode" role="group" aria-label="Comment tu filmes" data-en-aria-label="How you film">
         <span aria-hidden="true" class="seg-ind"></span>
-        <button class="seg" data-mode="pc" aria-pressed="true">Avec un ordinateur</button>
-        <button class="seg" data-mode="tel" aria-pressed="false">Téléphone seul</button>
+        <button class="seg" data-mode="pc" aria-pressed="true" data-en="With a computer">Avec un ordinateur</button>
+        <button class="seg" data-mode="tel" aria-pressed="false" data-en="Phone only">Téléphone seul</button>
       </div>
       <div class="pane" data-pane="pc">
-        <h2 class="h2">Le score dans OBS</h2>
-        <p>Dans OBS, ajoute une source Navigateur de 1920 × 1080 et colle ce lien. Le bandeau se met à jour tout seul à chaque point.</p>
+        <h2 class="h2" data-en="The score in OBS">Le score dans OBS</h2>
+        <p data-en="In OBS, add a 1920 × 1080 Browser source and paste this link. The score bar updates itself on every point.">Dans OBS, ajoute une source Navigateur de 1920 × 1080 et colle ce lien. Le bandeau se met à jour tout seul à chaque point.</p>
         <div class="copyrow">
-          <div class="codebox"><span id="obsUrl">—</span></div>
-          <button class="cbtn" id="copyObs"><span>Copier</span></button>
+          <div class="codebox"><span class="url" id="obsUrl">—</span></div>
+          <button class="cbtn" id="copyObs"><span data-en="Copy">Copier</span></button>
         </div>
       </div>
       <div class="pane" data-pane="tel" hidden>
-        <h2 class="h2">Le live depuis ton téléphone</h2>
-        <p>L'app gratuite VDO.Ninja envoie ta vidéo au serveur RacketStream, qui ajoute le score et diffuse le live sur Twitch ou YouTube.</p>
-        <p class="note">Le lien d'envoi (WHIP) est personnel : demande-le à l'administrateur du serveur, puis colle-le dans VDO.Ninja › Publishing settings › WHIP URL.</p>
-        <p class="note">Le score arrive au serveur en moins d'une seconde après chaque point.</p>
+        <div class="tlh"><h2 class="h2" data-en="Go live from your phone">Le live depuis ton téléphone</h2><span class="free" data-en="Free">Gratuit</span></div>
+        <p data-en="The PRISM Live Studio app films, adds the score bar and streams to Twitch or YouTube. No computer needed.">L'app PRISM Live Studio filme, ajoute le bandeau du score et diffuse sur Twitch ou YouTube. Pas besoin d'ordinateur.</p>
+        <ol class="steps">
+          <li><span class="sn" aria-hidden="true">1</span><div class="sb"><h3 data-en="Install PRISM Live Studio">Installe PRISM Live Studio</h3><p data-en="Free on the App Store and Google Play.">Gratuite, sur l'App Store et Google Play.</p></div></li>
+          <li><span class="sn" aria-hidden="true">2</span><div class="sb"><h3 data-en="Add the score bar">Ajoute le bandeau</h3><p data-en="In PRISM: Widget › Web, paste this link, then stretch the frame to fill the screen.">Dans PRISM : Widget › Web, colle ce lien, puis étire le cadre sur tout l'écran.</p>
+            <div class="copyrow">
+              <div class="codebox"><span class="url" id="telUrl">—</span></div>
+              <button class="cbtn" id="copyTel"><span data-en="Copy">Copier</span></button>
+            </div></div></li>
+          <li><span class="sn" aria-hidden="true">3</span><div class="sb"><h3 data-en="Go live">Lance le live</h3><p data-en="Connect your Twitch or YouTube account in PRISM. The score follows every point.">Connecte ton compte Twitch ou YouTube dans PRISM. Le score suit chaque point.</p></div></li>
+        </ol>
+        <p class="tbox" data-en="Club with several courts: one phone per court, each with its own court link.">Club avec plusieurs terrains : un téléphone par terrain, chacun avec le lien de son terrain.</p>
       </div>
     </section>
   </div>
@@ -686,45 +729,45 @@
   <div id="v-canaux" data-view="canaux" class="grid c" hidden>
     <div>
       <header class="vh col">
-        <h1 class="h1">Canaux</h1>
-        <p class="lead">Un canal relie une montre à son bandeau de live. <span class="mob">Touche</span><span class="desk">Clique sur</span> un canal pour l'utiliser.</p>
+        <div class="vrow"><h1 class="h1" data-en="Channels">Canaux</h1><span data-langsw></span></div>
+        <p class="lead" data-en-html="A channel links a watch to its live score bar. &lt;span class=&quot;mob&quot;&gt;Tap&lt;/span&gt;&lt;span class=&quot;desk&quot;&gt;Click&lt;/span&gt; a channel to use it.">Un canal relie une montre à son bandeau de live. <span class="mob">Touche</span><span class="desk">Clique sur</span> un canal pour l'utiliser.</p>
       </header>
-      <section class="chans" id="chans" aria-label="Canaux sur cet appareil"></section>
-      <p class="nochans" id="noChans">Aucun canal sur cet appareil pour l'instant.</p>
+      <section class="chans" id="chans" aria-label="Canaux sur cet appareil" data-en-aria-label="Channels on this device"></section>
+      <p class="nochans" id="noChans" data-en="No channel on this device yet.">Aucun canal sur cet appareil pour l'instant.</p>
       <section class="key-sec" id="keyCard" hidden>
         <div class="copyrow">
-          <div class="codebox"><span class="k">Clé</span><span class="kv" id="keyShown"></span></div>
-          <button class="cbtn" id="copyKey"><span>Copier</span></button>
+          <div class="codebox"><span class="k" data-en="Key">Clé</span><span class="kv" id="keyShown"></span></div>
+          <button class="cbtn" id="copyKey"><span data-en="Copy">Copier</span></button>
         </div>
-        <label class="twlab" for="twitch">Chaîne Twitch de ce canal, pour voir le live dans Diffusion</label>
+        <label class="twlab" for="twitch" data-en="Twitch channel for this watch, to watch the live in Broadcast">Chaîne Twitch de ce canal, pour voir le live dans Diffusion</label>
         <div class="copyrow">
-          <input id="twitch" class="ci" placeholder="ex. marcoleroc74" autocomplete="off" autocapitalize="none" spellcheck="false">
-          <button class="cbtn wide" id="saveTwitch"><span>Enregistrer</span></button>
+          <input id="twitch" class="ci" placeholder="ex. marcoleroc74" data-en-placeholder="e.g. marcoleroc74" autocomplete="off" autocapitalize="none" spellcheck="false">
+          <button class="cbtn wide" id="saveTwitch"><span data-en="Save">Enregistrer</span></button>
         </div>
-        <p class="twconsent" id="twConsent">En enregistrant une chaîne, tu acceptes que le lecteur de Twitch (Twitch Interactive, États-Unis) soit chargé sur la page Diffusion de cet appareil : Twitch peut alors déposer ses propres cookies. Vide le champ et enregistre pour retirer ton accord. <a href="confidentialite.html#twitch">En savoir plus</a></p>
-        <button class="linkdanger" id="removeChan">Retirer ce canal de l'appareil</button>
+        <p class="twconsent" id="twConsent" data-en-html="By saving a Twitch channel, you agree that the Twitch player (Twitch Interactive, United States) is loaded on the Broadcast page of this device: Twitch may then set its own cookies. Clear the field and save to withdraw your consent. &lt;a href=&quot;confidentialite.html#twitch&quot;&gt;Learn more&lt;/a&gt;">En enregistrant une chaîne, tu acceptes que le lecteur de Twitch (Twitch Interactive, États-Unis) soit chargé sur la page Diffusion de cet appareil : Twitch peut alors déposer ses propres cookies. Vide le champ et enregistre pour retirer ton accord. <a href="confidentialite.html#twitch">En savoir plus</a></p>
+        <button class="linkdanger" id="removeChan" data-en="Remove this channel from the device">Retirer ce canal de l'appareil</button>
       </section>
     </div>
     <div class="cards">
       <section class="card">
-        <h2 class="h2">Nouvelle montre</h2>
-        <label for="newChannel">Nom du canal, ton pseudo par exemple</label>
+        <h2 class="h2" data-en="New watch">Nouvelle montre</h2>
+        <label for="newChannel" data-en="Channel name, your nickname for example">Nom du canal, ton pseudo par exemple</label>
         <input id="newChannel" class="ci" maxlength="32" placeholder="julie" autocomplete="off" autocapitalize="none" spellcheck="false">
-        <button class="cta m" id="create">Créer le canal</button>
+        <button class="cta m" id="create" data-en="Create channel">Créer le canal</button>
         <div class="okcard" id="regOut" role="status" hidden>
-          <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span>Canal <span id="regChan"></span> créé</span></span>
-          <p>Colle cette clé dans Garmin Connect › RacketStream › Réglages. Elle n'est affichée en entier qu'une fois (elle reste mémorisée sur cet appareil).</p>
+          <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span data-en-html="Channel &lt;span id=&quot;regChan&quot;&gt;&lt;/span&gt; created">Canal <span id="regChan"></span> créé</span></span>
+          <p data-en="Paste this key into Garmin Connect › RacketStream › Settings. It is shown in full only once (it stays saved on this device).">Colle cette clé dans Garmin Connect › RacketStream › Réglages. Elle n'est affichée en entier qu'une fois (elle reste mémorisée sur cet appareil).</p>
           <div class="kbox" id="regKey"></div>
-          <button class="cbtn big" id="copyReg"><span>Copier la clé</span></button>
+          <button class="cbtn big" id="copyReg"><span data-en="Copy key">Copier la clé</span></button>
         </div>
       </section>
       <section class="card c2">
-        <h2 class="h2">Montre déjà configurée</h2>
-        <label for="channel">Canal</label>
-        <input id="channel" class="ci" placeholder="ton canal" autocomplete="off" autocapitalize="none" spellcheck="false">
-        <label for="key">Clé de la montre</label>
-        <input id="key" class="ci" type="password" placeholder="ta clé personnelle" autocomplete="off">
-        <button class="ghost" id="add">Ajouter</button>
+        <h2 class="h2" data-en="Watch already set up">Montre déjà configurée</h2>
+        <label for="channel" data-en="Channel">Canal</label>
+        <input id="channel" class="ci" placeholder="ton canal" data-en-placeholder="your channel" autocomplete="off" autocapitalize="none" spellcheck="false">
+        <label for="key" data-en="Watch key">Clé de la montre</label>
+        <input id="key" class="ci" type="password" placeholder="ta clé personnelle" data-en-placeholder="your personal key" autocomplete="off">
+        <button class="ghost" id="add" data-en="Add">Ajouter</button>
       </section>
       <p class="status chanst" id="chanStatus" role="status"></p>
     </div>
@@ -734,7 +777,7 @@
   <div id="v-club" data-view="club" class="grid c club" hidden>
     <div class="ccol">
       <header class="vh col">
-        <h1 class="h1">Club</h1>
+        <div class="vrow"><h1 class="h1">Club</h1><span data-langsw></span></div>
         <p class="lead" id="clubLead"></p>
       </header>
       <div id="clubOpen" hidden>
@@ -745,84 +788,84 @@
           </div>
           <span class="lv" id="clubLive"></span>
         </section>
-        <section class="terrains" id="terrains" aria-label="Terrains du club"></section>
-        <p class="nochans" id="noTerrains">Aucun terrain pour l'instant : ajoute le premier ci-dessous.</p>
+        <section class="terrains" id="terrains" aria-label="Terrains du club" data-en-aria-label="Club courts"></section>
+        <p class="nochans" id="noTerrains" data-en="No court yet: add the first one below.">Aucun terrain pour l'instant : ajoute le premier ci-dessous.</p>
         <section class="clubkey">
-          <h2 class="h2">Page publique</h2>
-          <p>Tous les matchs du club en direct, à afficher sur la TV de la salle ou à partager. Sans clé : elle ne permet que de regarder.</p>
+          <h2 class="h2" data-en="Public page">Page publique</h2>
+          <p data-en="All the club's matches live, to show on the hall TV or to share. No key: it can only be used to watch.">Tous les matchs du club en direct, à afficher sur la TV de la salle ou à partager. Sans clé : elle ne permet que de regarder.</p>
           <div class="copyrow">
-            <div class="codebox"><span class="k">Lien</span><span class="kv" id="clubPubUrl"></span></div>
-            <button class="cbtn" id="copyClubPub"><span>Copier</span></button>
+            <div class="codebox"><span class="k" data-en="Link">Lien</span><span class="kv url" id="clubPubUrl"></span></div>
+            <button class="cbtn" id="copyClubPub"><span data-en="Copy">Copier</span></button>
           </div>
-          <a class="linkcyan" id="openClubPub" target="_blank" rel="noopener" style="display:flex;align-items:center;text-decoration:none;">Ouvrir la page publique ›</a>
+          <a class="linkcyan" id="openClubPub" target="_blank" rel="noopener" style="display:flex;align-items:center;text-decoration:none;" data-en="Open the public page ›">Ouvrir la page publique ›</a>
         </section>
         <section class="clubkey" id="clubKeySec">
-          <h2 class="h2">Clé du club</h2>
-          <p>Elle sert à gérer les terrains, pas à envoyer des points. Garde-la pour ouvrir le club sur un autre appareil.</p>
+          <h2 class="h2" data-en="Club key">Clé du club</h2>
+          <p data-en="It's used to manage courts, not to send points. Keep it to open the club on another device.">Elle sert à gérer les terrains, pas à envoyer des points. Garde-la pour ouvrir le club sur un autre appareil.</p>
           <div class="copyrow">
-            <div class="codebox"><span class="k">Clé</span><span class="kv" id="clubKeyShown"></span></div>
-            <button class="cbtn" id="copyClubKey"><span>Copier</span></button>
+            <div class="codebox"><span class="k" data-en="Key">Clé</span><span class="kv" id="clubKeyShown"></span></div>
+            <button class="cbtn" id="copyClubKey"><span data-en="Copy">Copier</span></button>
           </div>
-          <button class="linkdanger" id="removeClub">Retirer ce club de l'appareil</button>
+          <button class="linkdanger" id="removeClub" data-en="Remove this club from the device">Retirer ce club de l'appareil</button>
         </section>
       </div>
     </div>
     <div class="cards" id="clubNone">
       <section class="card">
-        <h2 class="h2">Créer un club</h2>
-        <label for="clubNewName">Nom du club</label>
+        <h2 class="h2" data-en="Create a club">Créer un club</h2>
+        <label for="clubNewName" data-en="Club name">Nom du club</label>
         <input id="clubNewName" class="ci" maxlength="48" placeholder="BC Paris 15" autocomplete="off">
-        <label for="clubNewSlug">Identifiant court, utilisé dans les liens</label>
+        <label for="clubNewSlug" data-en="Short ID, used in links">Identifiant court, utilisé dans les liens</label>
         <input id="clubNewSlug" class="ci" maxlength="20" placeholder="bcparis" autocomplete="off" autocapitalize="none" spellcheck="false">
-        <label for="clubInvite">Code d'invitation</label>
+        <label for="clubInvite" data-en="Invitation code">Code d'invitation</label>
         <input id="clubInvite" class="ci" maxlength="64" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
-        <button class="cta m" id="createClub">Créer le club</button>
+        <button class="cta m" id="createClub" data-en="Create club">Créer le club</button>
         <div class="okcard" id="clubOut" role="status" hidden>
-          <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span>Club <span id="clubOutName"></span> créé</span></span>
-          <p>Voici la clé du club : elle sert à gérer les terrains depuis un autre appareil. Note-la en lieu sûr, elle n'est affichée en entier qu'une fois.</p>
+          <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span data-en-html="Club &lt;span id=&quot;clubOutName&quot;&gt;&lt;/span&gt; created">Club <span id="clubOutName"></span> créé</span></span>
+          <p data-en="Here is the club key: it's used to manage courts from another device. Write it down somewhere safe, it is shown in full only once.">Voici la clé du club : elle sert à gérer les terrains depuis un autre appareil. Note-la en lieu sûr, elle n'est affichée en entier qu'une fois.</p>
           <div class="kbox" id="clubOutKey"></div>
-          <button class="cbtn big" id="copyClubOut"><span>Copier la clé</span></button>
-          <button class="ghost" id="clubContinue">J'ai noté la clé, continuer</button>
+          <button class="cbtn big" id="copyClubOut"><span data-en="Copy key">Copier la clé</span></button>
+          <button class="ghost" id="clubContinue" data-en="I've written down the key, continue">J'ai noté la clé, continuer</button>
         </div>
       </section>
       <section class="card c2">
-        <h2 class="h2">Club existant</h2>
-        <label for="clubSlugIn">Identifiant du club</label>
+        <h2 class="h2" data-en="Existing club">Club existant</h2>
+        <label for="clubSlugIn" data-en="Club ID">Identifiant du club</label>
         <input id="clubSlugIn" class="ci" maxlength="20" placeholder="bcparis" autocomplete="off" autocapitalize="none" spellcheck="false">
-        <label for="clubKeyIn">Clé du club</label>
-        <input id="clubKeyIn" class="ci" type="password" placeholder="la clé notée à la création" autocomplete="off">
-        <button class="ghost" id="openClub">Ajouter</button>
+        <label for="clubKeyIn" data-en="Club key">Clé du club</label>
+        <input id="clubKeyIn" class="ci" type="password" placeholder="la clé notée à la création" data-en-placeholder="the key you wrote down when creating it" autocomplete="off">
+        <button class="ghost" id="openClub" data-en="Add">Ajouter</button>
       </section>
       <p class="status chanst" id="clubStatus0" role="status"></p>
     </div>
     <div class="cards one" id="clubCards" hidden>
       <section class="card tcard" id="tSlot" hidden></section>
       <section class="card c2 addt">
-        <h2 class="h2">Ajouter un terrain</h2>
-        <label for="newTerrain">Nom affiché</label>
+        <h2 class="h2" data-en="Add a court">Ajouter un terrain</h2>
+        <label for="newTerrain" data-en="Display name">Nom affiché</label>
         <div class="addrow">
           <input id="newTerrain" class="ci" maxlength="24" placeholder="Terrain 1" autocomplete="off">
-          <button class="cta m" id="addTerrain"><span class="mob">Ajouter le terrain</span><span class="desk">Ajouter</span></button>
+          <button class="cta m" id="addTerrain" data-en-html="&lt;span class=&quot;mob&quot;&gt;Add court&lt;/span&gt;&lt;span class=&quot;desk&quot;&gt;Add&lt;/span&gt;"><span class="mob">Ajouter le terrain</span><span class="desk">Ajouter</span></button>
         </div>
         <div class="okcard" id="terrainOut" role="status" hidden>
-          <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span><span id="terrainOutName"></span> ajouté</span></span>
-          <p>Colle cette clé dans la montre du terrain (Garmin Connect › RacketStream › Réglages). Elle reste mémorisée sur cet appareil.</p>
+          <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span data-en-html="&lt;span id=&quot;terrainOutName&quot;&gt;&lt;/span&gt; added"><span id="terrainOutName"></span> ajouté</span></span>
+          <p data-en="Paste this key into the court's watch (Garmin Connect › RacketStream › Settings). It stays saved on this device.">Colle cette clé dans la montre du terrain (Garmin Connect › RacketStream › Réglages). Elle reste mémorisée sur cet appareil.</p>
           <div class="kbox" id="terrainOutKey"></div>
-          <button class="cbtn big" id="copyTerrainOut"><span>Copier la clé</span></button>
+          <button class="cbtn big" id="copyTerrainOut"><span data-en="Copy key">Copier la clé</span></button>
         </div>
       </section>
       <p class="status chanst" id="clubStatus" role="status"></p>
     </div>
   </div>
-  <nav class="legalnav" aria-label="Informations légales"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgu.html">Conditions d'utilisation</a></nav>
+  <nav class="legalnav" aria-label="Informations légales" data-en-aria-label="Legal information"><a href="mentions-legales.html" data-en="Legal notice">Mentions légales</a><a href="confidentialite.html" data-en="Privacy">Confidentialité</a><a href="cgu.html" data-en="Terms of use">Conditions d'utilisation</a></nav>
 </main>
 
 <nav class="mnav" aria-label="Navigation">
   <span aria-hidden="true" class="bg"></span>
   <div class="row">
-    <a href="#diffusion" class="mtab" data-tab="diffusion"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>Diffusion</a>
+    <a href="#diffusion" class="mtab" data-tab="diffusion"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg><span data-en="Broadcast">Diffusion</span></a>
     <span></span>
-    <a href="#canaux" class="mtab" data-tab="canaux"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Canaux</a>
+    <a href="#canaux" class="mtab" data-tab="canaux"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span data-en="Channels">Canaux</span></a>
     <a href="#club" class="mtab" data-tab="club"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12h6M12 9v6"/></svg>Club</a>
   </div>
   <a href="#match" class="mmatch" data-tab="match" data-score-label><span class="ring0" aria-hidden="true"></span><span class="sc" data-score>0–0</span><span class="lb">Match</span></a>
@@ -845,6 +888,15 @@
   // Relance d'une animation CSS : on alterne deux classes identiques à chaque
   // point (k = nombre de points vus), sinon le navigateur ne la rejoue pas.
   const alt = (k, x, y) => k === 0 ? "" : (k % 2 ? x : y);
+  // Traduction (i18n.js) : T("français", "english").
+  const T = I18N.t;
+  const NO_NET = T("Pas de réseau : réessaie", "No network: try again");
+  const errRetry = (st) => T(`Erreur ${st} : réessaie`, `Error ${st}: try again`);
+  const COPY = T("Copier", "Copy");
+  const COPY_KEY = T("Copier la clé", "Copy key");
+  const ACTIVE = T("Actif", "Active");
+  const NO_MATCH = T("Aucun match", "No match");
+  const UNKNOWN = T("État inconnu", "Status unknown");
 
   // --- canaux mémorisés sur cet appareil ---
   // Ancien format : { channel, key } (un seul canal) → migré en liste.
@@ -871,7 +923,7 @@
     saveStore();
     channelChanged();
   }
-  const mask = (k) => k ? "•••• " + k.slice(-4).toUpperCase() : "pas de clé";
+  const mask = (k) => k ? "•••• " + k.slice(-4).toUpperCase() : T("pas de clé", "no key");
   // Un terrain de club s'affiche sous son nom (« Terrain 1 »), pas son canal.
   const chanName = (c) => c.label || c.channel;
 
@@ -888,7 +940,7 @@
     let ok = false;
     try { await navigator.clipboard.writeText(text); ok = true; } catch { /* refusé : sélection manuelle */ }
     if (ok && btn) {
-      label(btn, "Copié");
+      label(btn, T("Copié", "Copied"));
       btn.classList.add("done");
       clearTimeout(btn._t);
       btn._t = setTimeout(() => { label(btn, back); btn.classList.remove("done"); }, 1800);
@@ -918,8 +970,8 @@
   function renderHeader() {
     const c = active();
     for (const id of ["chanM", "chanD"]) {
-      $(id).querySelector(".nm").textContent = c ? chanName(c) : "Ajouter un canal";
-      $(id).setAttribute("aria-label", c ? `Canal ${chanName(c)}, changer de canal` : "Aucun canal, en ajouter un");
+      $(id).querySelector(".nm").textContent = c ? chanName(c) : T("Ajouter un canal", "Add a channel");
+      $(id).setAttribute("aria-label", c ? T(`Canal ${chanName(c)}, changer de canal`, `Channel ${chanName(c)}, switch channel`) : T("Aucun canal, en ajouter un", "No channel, add one"));
     }
     closeMenus();
     $("noChan").hidden = !!c;
@@ -936,7 +988,7 @@
     menu.textContent = "";
     // Avec un club : deux groupes, « Mes montres » puis les terrains du club.
     const club = store.club;
-    const groups = [{ name: club ? "Mes montres" : "", items: store.channels.filter((c) => !c.club) }];
+    const groups = [{ name: club ? T("Mes montres", "My watches") : "", items: store.channels.filter((c) => !c.club) }];
     if (club) groups.push({ name: club.name, items: store.channels.filter((c) => c.club === club.slug), c: true });
     groups.filter((g) => g.items.length).forEach((g, gi) => {
       if (g.name) {
@@ -952,7 +1004,7 @@
         it.setAttribute("aria-checked", String(on));
         it.innerHTML = "<i></i><span></span><em></em>";
         it.querySelector("span").textContent = chanName(c);
-        it.querySelector("em").textContent = on ? "Actif" : "";
+        it.querySelector("em").textContent = on ? ACTIVE : "";
         it.addEventListener("click", () => {
           closeMenus();
           if (on) return;
@@ -965,8 +1017,8 @@
         menu.appendChild(it);
       });
     });
-    const links = [["#canaux", "Gérer les canaux"]];
-    if (club) links.push(["#club", "Gérer le club"]);
+    const links = [["#canaux", T("Gérer les canaux", "Manage channels")]];
+    if (club) links.push(["#club", T("Gérer le club", "Manage club")]);
     for (const [href, txt] of links) {
       const a = document.createElement("a");
       a.href = href;
@@ -1038,7 +1090,7 @@
 
   $("validate").addEventListener("click", async () => {
     const c = active();
-    if (!c || !c.key) { setStatus("status", "Ajoute d'abord ton canal et sa clé (page Canaux)", "err"); return; }
+    if (!c || !c.key) { setStatus("status", T("Ajoute d'abord ton canal et sa clé (page Canaux)", "Add your channel and its key first (Channels page)"), "err"); return; }
     const body = {
       format,
       name1: $("name1").value.trim(),
@@ -1046,8 +1098,8 @@
       name2: $("name2").value.trim(),
       name2b: format === "simple" ? "" : $("name2b").value.trim(),
     };
-    if (format !== "simple" && (!body.name1b || !body.name2b)) { setStatus("status", "En double et en mixte, il faut les deux partenaires", "err"); return; }
-    sending($("validate"), true, "Envoi…");
+    if (format !== "simple" && (!body.name1b || !body.name2b)) { setStatus("status", T("En double et en mixte, il faut les deux partenaires", "Doubles and mixed need both partners"), "err"); return; }
+    sending($("validate"), true, T("Envoi…", "Sending…"));
     setStatus("status", "");
     try {
       const res = await fetch(`${API}/functions/v1/names`, {
@@ -1058,16 +1110,16 @@
       if (res.ok) {
         names = body;
         renderLive();
-        setStatus("status", "Noms envoyés : le bandeau et le chat suivent dès le prochain point", "ok");
+        setStatus("status", T("Noms envoyés : le bandeau et le chat suivent dès le prochain point", "Names sent: the score bar and chat follow from the next point"), "ok");
       } else if (res.status === 401) {
-        setStatus("status", "Clé refusée : vérifie la clé du canal dans la page Canaux", "err");
+        setStatus("status", T("Clé refusée : vérifie la clé du canal dans la page Canaux", "Key rejected: check the channel key on the Channels page"), "err");
       } else {
-        setStatus("status", "Erreur " + res.status + " : réessaie", "err");
+        setStatus("status", errRetry(res.status), "err");
       }
     } catch {
-      setStatus("status", "Pas de réseau : réessaie", "err");
+      setStatus("status", NO_NET, "err");
     }
-    sending($("validate"), false, "Envoyer les noms");
+    sending($("validate"), false, T("Envoyer les noms", "Send names"));
   });
 
   // --- score en direct ---
@@ -1088,8 +1140,8 @@
   let finalShown = false;
   function ago(ms) {
     const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
-    if (s < 60) return `il y a ${s} s`;
-    return `il y a ${Math.round(s / 60)} min`;
+    if (s < 60) return T(`il y a ${s} s`, `${s} s ago`);
+    return T(`il y a ${Math.round(s / 60)} min`, `${Math.round(s / 60)} min ago`);
   }
   function onRow(r) {
     if (isLive(r) || isFinal(r)) {
@@ -1115,7 +1167,7 @@
   }
   function setsMarks(el, won, total) {
     el.textContent = "";
-    el.setAttribute("aria-label", `Sets gagnés : ${won}`);
+    el.setAttribute("aria-label", T(`Sets gagnés : ${won}`, `Sets won: ${won}`));
     for (let i = 0; i < total; i++) {
       const m = document.createElement("i");
       if (i < won) m.className = "w";
@@ -1127,11 +1179,12 @@
     finalShown = isFinal(lastRow);
     const r = live || finalShown ? lastRow : null;
     document.body.classList.toggle("is-live", live);
-    const n1 = names ? teamName(names.name1, names.name1b) || "Équipe 1" : "Équipe 1";
-    const n2 = names ? teamName(names.name2, names.name2b) || "Équipe 2" : "Équipe 2";
+    const t1 = T("Équipe 1", "Team 1"), t2 = T("Équipe 2", "Team 2");
+    const n1 = names ? teamName(names.name1, names.name1b) || t1 : t1;
+    const n2 = names ? teamName(names.name2, names.name2b) || t2 : t2;
     const a = r ? r.score_me : 0;
     const b = r ? r.score_opp : 0;
-    $("liveBadge").textContent = live ? "En direct" : finalShown ? "Terminé" : "Pas de match";
+    $("liveBadge").textContent = live ? T("En direct", "Live") : finalShown ? T("Terminé", "Finished") : T("Pas de match", "No match");
     $("liveOff").hidden = live || finalShown;
     $("ln1").textContent = n1;
     $("ln2").textContent = n2;
@@ -1146,8 +1199,8 @@
     }
     $("srv1").classList.toggle("on", live && lastWin === "a");
     $("srv2").classList.toggle("on", live && lastWin === "b");
-    $("srv1").setAttribute("aria-label", live && lastWin === "a" ? "Au service" : "");
-    $("srv2").setAttribute("aria-label", live && lastWin === "b" ? "Au service" : "");
+    $("srv1").setAttribute("aria-label", live && lastWin === "a" ? T("Au service", "Serving") : "");
+    $("srv2").setAttribute("aria-label", live && lastWin === "b" ? T("Au service", "Serving") : "");
     // Animations du point marqué (claquement, balayage, flash, +1).
     $("lp1").className = "num " + alt(ka, "n1", "n2");
     $("lp2").className = "num " + alt(kb, "n1", "n2");
@@ -1172,7 +1225,7 @@
     // Rond / pastille « Match » : score en direct.
     document.querySelectorAll("[data-score]").forEach((el) => { el.textContent = `${a}–${b}`; });
     document.querySelectorAll("[data-score-label]").forEach((el) => {
-      el.setAttribute("aria-label", live ? `Match, score ${a} à ${b}` : "Match, pas de match en cours");
+      el.setAttribute("aria-label", live ? T(`Match, score ${a} à ${b}`, `Match, score ${a} to ${b}`) : T("Match, pas de match en cours", "Match, no match in progress"));
     });
     // Aperçu de la page Diffusion.
     $("pvN1").textContent = n1;
@@ -1181,7 +1234,7 @@
     $("pvS2").textContent = b;
     $("pvS1").className = alt(ka, "k1", "k2");
     $("pvS2").className = alt(kb, "k1", "k2");
-    $("pvLive").textContent = live ? "En direct" : "Pas de match";
+    $("pvLive").textContent = live ? T("En direct", "Live") : T("Pas de match", "No match");
   }
   async function pollScore() {
     const c = active();
@@ -1222,10 +1275,10 @@
     const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) && !installEvt;
     $("installBtn").hidden = !installEvt;
     $("installTxt").textContent = installEvt
-      ? "Garde RacketStream sur ton écran d'accueil"
+      ? T("Garde RacketStream sur ton écran d'accueil", "Keep RacketStream on your home screen")
       : ios
-        ? "Pour l'ouvrir comme une app : Safari › Partager › Sur l'écran d'accueil."
-        : "Pour l'ouvrir comme une app : menu du navigateur › Installer / Ajouter à l'écran d'accueil.";
+        ? T("Pour l'ouvrir comme une app : Safari › Partager › Sur l'écran d'accueil.", "To open it like an app: Safari › Share › Add to Home Screen.")
+        : T("Pour l'ouvrir comme une app : menu du navigateur › Installer / Ajouter à l'écran d'accueil.", "To open it like an app: browser menu › Install / Add to Home screen.");
   }
   addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; renderInstall(); });
   addEventListener("appinstalled", () => { installEvt = null; renderInstall(); });
@@ -1238,13 +1291,22 @@
   });
 
   // ================= DIFFUSION =================
+  // Lien affiché sans « https:// » ; la boîte est en rtl pour que la fin (le
+  // canal) reste visible : les marques LRM gardent l'ordre de lecture normal.
+  const showUrl = (u) => "\u200E" + u.replace(/^https?:\/\//, "") + "\u200E";
   const overlayUrl = (ch) => new URL("overlay/?channel=" + encodeURIComponent(ch), location.href.split("#")[0]).href;
   function renderDiffusion() {
     const c = active();
-    $("obsUrl").textContent = c ? overlayUrl(c.channel).replace(/^https?:\/\//, "") : "Ajoute d'abord un canal";
-    $("copyObs").disabled = !c;
+    // Même lien pour OBS et pour PRISM (téléphone seul).
+    const txt = c ? showUrl(overlayUrl(c.channel)) : T("Ajoute d'abord un canal", "Add a channel first");
+    for (const [box, btn] of [["obsUrl", "copyObs"], ["telUrl", "copyTel"]]) {
+      $(box).textContent = txt;
+      $(btn).disabled = !c;
+    }
   }
-  $("copyObs").addEventListener("click", () => { const c = active(); if (c) copy(overlayUrl(c.channel), $("copyObs"), "Copier"); });
+  for (const btn of ["copyObs", "copyTel"]) {
+    $(btn).addEventListener("click", () => { const c = active(); if (c) copy(overlayUrl(c.channel), $(btn), COPY); });
+  }
   // Mode : ordinateur (OBS) ou téléphone seul.
   document.querySelectorAll("[data-mode]").forEach((b, i) => b.addEventListener("click", () => {
     document.querySelectorAll("[data-mode]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
@@ -1256,7 +1318,7 @@
   // Live Twitch dans l'aperçu (essai) : le lecteur officiel est chargé
   // seulement sur la page Diffusion, et n'est montré que quand la chaîne est
   // en ligne ; hors live, l'illustration animée reste affichée.
-  let twFor = null;     // chaîne du lecteur en cours
+  let twFor;            // chaîne du lecteur en cours (undefined : le 1er appel initialise l'aperçu)
   let twLib = null;     // chargement du script Twitch
   let twPl = null;      // lecteur Twitch
   let twBad = 0;        // vérifications successives sans image
@@ -1273,7 +1335,7 @@
   function showTwitch(on) {
     $("tw").classList.toggle("on", on);
     $("twNote").hidden = !on;
-    $("dest").textContent = on ? "Twitch" : "Ton live";
+    $("dest").textContent = on ? "Twitch" : T("Ton live", "Your live");
   }
   // Les événements ONLINE/OFFLINE de Twitch arrivent avec retard (la chaîne
   // reste « en ligne » un moment après la fin du live, lecteur sur l'écran
@@ -1320,15 +1382,15 @@
     if (!c) return;
     // Accepte « marcoleroc74 » comme « https://www.twitch.tv/marcoleroc74 ».
     const v = $("twitch").value.trim().replace(/^.*twitch\.tv\//i, "").replace(/[/?#].*$/, "").toLowerCase();
-    if (v && !/^[a-z0-9_]{3,25}$/.test(v)) { setStatus("chanStatus", "Nom de chaîne Twitch invalide", "err"); return; }
+    if (v && !/^[a-z0-9_]{3,25}$/.test(v)) { setStatus("chanStatus", T("Nom de chaîne Twitch invalide", "Invalid Twitch channel name"), "err"); return; }
     c.twitch = v;
     c.twOk = !!v;
     saveStore();
     $("twitch").value = v;
-    label($("saveTwitch"), "Enregistré");
+    label($("saveTwitch"), T("Enregistré", "Saved"));
     $("saveTwitch").classList.add("done");
-    setTimeout(() => { label($("saveTwitch"), "Enregistrer"); $("saveTwitch").classList.remove("done"); }, 1800);
-    setStatus("chanStatus", v ? `Chaîne Twitch « ${v} » enregistrée pour ${c.channel}` : "Chaîne Twitch retirée", "ok");
+    setTimeout(() => { label($("saveTwitch"), T("Enregistrer", "Save")); $("saveTwitch").classList.remove("done"); }, 1800);
+    setStatus("chanStatus", v ? T(`Chaîne Twitch « ${v} » enregistrée pour ${c.channel}`, `Twitch channel “${v}” saved for ${c.channel}`) : T("Chaîne Twitch retirée", "Twitch channel removed"), "ok");
   });
 
   function fitPreview() {
@@ -1368,8 +1430,8 @@
       b.innerHTML = `<span class="bar"></span><span class="txt"><span class="nm"></span><span class="meta"></span></span><span class="tag"></span>`;
       b.querySelector(".bar").classList.toggle("on", !!(st && st.live));
       b.querySelector(".nm").textContent = c.channel;
-      b.querySelector(".meta").textContent = st ? (st.live ? `En match, set ${st.set}` : "Aucun match") : "État inconnu";
-      b.querySelector(".tag").textContent = on ? "Actif" : "";
+      b.querySelector(".meta").textContent = st ? (st.live ? T(`En match, set ${st.set}`, `In a match, set ${st.set}`) : NO_MATCH) : UNKNOWN;
+      b.querySelector(".tag").textContent = on ? ACTIVE : "";
       b.addEventListener("click", () => {
         store.active = c.channel;
         saveStore();
@@ -1387,20 +1449,21 @@
   // Un clic affiche la clé en entier et la copie.
   $("copyKey").addEventListener("click", async () => {
     const c = active();
-    if (!c || !c.key) { setStatus("chanStatus", "Pas de clé mémorisée pour ce canal", "err"); return; }
+    if (!c || !c.key) { setStatus("chanStatus", T("Pas de clé mémorisée pour ce canal", "No key saved for this channel"), "err"); return; }
     $("keyShown").textContent = c.key;
-    await copy(c.key, $("copyKey"), "Copier");
+    await copy(c.key, $("copyKey"), COPY);
   });
   $("removeChan").addEventListener("click", () => {
     const c = active();
     if (!c) return;
-    if (!confirm(`Retirer le canal « ${c.channel} » de cet appareil ?\n\nLe canal n'est pas supprimé, mais sa clé ne sera plus mémorisée ici : note-la avant si tu n'en as pas de copie.`)) return;
+    if (!confirm(T(`Retirer le canal « ${c.channel} » de cet appareil ?\n\nLe canal n'est pas supprimé, mais sa clé ne sera plus mémorisée ici : note-la avant si tu n'en as pas de copie.`,
+      `Remove the channel “${c.channel}” from this device?\n\nThe channel isn't deleted, but its key will no longer be saved here: write it down first if you don't have a copy.`))) return;
     store.channels = store.channels.filter((x) => x !== c);
     store.active = store.channels.length ? store.channels[0].channel : null;
     saveStore();
     channelChanged();
     paintChannels();
-    setStatus("chanStatus", "Canal retiré de cet appareil", "ok");
+    setStatus("chanStatus", T("Canal retiré de cet appareil", "Channel removed from this device"), "ok");
   });
 
   // Garde-fou anti-casse : les canaux vivent en minuscules côté serveur
@@ -1416,19 +1479,19 @@
   $("add").addEventListener("click", () => {
     const channel = $("channel").value.trim();
     const key = $("key").value.trim();
-    if (!channel || !key) { setStatus("chanStatus", "Canal et clé requis", "err"); return; }
+    if (!channel || !key) { setStatus("chanStatus", T("Canal et clé requis", "Channel and key required"), "err"); return; }
     fresh = channel;
     upsertChannel(channel, key);
     $("channel").value = "";
     $("key").value = "";
     renderChannels();
-    setStatus("chanStatus", `Canal « ${channel} » ajouté et activé`, "ok");
+    setStatus("chanStatus", T(`Canal « ${channel} » ajouté et activé`, `Channel “${channel}” added and activated`), "ok");
   });
 
   $("create").addEventListener("click", async () => {
     const channel = $("newChannel").value.trim();
-    if (!channel) { setStatus("chanStatus", "Choisis un nom de canal", "err"); return; }
-    sending($("create"), true, "Création…");
+    if (!channel) { setStatus("chanStatus", T("Choisis un nom de canal", "Pick a channel name"), "err"); return; }
+    sending($("create"), true, T("Création…", "Creating…"));
     setStatus("chanStatus", "");
     try {
       const res = await fetch(`${API}/functions/v1/register`, {
@@ -1447,16 +1510,16 @@
         upsertChannel(data.channel, data.key);
         renderChannels();
       } else if (res.status === 409) {
-        setStatus("chanStatus", "Ce nom est déjà pris : choisis-en un autre", "err");
+        setStatus("chanStatus", T("Ce nom est déjà pris : choisis-en un autre", "This name is taken: pick another one"), "err");
       } else {
-        setStatus("chanStatus", "Erreur " + res.status + " : réessaie", "err");
+        setStatus("chanStatus", errRetry(res.status), "err");
       }
     } catch {
-      setStatus("chanStatus", "Pas de réseau : réessaie", "err");
+      setStatus("chanStatus", NO_NET, "err");
     }
-    sending($("create"), false, "Créer le canal");
+    sending($("create"), false, T("Créer le canal", "Create channel"));
   });
-  $("copyReg").addEventListener("click", () => copy($("regKey").textContent, $("copyReg"), "Copier la clé"));
+  $("copyReg").addEventListener("click", () => copy($("regKey").textContent, $("copyReg"), COPY_KEY));
 
   // ================= CLUB =================
   // Un club possède des terrains ; chaque terrain est un canal avec sa propre
@@ -1490,8 +1553,8 @@
   }
   function clubError(status, id = "clubStatus") {
     setStatus(id, status === 401
-      ? "Clé du club refusée : retire le club de l'appareil puis rouvre-le avec la bonne clé"
-      : status === 409 ? "Limite de 16 terrains atteinte" : "Erreur " + status + " : réessaie", "err");
+      ? T("Clé du club refusée : retire le club de l'appareil puis rouvre-le avec la bonne clé", "Club key rejected: remove the club from this device, then open it again with the right key")
+      : status === 409 ? T("Limite de 16 terrains atteinte", "16-court limit reached") : errRetry(status), "err");
   }
 
   // Fusionne la liste du serveur dans les canaux mémorisés : on garde les clés
@@ -1520,10 +1583,10 @@
         data.terrains.forEach((t) => { clubScores[t.channel] = t.score; });
         mergeTerrains(data.terrains);
         paintClub();
-      } else if (status === 404) setStatus("clubStatus", "Ce club n'existe pas sur le serveur", "err");
-      else setStatus("clubStatus", "Erreur " + status + " : la liste des terrains n'est peut-être pas à jour", "err");
+      } else if (status === 404) setStatus("clubStatus", T("Ce club n'existe pas sur le serveur", "This club doesn't exist on the server"), "err");
+      else setStatus("clubStatus", T(`Erreur ${status} : la liste des terrains n'est peut-être pas à jour`, `Error ${status}: the court list may be out of date`), "err");
     } catch {
-      setStatus("clubStatus", "Pas de réseau : la liste des terrains n'est peut-être pas à jour", "err");
+      setStatus("clubStatus", T("Pas de réseau : la liste des terrains n'est peut-être pas à jour", "No network: the court list may be out of date"), "err");
     }
   }
 
@@ -1557,15 +1620,16 @@
     const club = store.club;
     const open = !!club && !clubJustCreated;
     $("clubLead").innerHTML = open
-      ? 'Les terrains de ton club. <span class="mob">Touche</span><span class="desk">Clique sur</span> un terrain pour l’utiliser et voir sa clé et son lien OBS.'
-      : "Un club regroupe plusieurs terrains, chacun avec son bandeau de live.";
+      ? T('Les terrains de ton club. <span class="mob">Touche</span><span class="desk">Clique sur</span> un terrain pour l’utiliser et voir sa clé et le lien de son bandeau.',
+        'Your club’s courts. <span class="mob">Tap</span><span class="desk">Click</span> a court to use it and see its key and score bar link.')
+      : T("Un club regroupe plusieurs terrains, chacun avec son bandeau de live.", "A club groups several courts, each with its own live score bar.");
     $("clubOpen").hidden = !open;
     $("clubNone").hidden = open;
     $("clubCards").hidden = !open;
     if (!open) return;
     $("clubSlug").textContent = "CLUB · " + club.slug;
     const pub = clubPubUrl(club.slug);
-    $("clubPubUrl").textContent = pub.replace(/^https?:\/\//, "");
+    $("clubPubUrl").textContent = showUrl(pub);
     $("openClubPub").href = pub;
     $("clubName").textContent = club.name;
     $("clubKeyShown").textContent = mask(club.key);
@@ -1573,7 +1637,7 @@
     box.textContent = "";
     const list = terrains();
     $("noTerrains").hidden = list.length > 0;
-    $("newTerrain").placeholder = "Terrain " + (list.length + 1);
+    $("newTerrain").placeholder = T("Terrain ", "Court ") + (list.length + 1);
     const cur = active() && active().club === club.slug ? active() : null;
     list.forEach((c, i) => {
       const on = c === cur;
@@ -1584,7 +1648,7 @@
       b.setAttribute("aria-pressed", String(on));
       b.innerHTML = `<span class="bar"></span><span class="txt"><span class="nm"></span><span class="meta"></span></span><span class="tag"></span>`;
       b.querySelector(".nm").textContent = chanName(c);
-      b.querySelector(".tag").textContent = on ? "Actif" : "";
+      b.querySelector(".tag").textContent = on ? ACTIVE : "";
       b.addEventListener("click", () => {
         if (store.active !== c.channel) {
           store.active = c.channel;
@@ -1610,9 +1674,9 @@
 
   function terrainMeta(ch) {
     const r = clubScores[ch];
-    if (r === undefined) return { live: false, meta: "État inconnu" };
-    if (isLive(r)) return { live: true, meta: `En match · ${r.score_me}–${r.score_opp}, set ${r.current_set}` };
-    return isFinal(r) ? { live: false, meta: `Terminé · ${r.sets_me}–${r.sets_opp} en sets` } : { live: false, meta: "Aucun match" };
+    if (r === undefined) return { live: false, meta: UNKNOWN };
+    if (isLive(r)) return { live: true, meta: T(`En match · ${r.score_me}–${r.score_opp}, set ${r.current_set}`, `In a match · ${r.score_me}–${r.score_opp}, set ${r.current_set}`) };
+    return isFinal(r) ? { live: false, meta: T(`Terminé · ${r.sets_me}–${r.sets_opp} en sets`, `Finished · ${r.sets_me}–${r.sets_opp} in sets`) } : { live: false, meta: NO_MATCH };
   }
   function paintTerrainStatus() {
     let n = 0;
@@ -1622,7 +1686,7 @@
       b.querySelector(".bar").classList.toggle("on", st.live);
       b.querySelector(".meta").textContent = st.meta;
     });
-    $("clubLive").textContent = n ? `${n} en match` : "Aucun match";
+    $("clubLive").textContent = n ? T(`${n} en match`, `${n} live`) : NO_MATCH;
     $("clubLive").classList.toggle("off", !n);
   }
 
@@ -1633,39 +1697,39 @@
     const p = document.createElement("div");
     p.className = "tpanel";
     p.innerHTML = `
-      <div class="tt"><h2></h2><button class="linkcyan" data-act="rename">Renommer</button></div>
-      <div class="copyrow rrow" hidden><input class="ci" maxlength="24" aria-label="Nouveau nom du terrain" autocomplete="off"><button class="cbtn wide" data-act="save"><span>Enregistrer</span></button></div>
-      <span class="dk">Clé de la montre de ce terrain</span>
-      <div class="copyrow"><div class="codebox"><span class="k">Clé montre</span><span class="kv"></span></div><button class="cbtn" data-act="copyKey"><span>Copier</span></button></div>
-      <span class="dk">Lien du bandeau pour OBS</span>
-      <div class="copyrow"><div class="codebox"><span class="k">OBS</span><span class="obs"></span></div><button class="cbtn" data-act="copyObs"><span>Copier</span></button></div>
+      <div class="tt"><h2></h2><button class="linkcyan" data-act="rename">${T("Renommer", "Rename")}</button></div>
+      <div class="copyrow rrow" hidden><input class="ci" maxlength="24" aria-label="${T("Nouveau nom du terrain", "New court name")}" autocomplete="off"><button class="cbtn wide" data-act="save"><span>${T("Enregistrer", "Save")}</span></button></div>
+      <span class="dk">${T("Clé de la montre de ce terrain", "Watch key for this court")}</span>
+      <div class="copyrow"><div class="codebox"><span class="k">${T("Clé montre", "Watch key")}</span><span class="kv"></span></div><button class="cbtn" data-act="copyKey"><span>${COPY}</span></button></div>
+      <span class="dk">${T("Lien du bandeau (OBS ou PRISM)", "Score bar link (OBS or PRISM)")}</span>
+      <div class="copyrow"><div class="codebox"><span class="k">${T("Lien", "Link")}</span><span class="obs url"></span></div><button class="cbtn" data-act="copyObs"><span>${COPY}</span></button></div>
       <div class="scorer">
-        <span class="qh">Marquer sans montre</span>
-        <p class="qnokey" hidden>La clé de ce terrain n'est pas sur cet appareil : crée une nouvelle clé (en bas) pour obtenir le scoreur et son QR code.</p>
+        <span class="qh">${T("Marquer sans montre", "Keep score without a watch")}</span>
+        <p class="qnokey" hidden>${T("La clé de ce terrain n'est pas sur cet appareil : crée une nouvelle clé (en bas) pour obtenir le scoreur et son QR code.", "This court's key isn't on this device: create a new key (below) to get the scorer and its QR code.")}</p>
         <div class="qok">
-          <p>Un téléphone au bord du terrain remplace la montre : on touche l'équipe qui marque.</p>
+          <p>${T("Un téléphone au bord du terrain remplace la montre : on touche l'équipe qui marque.", "A phone by the court replaces the watch: tap the team that scores.")}</p>
         </div>
-        <a class="cta qopen" target="_blank" rel="noopener">Ouvrir le scoreur ici</a>
-        <button class="ghostbtn" data-act="qr" aria-expanded="false">QR code à coller au poteau</button>
+        <a class="cta qopen" target="_blank" rel="noopener">${T("Ouvrir le scoreur ici", "Open the scorer here")}</a>
+        <button class="ghostbtn" data-act="qr" aria-expanded="false">${T("QR code à coller au poteau", "QR code to stick on the post")}</button>
         <div class="qrwrap" hidden>
-          <div class="qrcard"><span class="qc"></span><span class="qt"></span><div class="qimg" role="img" aria-label="QR code du scoreur"></div><b>Scanne pour marquer les points</b><small>Pas d'appli à installer : ça s'ouvre dans le navigateur.</small></div>
-          <div class="qacts"><button class="cbtn" data-act="print"><span>Imprimer</span></button><button class="cbtn" data-act="share"><span>Partager le lien</span></button></div>
-          <p class="qwarn">Ce QR contient la clé du terrain : ne le donne qu'aux personnes qui marquent. S'il circule trop, crée une nouvelle clé : l'ancien QR ne marchera plus.</p>
+          <div class="qrcard"><span class="qc"></span><span class="qt"></span><div class="qimg" role="img" aria-label="${T("QR code du scoreur", "Scorer QR code")}"></div><b>${QR_SCAN}</b><small>${QR_NOAPP}</small></div>
+          <div class="qacts"><button class="cbtn" data-act="print"><span>${T("Imprimer", "Print")}</span></button><button class="cbtn" data-act="share"><span>${SHARE}</span></button></div>
+          <p class="qwarn">${T("Ce QR contient la clé du terrain : ne le donne qu'aux personnes qui marquent. S'il circule trop, crée une nouvelle clé : l'ancien QR ne marchera plus.", "This QR contains the court key: only give it to the people keeping score. If it spreads too far, create a new key: the old QR will stop working.")}</p>
         </div>
       </div>
       <div class="okcard" role="status" hidden>
-        <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span>Nouvelle clé</span></span>
-        <p>Colle-la dans la montre du terrain (Garmin Connect › RacketStream › Réglages). L'ancienne clé ne marche plus.</p>
+        <span class="t"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg><span>${T("Nouvelle clé", "New key")}</span></span>
+        <p>${T("Colle-la dans la montre du terrain (Garmin Connect › RacketStream › Réglages). L'ancienne clé ne marche plus.", "Paste it into the court's watch (Garmin Connect › RacketStream › Settings). The old key no longer works.")}</p>
         <div class="kbox"></div>
-        <button class="cbtn big" data-act="copyNew"><span>Copier la clé</span></button>
+        <button class="cbtn big" data-act="copyNew"><span>${COPY_KEY}</span></button>
       </div>
-      <div class="acts"><button class="linkcyan ren" data-act="rename">Renommer</button><button class="linkdanger" data-act="newKey"><span class="mob">Nouvelle clé montre</span><span class="desk">Nouvelle clé montre (l'ancienne ne marchera plus)</span></button></div>`;
+      <div class="acts"><button class="linkcyan ren" data-act="rename">${T("Renommer", "Rename")}</button><button class="linkdanger" data-act="newKey"><span class="mob">${T("Nouvelle clé montre", "New watch key")}</span><span class="desk">${T("Nouvelle clé montre (l'ancienne ne marchera plus)", "New watch key (the old one will stop working)")}</span></button></div>`;
     p.querySelector(".tt h2").textContent = chanName(c);
     const kv = p.querySelector(".kv");
-    kv.textContent = c.key ? mask(c.key) : "pas sur cet appareil";
+    kv.textContent = c.key ? mask(c.key) : T("pas sur cet appareil", "not on this device");
     kv.classList.toggle("none", !c.key);
     p.querySelector('[data-act="copyKey"]').disabled = !c.key;
-    p.querySelector(".obs").textContent = overlayUrl(c.channel).replace(/^https?:\/\//, "");
+    p.querySelector(".obs").textContent = showUrl(overlayUrl(c.channel));
     const input = p.querySelector(".rrow input");
     if (renaming === c.channel) {
       p.querySelector(".rrow").hidden = false;
@@ -1687,9 +1751,9 @@
       const b = e.target.closest("[data-act]");
       if (!b) return;
       const act = b.dataset.act;
-      if (act === "copyKey" && c.key) { kv.textContent = c.key; copy(c.key, b, "Copier"); }
-      else if (act === "copyObs") copy(overlayUrl(c.channel), b, "Copier");
-      else if (act === "copyNew" && regen) copy(regen.key, b, "Copier la clé");
+      if (act === "copyKey" && c.key) { kv.textContent = c.key; copy(c.key, b, COPY); }
+      else if (act === "copyObs") copy(overlayUrl(c.channel), b, COPY);
+      else if (act === "copyNew" && regen) copy(regen.key, b, COPY_KEY);
       else if (act === "rename") {
         renaming = renaming === c.channel ? null : c.channel;
         paintClub();
@@ -1709,6 +1773,9 @@
   // La clé voyage dans le fragment (#) : jamais envoyée au serveur de pages.
   const scorerUrl = (c) => new URL("scoreur.html", location.href).href.split("#")[0] +
     "#c=" + encodeURIComponent(c.channel) + "&k=" + encodeURIComponent(c.key);
+  const QR_SCAN = T("Scanne pour marquer les points", "Scan to keep score");
+  const QR_NOAPP = T("Pas d'appli à installer : ça s'ouvre dans le navigateur.", "No app to install: it opens in the browser.");
+  const SHARE = T("Partager le lien", "Share link");
   let qrLib = null;
   function loadQrLib() {
     qrLib = qrLib || new Promise((ok, ko) => {
@@ -1733,14 +1800,14 @@
     p.querySelector(".qc").textContent = store.club ? store.club.name : "";
     p.querySelector(".qt").textContent = chanName(c);
     try { p.querySelector(".qimg").innerHTML = await qrSvg(scorerUrl(c)); }
-    catch { p.querySelector(".qimg").textContent = "QR indisponible (pas de réseau) : utilise « Partager le lien »."; }
+    catch { p.querySelector(".qimg").textContent = T("QR indisponible (pas de réseau) : utilise « Partager le lien ».", "QR unavailable (no network): use “Share link”."); }
   }
   // Impression : la carte seule, en noir sur blanc, sur une page vierge.
   function printQr(c, p) {
     const w = window.open("", "_blank");
-    if (!w) { setStatus("clubStatus", "Autorise les fenêtres pour imprimer", "err"); return; }
+    if (!w) { setStatus("clubStatus", T("Autorise les fenêtres pour imprimer", "Allow pop-ups to print"), "err"); return; }
     const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
-    w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(chanName(c))} — QR scoreur</title>
+    w.document.write(`<!doctype html><html lang="${I18N.lang}"><meta charset="utf-8"><title>${esc(chanName(c))} — ${T("QR scoreur", "scorer QR")}</title>
 <style>body{margin:0;font-family:Archivo,Helvetica,Arial,sans-serif;display:flex;justify-content:center;padding:40px 20px;color:#000}
 .c{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border:3px solid #000;padding:36px 40px;max-width:420px}
 .k{font-size:18px;font-weight:900;font-style:italic;letter-spacing:.05em;text-transform:uppercase}
@@ -1748,8 +1815,8 @@
 .q{width:300px;height:300px;margin:14px 0}.q svg{width:100%;height:100%}
 b{font-size:24px;font-style:italic}small{font-size:15px}</style>
 <div class="c"><span class="k">${esc(store.club ? store.club.name : "")}</span><span class="t">${esc(chanName(c))}</span>
-<div class="q">${p.querySelector(".qimg").innerHTML}</div><b>Scanne pour marquer les points</b>
-<small>Pas d'appli à installer : ça s'ouvre dans le navigateur.</small></div>`);
+<div class="q">${p.querySelector(".qimg").innerHTML}</div><b>${esc(QR_SCAN)}</b>
+<small>${esc(QR_NOAPP)}</small></div>`);
     w.document.close();
     w.focus();
     setTimeout(() => w.print(), 300);
@@ -1757,14 +1824,14 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
   async function shareScorer(c, btn) {
     const url = scorerUrl(c);
     if (navigator.share) {
-      try { await navigator.share({ title: chanName(c) + " — scoreur", text: "Marque les points de " + chanName(c) + " :", url }); return; }
+      try { await navigator.share({ title: chanName(c) + T(" — scoreur", " — scorer"), text: T("Marque les points de " + chanName(c) + " :", "Keep score for " + chanName(c) + ":"), url }); return; }
       catch (e) { if (e.name === "AbortError") return; }
     }
-    copy(url, btn, "Partager le lien");
+    copy(url, btn, SHARE);
   }
 
   async function saveLabel(c, label, btn) {
-    if (!label) { setStatus("clubStatus", "Donne un nom au terrain", "err"); return; }
+    if (!label) { setStatus("clubStatus", T("Donne un nom au terrain", "Give the court a name"), "err"); return; }
     setStatus("clubStatus", "");
     btn.disabled = true;
     try {
@@ -1775,16 +1842,17 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
         renaming = null;
         renderHeader();
         paintClub();
-        setStatus("clubStatus", "Terrain renommé", "ok");
+        setStatus("clubStatus", T("Terrain renommé", "Court renamed"), "ok");
       } else clubError(status);
     } catch {
-      setStatus("clubStatus", "Pas de réseau : réessaie", "err");
+      setStatus("clubStatus", NO_NET, "err");
     }
     btn.disabled = false;
   }
 
   async function renewKey(c, btn) {
-    if (!confirm(`Créer une nouvelle clé pour « ${chanName(c)} » ?\n\nL'ancienne clé ne marchera plus : il faudra coller la nouvelle dans la montre du terrain.`)) return;
+    if (!confirm(T(`Créer une nouvelle clé pour « ${chanName(c)} » ?\n\nL'ancienne clé ne marchera plus : il faudra coller la nouvelle dans la montre du terrain.`,
+      `Create a new key for “${chanName(c)}”?\n\nThe old key will stop working: you'll need to paste the new one into the court's watch.`))) return;
     setStatus("clubStatus", "");
     btn.disabled = true;
     try {
@@ -1797,14 +1865,14 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
         paintClub();
       } else clubError(status);
     } catch {
-      setStatus("clubStatus", "Pas de réseau : réessaie", "err");
+      setStatus("clubStatus", NO_NET, "err");
     }
     btn.disabled = false;
   }
 
   $("addTerrain").addEventListener("click", async () => {
     const label = $("newTerrain").value.trim();
-    if (!label) { setStatus("clubStatus", "Donne un nom au terrain", "err"); return; }
+    if (!label) { setStatus("clubStatus", T("Donne un nom au terrain", "Give the court a name"), "err"); return; }
     const btn = $("addTerrain");
     btn.disabled = true;
     setStatus("clubStatus", "");
@@ -1827,11 +1895,11 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
         openClubStream();
       } else clubError(status);
     } catch {
-      setStatus("clubStatus", "Pas de réseau : réessaie", "err");
+      setStatus("clubStatus", NO_NET, "err");
     }
     btn.disabled = false;
   });
-  $("copyTerrainOut").addEventListener("click", () => copy($("terrainOutKey").textContent, $("copyTerrainOut"), "Copier la clé"));
+  $("copyTerrainOut").addEventListener("click", () => copy($("terrainOutKey").textContent, $("copyTerrainOut"), COPY_KEY));
 
   // Identifiant du club : minuscules, chiffres et tirets (comme dans les liens).
   for (const id of ["clubNewSlug", "clubSlugIn"]) {
@@ -1846,8 +1914,8 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
     const name = $("clubNewName").value.trim();
     const slug = $("clubNewSlug").value.trim();
     const invite = $("clubInvite").value.trim();
-    if (!name || !slug || !invite) { setStatus("clubStatus0", "Nom, identifiant et code d'invitation requis", "err"); return; }
-    sending($("createClub"), true, "Création…");
+    if (!name || !slug || !invite) { setStatus("clubStatus0", T("Nom, identifiant et code d'invitation requis", "Name, ID and invitation code required"), "err"); return; }
+    sending($("createClub"), true, T("Création…", "Creating…"));
     setStatus("clubStatus0", "");
     try {
       const { status, data } = await clubApi("", { method: "POST", body: JSON.stringify({ slug, name, invite }) }, null);
@@ -1863,20 +1931,20 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
         for (const id of ["clubNewName", "clubNewSlug", "clubInvite"]) $(id).value = "";
         renderHeader();
       } else if (status === 403) {
-        setStatus("clubStatus0", "Code d'invitation inconnu ou déjà utilisé", "err");
+        setStatus("clubStatus0", T("Code d'invitation inconnu ou déjà utilisé", "Unknown or already used invitation code"), "err");
       } else if (status === 409) {
-        setStatus("clubStatus0", "Cet identifiant est déjà pris : choisis-en un autre", "err");
+        setStatus("clubStatus0", T("Cet identifiant est déjà pris : choisis-en un autre", "This ID is taken: pick another one"), "err");
       } else if (status === 400 && data && data.error === "slug") {
-        setStatus("clubStatus0", "Identifiant : 2 à 20 caractères, lettres minuscules, chiffres ou tirets (pas au début ni à la fin)", "err");
+        setStatus("clubStatus0", T("Identifiant : 2 à 20 caractères, lettres minuscules, chiffres ou tirets (pas au début ni à la fin)", "ID: 2 to 20 characters, lowercase letters, digits or hyphens (not at the start or end)"), "err");
       } else {
-        setStatus("clubStatus0", "Erreur " + status + " : réessaie", "err");
+        setStatus("clubStatus0", errRetry(status), "err");
       }
     } catch {
-      setStatus("clubStatus0", "Pas de réseau : réessaie", "err");
+      setStatus("clubStatus0", NO_NET, "err");
     }
-    sending($("createClub"), false, "Créer le club");
+    sending($("createClub"), false, T("Créer le club", "Create club"));
   });
-  $("copyClubOut").addEventListener("click", () => copy($("clubOutKey").textContent, $("copyClubOut"), "Copier la clé"));
+  $("copyClubOut").addEventListener("click", () => copy($("clubOutKey").textContent, $("copyClubOut"), COPY_KEY));
   $("clubContinue").addEventListener("click", () => {
     clubJustCreated = false;
     $("clubOut").hidden = true;
@@ -1886,7 +1954,7 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
   $("openClub").addEventListener("click", async () => {
     const slug = $("clubSlugIn").value.trim();
     const key = $("clubKeyIn").value.trim();
-    if (!slug || !key) { setStatus("clubStatus0", "Identifiant et clé du club requis", "err"); return; }
+    if (!slug || !key) { setStatus("clubStatus0", T("Identifiant et clé du club requis", "Club ID and key required"), "err"); return; }
     const btn = $("openClub");
     btn.disabled = true;
     setStatus("clubStatus0", "");
@@ -1899,30 +1967,31 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
         $("clubKeyIn").value = "";
         renderHeader();
         renderClub(true);
-        setStatus("clubStatus", `Club « ${data.name} » ajouté`, "ok");
+        setStatus("clubStatus", T(`Club « ${data.name} » ajouté`, `Club “${data.name}” added`), "ok");
       } else if (status === 401) {
-        setStatus("clubStatus0", "Identifiant ou clé du club incorrect", "err");
+        setStatus("clubStatus0", T("Identifiant ou clé du club incorrect", "Wrong club ID or key"), "err");
       } else {
-        setStatus("clubStatus0", "Erreur " + status + " : réessaie", "err");
+        setStatus("clubStatus0", errRetry(status), "err");
       }
     } catch {
-      setStatus("clubStatus0", "Pas de réseau : réessaie", "err");
+      setStatus("clubStatus0", NO_NET, "err");
     }
     btn.disabled = false;
   });
 
   // Un clic affiche la clé du club en entier et la copie.
   function clubPubUrl(slug) { return new URL("club.html", location.href).href.split(/[?#]/)[0] + "?c=" + encodeURIComponent(slug); }
-  $("copyClubPub").addEventListener("click", () => { if (store.club) copy(clubPubUrl(store.club.slug), $("copyClubPub"), "Copier"); });
+  $("copyClubPub").addEventListener("click", () => { if (store.club) copy(clubPubUrl(store.club.slug), $("copyClubPub"), COPY); });
   $("copyClubKey").addEventListener("click", () => {
     if (!store.club) return;
     $("clubKeyShown").textContent = store.club.key;
-    copy(store.club.key, $("copyClubKey"), "Copier");
+    copy(store.club.key, $("copyClubKey"), COPY);
   });
   $("removeClub").addEventListener("click", () => {
     const club = store.club;
     if (!club) return;
-    if (!confirm(`Retirer le club « ${club.name} » de cet appareil ?\n\nLe club et ses terrains ne sont pas supprimés, mais leurs clés ne seront plus mémorisées ici : note la clé du club avant si tu n'en as pas de copie.`)) return;
+    if (!confirm(T(`Retirer le club « ${club.name} » de cet appareil ?\n\nLe club et ses terrains ne sont pas supprimés, mais leurs clés ne seront plus mémorisées ici : note la clé du club avant si tu n'en as pas de copie.`,
+      `Remove the club “${club.name}” from this device?\n\nThe club and its courts aren't deleted, but their keys will no longer be saved here: write down the club key first if you don't have a copy.`))) return;
     closeClubStream();
     store.channels = store.channels.filter((c) => c.club !== club.slug);
     store.club = null;
@@ -1933,7 +2002,7 @@ b{font-size:24px;font-style:italic}small{font-size:15px}</style>
     $("terrainOut").hidden = true;
     channelChanged();
     paintClub();
-    setStatus("clubStatus0", "Club retiré de cet appareil", "ok");
+    setStatus("clubStatus0", T("Club retiré de cet appareil", "Club removed from this device"), "ok");
   });
 
   // --- changement de canal actif : tout se recharge ---

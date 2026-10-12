@@ -3,20 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Confidentialité · RacketStream</title>
-<meta name="description" content="Politique de confidentialité de RacketStream : données traitées, finalités, durées de conservation, cookies et droits RGPD.">
+<title data-en="Privacy · RacketStream">Confidentialité · RacketStream</title>
+<meta name="description" data-en-content="RacketStream privacy policy: data processed, purposes, retention periods, cookies and GDPR rights." content="Politique de confidentialité de RacketStream : données traitées, finalités, durées de conservation, cookies et droits RGPD.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link href="fonts/archivo.css" rel="stylesheet">
 <link href="legal.css" rel="stylesheet">
+<script src="i18n.js"></script>
 </head>
 <body>
 <main class="page">
-  <a class="back" href="./">← Retour au portail</a>
+  <div class="topbar">
+    <a class="back" href="./" data-en="← Back to the portal">← Retour au portail</a>
+    <span data-langsw></span>
+  </div>
   <span class="eyebrow">RACKETSTREAM</span>
-  <h1>Politique de confidentialité</h1>
-  <p class="updated">Dernière mise à jour : 12 octobre 2026</p>
+  <h1 data-en="Privacy policy">Politique de confidentialité</h1>
+  <p class="updated" data-en="Last updated: 12 October 2026">Dernière mise à jour : 12 octobre 2026</p>
 
+  <div data-lang="fr">
   <div class="box">
     <p><strong>L'essentiel.</strong> RacketStream fonctionne sans compte, sans e-mail et sans mot de passe. Il n'y a ni publicité, ni mesure d'audience, ni cookie déposé par le site. Nous traitons uniquement ce qu'il faut pour afficher un score en direct : un nom de canal, une clé d'accès, les noms que vous choisissez d'afficher et les points du match.</p>
   </div>
@@ -97,12 +102,110 @@
 
   <h2>9. Modifications</h2>
   <p>Cette politique peut évoluer, par exemple à l'arrivée d'offres payantes. La date de mise à jour figure en haut de la page. En cas de changement important, une information sera affichée sur le portail.</p>
+  </div>
 
-  <nav class="legal" aria-label="Informations légales">
-    <a href="mentions-legales.html">Mentions légales</a>
-    <a href="confidentialite.html" aria-current="page">Confidentialité</a>
-    <a href="cgu.html">Conditions d'utilisation</a>
+  <div data-lang="en" hidden>
+  <div class="box">
+    <p>This is a translation provided for convenience. The French version is the only legally binding one.</p>
+  </div>
+
+  <div class="box">
+    <p><strong>In short.</strong> RacketStream works without an account, an email address or a password. There is no advertising, no audience measurement and no cookie set by the site. We process only what is needed to display a live score: a channel name, an access key, the names you choose to display and the points of the match.</p>
+  </div>
+
+  <p>This policy explains how personal data is processed on the portal <strong>racket-stream-portal.marc-suarez.fr</strong>, its related pages (scorer, public club pages, score bug for OBS), the service <strong>racket-stream.marc-suarez.fr</strong> and the RacketStream app for Garmin watches. It applies the General Data Protection Regulation (GDPR, Regulation (EU) 2016/679) and French Law No. 78-17 of 6 January 1978 on data processing, data files and individual liberties (“Informatique et Libertés”).</p>
+
+  <h2>1. Data controller</h2>
+  <p>The publisher of RacketStream, a private individual acting on a non-professional basis (see the <a href="mentions-legales.html">legal notice</a>). For any question or request: <a href="mailto:racketstream-contact@marc-suarez.fr">racketstream-contact@marc-suarez.fr</a>.</p>
+
+  <h2>2. Data processed and why</h2>
+  <div class="tw">
+  <table>
+    <thead><tr><th scope="col">Data</th><th scope="col">Purpose</th><th scope="col">Legal basis</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Channel name</strong> (a pseudonym you choose) and <strong>access key</strong>. The server keeps only a cryptographic fingerprint of the key (SHA-256): it does not know the key in plain text.</td><td>Linking your watch or phone to your score bug, and checking that only you can send points to it.</td><td>Performance of the <a href="cgu.html">terms of use</a> (Art. 6(1)(b) GDPR).</td></tr>
+      <tr><td><strong>Player names</strong> (up to 4 per match), match <strong>format</strong>.</td><td>Displaying them on the score bug, the portal, the club page and, if you asked for it, in your live stream's chat.</td><td>Performance of the terms of use for the user; legitimate interest of the organiser and players in following the match (Art. 6(1)(f)) for the named players.</td></tr>
+      <tr><td><strong>Match points</strong>: score, sets, time of each point, random identifier of the scoring device.</td><td>Calculating and broadcasting the live score, avoiding duplicates when the connection drops.</td><td>Performance of the terms of use.</td></tr>
+      <tr><td><strong>Club</strong>: club name, court names, club key (cryptographic fingerprint only).</td><td>Allowing a club to manage its courts and publish its scores page.</td><td>Performance of the terms of use.</td></tr>
+      <tr><td><strong>Technical data</strong>: IP address, date and time, requested address, browser type, recorded in the server's error logs.</td><td>Service security, troubleshooting, abuse prevention.</td><td>The publisher's legitimate interest in securing its service (Art. 6(1)(f)).</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>We collect no sensitive data, carry out no profiling and make no automated decisions about you. The data is never sold, rented or used for advertising purposes.</p>
+
+  <h3>Scores are public</h3>
+  <p>A score bug is meant to be seen: the score and the names displayed on a channel or a club page can be viewed by anyone who knows the channel name or the page address. Only enter what the players agree to have displayed. A first name, initials or a nickname is enough.</p>
+
+  <h3>Players named without being users</h3>
+  <p>If your name appears on a score bug, it was entered by the person who manages the channel or the club. You can ask them to remove it or write to us directly at <a href="mailto:racketstream-contact@marc-suarez.fr">racketstream-contact@marc-suarez.fr</a>: we will delete it without you having to give a reason. For a minor player, entering their name requires the consent of their legal guardians (see the <a href="cgu.html">terms of use</a>).</p>
+
+  <h2>3. Who receives the data</h2>
+  <ul>
+    <li><strong>The publisher</strong>, the sole administrator of the service.</li>
+    <li><strong>Infomaniak Network SA</strong> (Geneva, Switzerland), host of the site and the server, acting on our behalf. Switzerland benefits from an adequacy decision of the European Commission: it is deemed to offer protection equivalent to that of the European Union.</li>
+    <li><strong>StreamElements Inc.</strong> (United States), only if a channel holder has asked for the score to be announced in their live stream's chat: the score text, including the players' names, is then sent to the StreamElements chat bot of their channel. This transfer outside the European Union takes place at the holder's request, in order to provide the service they asked for (Art. 49(1)(b) GDPR), and relies on the safeguards offered by this provider.</li>
+  </ul>
+  <p>No one else has access to it, except where required by law (judicial request).</p>
+
+  <h2>4. How long</h2>
+  <div class="tw">
+  <table>
+    <thead><tr><th scope="col">Data</th><th scope="col">Retention period</th></tr></thead>
+    <tbody>
+      <tr><td>Player names</td><td>Until they are replaced by the names of the next match or the channel is deleted.</td></tr>
+      <tr><td>Match points and results</td><td>12 months after the match, then automatically deleted.</td></tr>
+      <tr><td>Personal channel and its key</td><td>As long as it is used; automatically deleted after 24 months without any match, or earlier on request.</td></tr>
+      <tr><td>Club, its courts and their keys</td><td>As long as the club exists; deleted at the club's request, together with all its matches.</td></tr>
+      <tr><td>Technical logs (IP address…)</td><td>6 months at most.</td></tr>
+      <tr><td>Database backups</td><td>14 days on the server; the 30 most recent copies kept by the publisher on a personal storage medium, in France, so that the service can be restored after a failure.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="cookies-en">5. Cookies and storage in your browser</h2>
+  <p><strong>The site sets no cookies.</strong> It uses no audience measurement tool, no advertising pixel and no social media button. The typeface is hosted on our own servers: no request is sent to Google or any other third-party service when you visit.</p>
+  <p>To work, the portal and the scorer save the following in your browser's local storage (<em>localStorage</em>), on your device only:</p>
+  <ul>
+    <li>the channels, courts and clubs you have added, with their access keys;</li>
+    <li>the names entered and the match in progress, to resume after an interruption;</li>
+    <li>a copy of the portal's pages (the app's offline cache).</li>
+  </ul>
+  <p>This information is strictly necessary for the service you request: the law exempts it from consent (Article 82 of the French “Informatique et Libertés” Act). It is never read by any third party. You can erase it at any time with “Retirer ce canal de l'appareil” (Remove this channel from the device) or by clearing the site's data in your browser. Keep a copy of your key elsewhere if you want to be able to reuse it.</p>
+
+  <h3 id="twitch-en">Twitch player (optional)</h3>
+  <p>On the Diffusion (Broadcast) page, you can choose to display the video player of your Twitch channel. This player is provided by <strong>Twitch Interactive, Inc.</strong> (United States), which may set its own cookies and collect data in accordance with its <a href="https://www.twitch.tv/p/legal/privacy-notice/">privacy notice</a>.</p>
+  <p>The player is loaded <strong>only after your consent</strong>, given by saving a Twitch channel in the Canaux (Channels) tab, and only on the device where you did so. To withdraw your consent, clear the “Chaîne Twitch” (Twitch channel) field and save: the player is no longer loaded.</p>
+
+  <h2>6. Security</h2>
+  <p>All connections are encrypted (HTTPS). Access keys are stored on the server only as a fingerprint, access to the server is restricted to the publisher and the database is backed up every day. Your access key is the equivalent of a password: share it only with the people who need to score the points.</p>
+
+  <h2>7. Your rights</h2>
+  <p>You have the right to access, rectify, erase, restrict, port and object to the processing of your data, as well as the right to set instructions regarding what happens to it after your death.</p>
+  <p>To exercise these rights, write to <a href="mailto:racketstream-contact@marc-suarez.fr">racketstream-contact@marc-suarez.fr</a>, stating the name of the channel or club concerned. As there are no accounts, we may ask you to prove that you are its holder, for example by displaying on that channel a player name that we suggest. <strong>Never send your access key by email.</strong> We respond within one month.</p>
+  <p>If, after contacting us, you believe that your rights have not been respected, you may lodge a complaint with the <strong>CNIL</strong> (French data protection authority): 3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07, France, or at <a href="https://www.cnil.fr/fr/plaintes">www.cnil.fr/fr/plaintes</a>.</p>
+
+  <h2>8. Minors</h2>
+  <p>RacketStream does not ask for any information about age and is not specifically aimed at children. A club or user who displays the name of a minor player must have the consent of their legal guardians; otherwise, they use a nickname or initials.</p>
+
+  <h2>9. Changes</h2>
+  <p>This policy may change, for example when paid offers are introduced. The date of the last update appears at the top of the page. In the event of a significant change, a notice will be displayed on the portal.</p>
+  </div>
+
+  <nav class="legal" aria-label="Informations légales" data-en-aria-label="Legal information">
+    <a href="mentions-legales.html" data-en="Legal notice">Mentions légales</a>
+    <a href="confidentialite.html" aria-current="page" data-en="Privacy">Confidentialité</a>
+    <a href="cgu.html" data-en="Terms of use">Conditions d'utilisation</a>
   </nav>
 </main>
+<script>
+// Ancres #cookies / #twitch : en anglais, le bloc français est masqué ;
+// on défile vers l'équivalent anglais (#cookies-en, #twitch-en).
+if (document.documentElement.lang === "en" && location.hash) {
+  addEventListener("load", () => setTimeout(() => {
+    const t = document.getElementById(location.hash.slice(1) + "-en");
+    if (t) t.scrollIntoView();
+  }));
+}
+</script>
 </body>
 </html>

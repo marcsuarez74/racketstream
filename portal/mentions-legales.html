@@ -3,20 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mentions légales · RacketStream</title>
-<meta name="description" content="Mentions légales du site RacketStream : éditeur, hébergeur, propriété intellectuelle et signalement de contenus.">
+<title data-en="Legal notice · RacketStream">Mentions légales · RacketStream</title>
+<meta name="description" data-en-content="RacketStream legal notice: publisher, host, intellectual property and reporting of content." content="Mentions légales du site RacketStream : éditeur, hébergeur, propriété intellectuelle et signalement de contenus.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link href="fonts/archivo.css" rel="stylesheet">
 <link href="legal.css" rel="stylesheet">
+<script src="i18n.js"></script>
 </head>
 <body>
 <main class="page">
-  <a class="back" href="./">← Retour au portail</a>
+  <div class="topbar">
+    <a class="back" href="./" data-en="← Back to the portal">← Retour au portail</a>
+    <span data-langsw></span>
+  </div>
   <span class="eyebrow">RACKETSTREAM</span>
-  <h1>Mentions légales</h1>
-  <p class="updated">Dernière mise à jour : 12 octobre 2026</p>
+  <h1 data-en="Legal notice">Mentions légales</h1>
+  <p class="updated" data-en="Last updated: 12 October 2026">Dernière mise à jour : 12 octobre 2026</p>
 
+  <div data-lang="fr">
   <p>Ces informations sont publiées en application de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique (LCEN). Elles concernent le site <strong>racket-stream-portal.marc-suarez.fr</strong>, ses pages annexes (scoreur, pages publiques des clubs, bandeau de score), le service de données <strong>racket-stream.marc-suarez.fr</strong> et l'application RacketStream pour montres Garmin (ensemble, « RacketStream »).</p>
 
   <h2>Éditeur</h2>
@@ -58,11 +63,60 @@
 
   <h2>Accessibilité</h2>
   <p>Le site vise le respect des règles d'accessibilité (WCAG 2.1, niveau AA) : textes contrastés, navigation au clavier, libellés pour les lecteurs d'écran. Si un contenu ou une fonction vous est inaccessible, écrivez à <a href="mailto:racketstream-contact@marc-suarez.fr">racketstream-contact@marc-suarez.fr</a> : nous vous apporterons une réponse ou une alternative.</p>
+  </div>
 
-  <nav class="legal" aria-label="Informations légales">
-    <a href="mentions-legales.html" aria-current="page">Mentions légales</a>
-    <a href="confidentialite.html">Confidentialité</a>
-    <a href="cgu.html">Conditions d'utilisation</a>
+  <div data-lang="en" hidden>
+  <div class="box">
+    <p>This is a translation provided for convenience. The French version is the only legally binding one.</p>
+  </div>
+
+  <p>This information is published pursuant to French Law No. 2004-575 of 21 June 2004 on confidence in the digital economy (LCEN). It concerns the website <strong>racket-stream-portal.marc-suarez.fr</strong>, its related pages (scorer, public club pages, score bug), the data service <strong>racket-stream.marc-suarez.fr</strong> and the RacketStream app for Garmin watches (together, “RacketStream”).</p>
+
+  <h2>Publisher</h2>
+  <p>RacketStream is published by a private individual, on a non-professional basis and free of charge.</p>
+  <p>As the law allows for non-professional publishers, the publisher's name and address are not published here: they have been provided to the host, which may disclose them to the judicial authorities.</p>
+  <p><strong>Contact:</strong> <a href="mailto:racketstream-contact@marc-suarez.fr">racketstream-contact@marc-suarez.fr</a></p>
+  <p><strong>Publication director:</strong> the publisher, reachable at the same address.</p>
+
+  <h2>Host</h2>
+  <p><strong>Infomaniak Network SA</strong><br>
+  Rue Eugène-Marziano 25, 1227 Les Acacias (Geneva), Switzerland<br>
+  Phone: +41 22 820 35 44<br>
+  Commercial register of the Canton of Geneva: CH-660.0.059.996-1<br>
+  Website: <a href="https://www.infomaniak.com/">www.infomaniak.com</a></p>
+
+  <h2>Intellectual property</h2>
+  <p>The RacketStream name and the site's texts, visuals and code belong to the publisher, unless otherwise stated. Any reproduction without permission is prohibited, except for private use or as otherwise permitted by law.</p>
+  <p>Third-party components:</p>
+  <ul>
+    <li>the <strong>Archivo</strong> typeface (The Archivo Project Authors), under the <a href="fonts/OFL.txt">SIL Open Font License 1.1</a>, hosted on our own servers;</li>
+    <li>the <strong>qrcode-generator</strong> library (Kazuhiko Arase), under the MIT licence.</li>
+  </ul>
+  <p>Garmin, Connect IQ, Twitch, StreamElements and OBS are trademarks of their respective owners. RacketStream is an independent project, not affiliated with these companies.</p>
+
+  <h2>User-submitted content</h2>
+  <p>Channel, club, court and player names are entered by users, who are responsible for them (see the <a href="cgu.html">terms of use</a>). The publisher does not review them before they are published.</p>
+
+  <h3>Reporting illegal content</h3>
+  <p>To report content you consider illegal, write to <a href="mailto:racketstream-contact@marc-suarez.fr">racketstream-contact@marc-suarez.fr</a>, stating:</p>
+  <ul>
+    <li>the address of the page or the name of the channel concerned;</li>
+    <li>the content in question and why you believe it is illegal;</li>
+    <li>your name and email address, except when reporting child sexual abuse material, which may be done anonymously.</li>
+  </ul>
+  <p>The publisher reviews each report promptly, removes the content if it is manifestly illegal and informs the person who made the report of the action taken. This address is also the single point of contact required by the EU Digital Services Act (DSA) for authorities and users, in French or English.</p>
+
+  <h2>Personal data and cookies</h2>
+  <p>See the <a href="confidentialite.html">privacy policy</a>. The site sets no cookies and performs no audience measurement.</p>
+
+  <h2>Accessibility</h2>
+  <p>The site aims to comply with accessibility guidelines (WCAG 2.1, level AA): sufficient text contrast, keyboard navigation, labels for screen readers. If any content or feature is inaccessible to you, write to <a href="mailto:racketstream-contact@marc-suarez.fr">racketstream-contact@marc-suarez.fr</a>: we will provide an answer or an alternative.</p>
+  </div>
+
+  <nav class="legal" aria-label="Informations légales" data-en-aria-label="Legal information">
+    <a href="mentions-legales.html" aria-current="page" data-en="Legal notice">Mentions légales</a>
+    <a href="confidentialite.html" data-en="Privacy">Confidentialité</a>
+    <a href="cgu.html" data-en="Terms of use">Conditions d'utilisation</a>
   </nav>
 </main>
 </body>

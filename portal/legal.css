@@ -26,3 +26,6 @@ nav.legal { margin-top: 40px; padding-top: 16px; border-top: 1px solid #222933; 
 nav.legal a { color: #9AA3AE; }
 nav.legal a[aria-current="page"] { color: #FFFFFF; text-decoration: none; font-weight: 800; }
 @media (max-width: 520px) { h1 { font-size: 34px; } th, td { padding: 7px 6px; font-size: 14px; } }
+/* Ligne du haut : lien retour à gauche, sélecteur de langue FR | EN à droite. */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.topbar .back { margin-bottom: 0; }

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Scoreur — RacketStream</title>
+<script src="i18n.js"></script>
 <meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
@@ -27,6 +28,8 @@
   .app { max-width: 560px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
   .scr { flex-grow: 1; display: flex; flex-direction: column; }
 
+  .ey { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ey .eyebrow { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
   .eyebrow { font-size: 13px; font-weight: 900; font-style: italic; color: #4DABF7; text-transform: uppercase; letter-spacing: .02em; }
   .h1 { font-size: 40px; font-weight: 900; font-style: italic; font-stretch: 68%; line-height: 1; }
   .lead { font-size: 14px; color: #9AA3AE; line-height: 1.45; }
@@ -92,6 +95,7 @@
   /* --- fin --- */
   .win { font-size: 44px; font-weight: 900; font-style: italic; font-stretch: 66%; line-height: 1; }
   .win span { color: #3DD68C; }
+  .win .wl { color: inherit; }
   .win span.b { color: #4DABF7; }
   .recap { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
   .recap div { display: flex; align-items: center; height: 52px; padding: 0 16px; background: #1A1F26; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
@@ -140,37 +144,37 @@
   <!-- Lien incomplet ou clé refusée -->
   <section class="scr" id="sNoKey" hidden>
     <div class="head">
-      <span class="eyebrow">RacketStream · scoreur</span>
-      <h1 class="h1">Lien incomplet</h1>
+      <div class="ey"><span class="eyebrow" data-en="RacketStream · scorer">RacketStream · scoreur</span><span data-langsw></span></div>
+      <h1 class="h1" data-en="Incomplete link">Lien incomplet</h1>
     </div>
     <div class="form">
-      <p class="lead" id="noKeyMsg">Scanne le QR code collé au poteau du terrain : il ouvre le scoreur de ce terrain.</p>
+      <p class="lead" id="noKeyMsg"></p>
     </div>
   </section>
 
   <!-- 0. Terrain déjà occupé : reprendre, nouveau match ou regarder -->
   <section class="scr" id="sBusy" hidden>
     <div class="head">
-      <span class="eyebrow" id="busyClub">Scoreur</span>
-      <h1 class="h1" id="busyTerrain">Terrain</h1>
+      <div class="ey"><span class="eyebrow" id="busyClub"></span><span data-langsw></span></div>
+      <h1 class="h1" id="busyTerrain"></h1>
     </div>
     <div class="form">
-      <div class="busyTag">⚠ Match déjà en cours sur ce terrain</div>
+      <div class="busyTag" data-en="⚠ Match already in progress on this court">⚠ Match déjà en cours sur ce terrain</div>
       <div class="live" id="busyLive"></div>
-      <span class="lbl" style="margin-top: 8px;">Que veux-tu faire ?</span>
-      <button class="choice main" id="takeOver"><b>Reprendre ce match</b><span id="takeOverTxt"></span></button>
-      <button class="choice" id="newOver"><b>Nouveau match</b><span>Ce match est fini ou abandonné : on repart à 0–0.</span></button>
+      <span class="lbl" style="margin-top: 8px;" data-en="What do you want to do?">Que veux-tu faire ?</span>
+      <button class="choice main" id="takeOver"><b data-en="Take over this match">Reprendre ce match</b><span id="takeOverTxt"></span></button>
+      <button class="choice" id="newOver"><b data-en="New match">Nouveau match</b><span data-en="That match is over or abandoned: start again at 0–0.">Ce match est fini ou abandonné : on repart à 0–0.</span></button>
     </div>
     <div class="foot">
-      <a class="linkbtn" id="watchLive" style="display: flex; align-items: center; text-decoration: none;">Juste regarder le live →</a>
+      <a class="linkbtn" id="watchLive" style="display: flex; align-items: center; text-decoration: none;" data-en="Just watch the live →">Juste regarder le live →</a>
     </div>
   </section>
 
   <!-- 1. Préparation -->
   <section class="scr" id="sPrep" hidden>
     <div class="head">
-      <span class="eyebrow" id="prepClub">Scoreur</span>
-      <h1 class="h1" id="prepTerrain">Terrain</h1>
+      <div class="ey"><span class="eyebrow" id="prepClub"></span><span data-langsw></span></div>
+      <h1 class="h1" id="prepTerrain"></h1>
     </div>
     <div class="form">
       <div class="mini" id="prepBusy" hidden></div>
@@ -179,66 +183,66 @@
       <span class="lbl" id="lFmt">Format</span>
       <div class="segs three" id="formats" role="group" aria-labelledby="lFmt"></div>
       <span class="fdet" id="fdet"></span>
-      <span class="lbl" style="margin-top: 4px;">Joueurs</span>
-      <div class="prow"><i></i><input class="ci" id="n1" maxlength="49" placeholder="Équipe 1 (ex. Léa / Tom)" aria-label="Équipe 1" autocomplete="off"></div>
-      <div class="prow"><i class="b"></i><input class="ci" id="n2" maxlength="49" placeholder="Équipe 2" aria-label="Équipe 2" autocomplete="off"></div>
-      <span class="fdet">En double, sépare les partenaires par « / ».</span>
+      <span class="lbl" style="margin-top: 4px;" data-en="Players">Joueurs</span>
+      <div class="prow"><i></i><input class="ci" id="n1" maxlength="49" placeholder="Équipe 1 (ex. Léa / Tom)" aria-label="Équipe 1" data-en-placeholder="Team 1 (e.g. Lea / Tom)" data-en-aria-label="Team 1" autocomplete="off"></div>
+      <div class="prow"><i class="b"></i><input class="ci" id="n2" maxlength="49" placeholder="Équipe 2" aria-label="Équipe 2" data-en-placeholder="Team 2" data-en-aria-label="Team 2" autocomplete="off"></div>
+      <span class="fdet" data-en="In doubles, separate partners with “/”.">En double, sépare les partenaires par « / ».</span>
     </div>
     <div class="foot">
       <p class="status" id="prepStatus" role="status"></p>
-      <span class="note">L'écran reste allumé pendant le match.</span>
-      <button class="cta" id="start">Lancer le match</button>
-      <button class="linkbtn" id="prepBack" hidden>← Retour</button>
-      <nav class="legalnav" aria-label="Informations légales"><a href="mentions-legales.html">Mentions légales</a><a href="confidentialite.html">Confidentialité</a><a href="cgu.html">Conditions d'utilisation</a></nav>
+      <span class="note" data-en="The screen stays on during the match.">L'écran reste allumé pendant le match.</span>
+      <button class="cta" id="start" data-en="Start the match">Lancer le match</button>
+      <button class="linkbtn" id="prepBack" hidden data-en="← Back">← Retour</button>
+      <nav class="legalnav" aria-label="Informations légales" data-en-aria-label="Legal information"><a href="mentions-legales.html" data-en="Legal notice">Mentions légales</a><a href="confidentialite.html" data-en="Privacy">Confidentialité</a><a href="cgu.html" data-en="Terms of use">Conditions d'utilisation</a></nav>
     </div>
   </section>
 
   <!-- 2. Score -->
   <section class="scr" id="sPlay" hidden>
     <div class="bar">
-      <span class="badge" id="badge"><span class="d"></span><span id="badgeT">EN DIRECT</span></span>
-      <span class="where" id="where">Set 1</span>
+      <span class="badge" id="badge"><span class="d"></span><span id="badgeT"></span></span>
+      <span class="where" id="where"></span>
       <span class="sync" id="sync" role="status"></span>
     </div>
     <div class="playwrap">
       <div class="zones" id="zones">
-        <button class="zone" id="zA"><span class="nm"><span id="nA">Équipe 1</span><svg role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg></span><span class="st" id="stA">Sets 0</span><span class="pts" id="pA">0</span><span class="hint">Touche pour +1</span></button>
-        <button class="zone b" id="zB"><span class="nm"><span id="nB">Équipe 2</span><svg role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg></span><span class="st" id="stB">Sets 0</span><span class="pts" id="pB">0</span><span class="hint">Touche pour +1</span></button>
+        <button class="zone" id="zA"><span class="nm"><span id="nA"></span><svg role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service" data-en-aria-label="serving"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg></span><span class="st" id="stA"></span><span class="pts" id="pA">0</span><span class="hint" data-en="Tap for +1">Touche pour +1</span></button>
+        <button class="zone b" id="zB"><span class="nm"><span id="nB"></span><svg role="img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-label="au service" data-en-aria-label="serving"><path d="M8.5 15L5 3h14l-3.5 12z"/><path d="M12 15v6"/></svg></span><span class="st" id="stB"></span><span class="pts" id="pB">0</span><span class="hint" data-en="Tap for +1">Touche pour +1</span></button>
       </div>
       <div class="setcard" id="setCard" role="dialog" aria-labelledby="setT" hidden>
-        <span class="t" id="setT">Set 1 pour Équipe 1</span>
-        <span class="s" id="setS">21–17</span>
-        <button class="cta" id="nextSet">Set suivant</button>
-        <button class="linkbtn" id="setUndo">Annuler le dernier point</button>
+        <span class="t" id="setT"></span>
+        <span class="s" id="setS"></span>
+        <button class="cta" id="nextSet"></button>
+        <button class="linkbtn" id="setUndo" data-en="Undo last point">Annuler le dernier point</button>
       </div>
       <div class="setcard warn" id="lostCard" role="alertdialog" aria-labelledby="lostT" hidden>
-        <span class="t" id="lostT">Un autre téléphone a pris la main</span>
-        <span class="cs">Tes points ne sont plus envoyés au live. Le score continue sur l'autre appareil.</span>
-        <a class="cta" id="lostLive" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Voir le live</a>
-        <button class="ghost" id="lostTake">Reprendre la main</button>
-        <button class="linkbtn" id="lostQuit">Quitter</button>
+        <span class="t" id="lostT" data-en="Another phone took over">Un autre téléphone a pris la main</span>
+        <span class="cs" data-en="Your points no longer go to the live. Scoring continues on the other device.">Tes points ne sont plus envoyés au live. Le score continue sur l'autre appareil.</span>
+        <a class="cta" id="lostLive" style="display: flex; align-items: center; justify-content: center; text-decoration: none;" data-en="Watch the live">Voir le live</a>
+        <button class="ghost" id="lostTake" data-en="Take back control">Reprendre la main</button>
+        <button class="linkbtn" id="lostQuit" data-en="Quit">Quitter</button>
       </div>
     </div>
     <div class="tools">
-      <button class="tool" id="undo">↶ Annuler</button>
-      <button class="tool" id="swap">⇅ Côtés</button>
-      <button class="tool red" id="stop">Fin</button>
+      <button class="tool" id="undo" data-en="↶ Undo">↶ Annuler</button>
+      <button class="tool" id="swap" data-en="⇅ Sides">⇅ Côtés</button>
+      <button class="tool red" id="stop" data-en="End">Fin</button>
     </div>
   </section>
 
   <!-- 3. Fin du match -->
   <section class="scr" id="sEnd" hidden>
     <div class="form" style="padding-top: 40px;">
-      <span class="eyebrow" id="endWhere">Match terminé</span>
-      <h1 class="win">Victoire<br><span id="winner">Équipe 1</span></h1>
+      <span class="eyebrow" id="endWhere"></span>
+      <h1 class="win"><span class="wl" data-en="Winner">Victoire</span><br><span id="winner"></span></h1>
       <div class="recap" id="recap"></div>
       <span class="fdet" id="endMeta"></span>
     </div>
     <div class="foot">
       <p class="sync" id="endSync" role="status" style="margin: 0 auto;"></p>
-      <button class="cta" id="again">Nouveau match</button>
-      <button class="ghost" id="finish">Terminer (le live se vide)</button>
-      <button class="linkbtn" id="endUndo">Annuler le dernier point</button>
+      <button class="cta" id="again" data-en="New match">Nouveau match</button>
+      <button class="ghost" id="finish" data-en="Finish (clears the live)">Terminer (le live se vide)</button>
+      <button class="linkbtn" id="endUndo" data-en="Undo last point">Annuler le dernier point</button>
     </div>
   </section>
 </div>
@@ -253,6 +257,19 @@
   const API = "https://racket-stream.marc-suarez.fr";
   const LS = "rs-scoreur";
   const $ = (id) => document.getElementById(id);
+  const tx = I18N.t;
+  document.title = tx("Scoreur", "Scorer") + " — RacketStream";
+  // Textes produits par engine/ (en français) : traduits à l'affichage ; un
+  // texte inconnu (moteur modifié) reste en français.
+  const EN = {
+    "PAR 11 · 3 jeux": "TO 11 · 3 games", "PAR 11 · 2 jeux": "TO 11 · 2 games", "PAR 15 · 3 jeux": "TO 15 · 3 games",
+    "Set unique 21": "Single set 21",
+    "meilleur des 5 · écart 2": "best of 5 · win by 2", "meilleur des 3 · écart 2": "best of 3 · win by 2",
+    "2 sets gagnants · plafond 30": "best of 3 sets · cap 30", "BWF 2027 · plafond 21": "BWF 2027 · cap 21",
+    "1 set · plafond 30": "1 set · cap 30",
+    "JEUX": "GAMES",
+  };
+  const eng = (fr) => (I18N.lang === "en" && EN[fr]) || fr;
 
   // État mémorisé (le match reprend après un rechargement ou une coupure) :
   // { deviceId, channel, key, terrain, club, sport, fmt, n1, n2, match, acked, rev, sentRev, swap, stop,
@@ -281,10 +298,10 @@
   st.sentRev = st.sentRev || 0;
   save();
 
-  const team = (v, i) => v || "Équipe " + i;
+  const team = (v, i) => v || tx("Équipe ", "Team ") + i;
   const nameA = () => team(st.n1, 1);
   const nameB = () => team(st.n2, 2);
-  const setW = () => Sports.setWord(engine ? engine.config.sport : st.sport) === "JEU" ? "Jeu" : "Set";
+  const setW = () => Sports.setWord(engine ? engine.config.sport : st.sport) === "JEU" ? tx("Jeu", "Game") : "Set";
 
   function show(id) {
     for (const s of ["sNoKey", "sBusy", "sPrep", "sPlay", "sEnd"]) $(s).hidden = s !== id;
@@ -310,9 +327,9 @@
     } catch { /* hors ligne : noms mémorisés */ }
   }
   function paintTerrain() {
-    $("prepClub").textContent = $("busyClub").textContent = (st.club ? st.club + " · " : "") + "Scoreur";
+    $("prepClub").textContent = $("busyClub").textContent = (st.club ? st.club + " · " : "") + tx("Scoreur", "Scorer");
     $("prepTerrain").textContent = $("busyTerrain").textContent = st.terrain || st.channel;
-    document.title = (st.terrain || st.channel) + " — Scoreur";
+    document.title = (st.terrain || st.channel) + " — " + tx("Scoreur", "Scorer");
   }
 
   // ---------- préparation ----------
@@ -330,12 +347,12 @@
     for (let f = 0; f < Sports.formatCount(st.sport); f++) {
       const b = document.createElement("button");
       b.className = "seg";
-      b.textContent = Sports.formatLabel(st.sport, f);
+      b.textContent = eng(Sports.formatLabel(st.sport, f));
       b.setAttribute("aria-pressed", String(f === st.fmt));
       b.addEventListener("click", () => { st.fmt = f; save(); paintPrep(); });
       $("formats").appendChild(b);
     }
-    $("fdet").textContent = Sports.formatDetail(st.sport, st.fmt);
+    $("fdet").textContent = eng(Sports.formatDetail(st.sport, st.fmt));
   }
   // Noms du live du terrain (les mêmes que ceux saisis dans le portail).
   let names = null;
@@ -392,11 +409,11 @@
     }
     return null;
   }
-  const busyNames = () => [$("n1").value.trim() || "Équipe 1", $("n2").value.trim() || "Équipe 2"];
+  const busyNames = () => [$("n1").value.trim() || tx("Équipe 1", "Team 1"), $("n2").value.trim() || tx("Équipe 2", "Team 2")];
   function paintBusy() {
     const r = busy;
     const [a, b] = busyNames();
-    const sw = r.config && r.config.sport === "squash" ? "Jeu" : "Set";
+    const sw = r.config && r.config.sport === "squash" ? tx("Jeu", "Game") : "Set";
     const ago = Math.max(0, Math.round((Date.now() - r.updated_at) / 1000));
     $("busyLive").textContent = "";
     for (const [n, sets, pts, cls] of [[a, r.sets_me, r.score_me, ""], [b, r.sets_opp, r.score_opp, "b"]]) {
@@ -410,14 +427,16 @@
     }
     const m = document.createElement("span");
     m.className = "lmeta";
-    m.textContent = `${sw} ${r.current_set} · dernier point il y a ${ago < 60 ? ago + " s" : Math.round(ago / 60) + " min"}`;
+    const agoTxt = ago < 60 ? ago + " s" : Math.round(ago / 60) + " min";
+    m.textContent = `${sw} ${r.current_set} · ` + tx(`dernier point il y a ${agoTxt}`, `last point ${agoTxt} ago`);
     $("busyLive").appendChild(m);
     const fmt = busyFormat(r);
     $("takeOver").disabled = !fmt;
     $("takeOverTxt").textContent = fmt
-      ? `On continue à ${r.score_me}–${r.score_opp}. L'autre téléphone (ou la montre) ne compte plus.`
-      : r.config && r.config.sport === "padel" ? "Indisponible : le padel ne se compte que sur la montre."
-      : "Indisponible : ce format n'existe pas sur le scoreur web.";
+      ? tx(`On continue à ${r.score_me}–${r.score_opp}. L'autre téléphone (ou la montre) ne compte plus.`,
+        `Carry on at ${r.score_me}–${r.score_opp}. The other phone (or the watch) stops scoring.`)
+      : r.config && r.config.sport === "padel" ? tx("Indisponible : le padel ne se compte que sur la montre.", "Unavailable: padel can only be scored on the watch.")
+      : tx("Indisponible : ce format n'existe pas sur le scoreur web.", "Unavailable: this format isn't available on the web scorer.");
   }
   // Live : page publique du club (tous ses terrains), sinon l'overlay du canal.
   function liveUrl() {
@@ -451,7 +470,7 @@
     busyNew = false;
     changed();
     render();
-    toast("Tu as la main");
+    toast(tx("Tu as la main", "You're in control"));
   });
   // Écarté par un autre scoreur : reprendre la main relance un match au score courant.
   $("lostTake").addEventListener("click", () => {
@@ -491,7 +510,7 @@
     if (who === "a") engine.pointMe(); else engine.pointOpponent();
     lastTap = who;
     if (navigator.vibrate) navigator.vibrate(30);
-    if (sideChange(engine, st.sport, st.fmt)) toast("Changement de côté");
+    if (sideChange(engine, st.sport, st.fmt)) toast(tx("Changement de côté", "Change sides"));
     changed();
     render();
   }
@@ -510,13 +529,13 @@
   $("swap").addEventListener("click", () => { st.swap = !st.swap; save(); render(); });
   $("nextSet").addEventListener("click", () => { engine.changeSet(); changed(); render(); });
   $("stop").addEventListener("click", () => {
-    if (!confirm("Arrêter ce match ?\n\nLe score disparaît du live du terrain.")) return;
+    if (!confirm(tx("Arrêter ce match ?\n\nLe score disparaît du live du terrain.", "Stop this match?\n\nThe score disappears from the court's live."))) return;
     finish();
   });
   $("finish").addEventListener("click", finish);
   $("again").addEventListener("click", () => {
     // Le match terminé reste « fini » côté serveur ; le suivant le remplace.
-    if (pending() && !confirm("Le score final n'est pas encore envoyé (pas de réseau).\n\nCommencer quand même un nouveau match ?")) return;
+    if (pending() && !confirm(tx("Le score final n'est pas encore envoyé (pas de réseau).\n\nCommencer quand même un nouveau match ?", "The final score hasn't been sent yet (no network).\n\nStart a new match anyway?"))) return;
     engine = null;
     st.stop = false;
     save();
@@ -544,12 +563,12 @@
 
   function render() {
     if (!st.key) {
-      $("noKeyMsg").textContent = "Scanne le QR code collé au poteau du terrain : il ouvre le scoreur de ce terrain.";
+      $("noKeyMsg").textContent = tx("Scanne le QR code collé au poteau du terrain : il ouvre le scoreur de ce terrain.", "Scan the QR code on the court post: it opens this court's scorer.");
       show("sNoKey");
       return;
     }
     if (keyRefused) {
-      $("noKeyMsg").textContent = "Ce QR code n'est plus valable : le club a créé une nouvelle clé pour ce terrain. Demande le nouveau QR code au club.";
+      $("noKeyMsg").textContent = tx("Ce QR code n'est plus valable : le club a créé une nouvelle clé pour ce terrain. Demande le nouveau QR code au club.", "This QR code is no longer valid: the club created a new key for this court. Ask the club for the new QR code.");
       show("sNoKey");
       return;
     }
@@ -563,7 +582,7 @@
     if (!engine || st.stop) {
       const [a, b] = busy ? busyNames() : [];
       $("prepBusy").hidden = $("prepBack").hidden = !busy;
-      if (busy) $("prepBusy").innerHTML = `⚠ Le match <b></b> sera terminé au lancement.`;
+      if (busy) $("prepBusy").innerHTML = tx("⚠ Le match <b></b> sera terminé au lancement.", "⚠ The match <b></b> will be ended when you start.");
       if (busy) $("prepBusy").querySelector("b").textContent = `${a} ${busy.score_me}–${busy.score_opp} ${b}`;
       paintPrep();
       show("sPrep");
@@ -576,7 +595,7 @@
       const aWon = e.setsMe > e.setsOpp;
       $("winner").textContent = aWon ? nameA() : nameB();
       $("winner").className = aWon ? "" : "b";
-      $("endWhere").textContent = (st.terrain || st.channel) + " · match terminé";
+      $("endWhere").textContent = (st.terrain || st.channel) + tx(" · match terminé", " · match over");
       $("recap").textContent = "";
       rows.forEach((r, i) => {
         const d = document.createElement("div");
@@ -587,7 +606,8 @@
       });
       const n = points(e.events)[1];
       const last = e.events.length ? e.events[e.events.length - 1][3] : e.startedAtMs;
-      $("endMeta").textContent = `Durée ${Math.max(1, Math.round((last - e.startedAtMs) / 60000))} min · ${n} points` + (st.resumed ? " (depuis la reprise)" : "");
+      const mins = Math.max(1, Math.round((last - e.startedAtMs) / 60000));
+      $("endMeta").textContent = tx(`Durée ${mins} min · ${n} points`, `${mins} min · ${n} point${n > 1 ? "s" : ""}`) + (st.resumed ? tx(" (depuis la reprise)", " (since takeover)") : "");
       show("sEnd");
       paintSync();
       return;
@@ -595,10 +615,10 @@
     show("sPlay");
     $("nA").textContent = nameA();
     $("nB").textContent = nameB();
-    $("zA").setAttribute("aria-label", `Point pour ${nameA()} (${e.scoreMe})`);
-    $("zB").setAttribute("aria-label", `Point pour ${nameB()} (${e.scoreOpp})`);
-    $("stA").textContent = Sports.setsWord(e.config.sport).toLowerCase().replace(/^./, (c) => c.toUpperCase()) + " " + e.setsMe;
-    $("stB").textContent = Sports.setsWord(e.config.sport).toLowerCase().replace(/^./, (c) => c.toUpperCase()) + " " + e.setsOpp;
+    $("zA").setAttribute("aria-label", tx(`Point pour ${nameA()} (${e.scoreMe})`, `Point for ${nameA()} (${e.scoreMe})`));
+    $("zB").setAttribute("aria-label", tx(`Point pour ${nameB()} (${e.scoreOpp})`, `Point for ${nameB()} (${e.scoreOpp})`));
+    $("stA").textContent = eng(Sports.setsWord(e.config.sport)).toLowerCase().replace(/^./, (c) => c.toUpperCase()) + " " + e.setsMe;
+    $("stB").textContent = eng(Sports.setsWord(e.config.sport)).toLowerCase().replace(/^./, (c) => c.toUpperCase()) + " " + e.setsOpp;
     for (const [id, v, k] of [["pA", e.scoreMe, "a"], ["pB", e.scoreOpp, "b"]]) {
       const el = $(id);
       if (el.textContent !== String(v)) {
@@ -617,16 +637,16 @@
     $("lostCard").hidden = !lost;
     $("zones").classList.toggle("dim", lost);
     $("badge").classList.toggle("off", lost);
-    $("badgeT").textContent = lost ? "HORS LIVE" : "EN DIRECT";
+    $("badgeT").textContent = lost ? tx("HORS LIVE", "OFF LIVE") : tx("EN DIRECT", "LIVE");
     $("swap").disabled = lost;
     $("zA").disabled = res || lost;
     $("zB").disabled = res || lost;
     $("setUndo").hidden = e.events.length === 0;
     if (res) {
       const aWon = e.lastSetScoreMe > e.lastSetScoreOpp;
-      $("setT").textContent = `${setW()} ${e.setNumber} pour ${aWon ? nameA() : nameB()}`;
+      $("setT").textContent = tx(`${setW()} ${e.setNumber} pour ${aWon ? nameA() : nameB()}`, `${setW()} ${e.setNumber} to ${aWon ? nameA() : nameB()}`);
       $("setS").textContent = `${e.lastSetScoreMe}–${e.lastSetScoreOpp}`;
-      $("nextSet").textContent = setW() + " suivant";
+      $("nextSet").textContent = tx(setW() + " suivant", "Next " + setW().toLowerCase());
     }
     $("undo").disabled = e.events.length === 0 || lost;
     paintSync();
@@ -682,7 +702,7 @@
         save();
       }
     } catch (err) {
-      lastErr = navigator.onLine === false ? "hors ligne" : "réseau";
+      lastErr = navigator.onLine === false ? tx("hors ligne", "offline") : tx("réseau", "network");
       retryT = setTimeout(flush, retryMs);
       retryMs = Math.min(retryMs * 2, 30000);
     }
@@ -694,12 +714,12 @@
 
   function paintSync() {
     const n = pending();
-    let txt = "✓ envoyé", cls = "sync";
-    if (keyRefused) { txt = "clé refusée"; cls = "sync err"; }
-    else if (n && lastErr) { txt = `⏳ ${lastErr}, ${n} en attente`; cls = "sync wait"; }
-    else if (n) { txt = "envoi…"; cls = "sync wait"; }
+    let txt = tx("✓ envoyé", "✓ sent"), cls = "sync";
+    if (keyRefused) { txt = tx("clé refusée", "key refused"); cls = "sync err"; }
+    else if (n && lastErr) { txt = tx(`⏳ ${lastErr}, ${n} en attente`, `⏳ ${lastErr}, ${n} pending`); cls = "sync wait"; }
+    else if (n) { txt = tx("envoi…", "sending…"); cls = "sync wait"; }
     for (const id of ["sync", "endSync"]) { $(id).textContent = txt; $(id).className = cls; }
-    $("prepStatus").textContent = st.stop && n ? "Arrêt du match en attente de réseau…" : "";
+    $("prepStatus").textContent = st.stop && n ? tx("Arrêt du match en attente de réseau…", "Stopping the match, waiting for network…") : "";
   }
 
   // ---------- écran allumé pendant le match ----------

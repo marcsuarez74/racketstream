@@ -1,7 +1,7 @@
 // Service worker du portail : rend l'app installable et lui permet de s'ouvrir
 // sans réseau. Il ne gère QUE les fichiers du portail : l'overlay (/overlay/,
 // même origine) et l'API (autre origine) passent sans être touchés.
-const CACHE = "rs-portal-v7";
+const CACHE = "rs-portal-v8";
 const SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -9,6 +9,8 @@ const SHELL = [
   "./icons/icon-512.png",
   "./icons/favicon.svg",
   "./icons/apple-touch-icon.png",
+  // Traduction FR/EN, chargée par toutes les pages.
+  "./i18n.js",
   // Scoreur sans montre (doit s'ouvrir et compter sans réseau) et page club.
   "./scoreur.html",
   "./club.html",

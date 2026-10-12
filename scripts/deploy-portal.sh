@@ -9,7 +9,7 @@ DEST=/var/www/racketstream-portal
 
 # Portail = page + fichiers de l'app installable (manifeste, service worker, icônes),
 # scoreur sans montre (moteur de score JS, sans ses tests) et page publique club.
-PORTAL_FILES=(index.html manifest.webmanifest sw.js icons scoreur.html club.html engine vendor fonts legal.css mentions-legales.html confidentialite.html cgu.html)
+PORTAL_FILES=(index.html i18n.js manifest.webmanifest sw.js icons scoreur.html club.html engine vendor fonts legal.css mentions-legales.html confidentialite.html cgu.html)
 COPYFILE_DISABLE=1 tar --no-xattrs --exclude='*_test.js' -C portal -czf - "${PORTAL_FILES[@]}" | ssh "$HOST" "rm -rf /tmp/rs-portal && mkdir -p /tmp/rs-portal && tar -C /tmp/rs-portal -xzf -"
 scp -q overlay/index.html "$HOST:/tmp/rs-overlay-index.html"
 ssh "$HOST" "set -e
