@@ -21,4 +21,5 @@ docs/local/
 docs/superpowers/specs/2026-09-21-store-business-plan.md
 watch/connect-iq/store/
 beta-store/
+prod-store/
 __pycache__/

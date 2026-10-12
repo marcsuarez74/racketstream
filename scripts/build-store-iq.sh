@@ -16,8 +16,14 @@ KEY_PATH="${DEV_KEY_PATH:-$HOME/keys/developer_key_personal.der}"
 SDK="$(cat "$HOME/Library/Application Support/Garmin/ConnectIQ/current-sdk.cfg")"
 
 # Version lue dans le manifest → sortie versionnée : beta-store/v-0.1.1/…
+# Dossier choisi par l'id d'app : la fiche bêta et la fiche publique sont deux
+# apps distinctes sur le store (une bêta ne se convertit pas en publique).
 APP_VERSION="$(sed -n 's/.*iq:application[^>]* version="\([^"]*\)".*/\1/p' "$REPO/watch/connect-iq/manifest.xml" | head -1)"
-OUT="$REPO/beta-store/v-$APP_VERSION"
+APP_ID="$(sed -n 's/.*iq:application[^>]* id="\([^"]*\)".*/\1/p' "$REPO/watch/connect-iq/manifest.xml" | head -1)"
+BETA_ID="59EEABC33F1813AE142E338E63007E53"
+if [ "$APP_ID" = "$BETA_ID" ]; then DEST=beta-store; else DEST=prod-store; fi
+echo "App $APP_ID → $DEST/"
+OUT="$REPO/$DEST/v-$APP_VERSION"
 mkdir -p "$OUT"
 
 # Arbre propre : purge des artefacts de builds précédents (.mir/.prg contiennent
