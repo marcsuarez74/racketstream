@@ -123,6 +123,12 @@ module Ui {
         dc.drawText(x(px), y(py), f, st, justify(align));
     }
 
+    // Vrai si le texte tient dans maxw (repère maquette) avec la plus petite
+    // police texte.
+    function fits(dc as Dc, str as String, maxw) as Boolean {
+        return dc.getTextWidthInPixels(str, mText[mText.size() - 1][0]) <= s(maxw);
+    }
+
     // « libellé valeur » centré sur une ligne, deux couleurs.
     function pair(dc as Dc, label as String, value, py, size, lc as Number, vc as Number) as Void {
         var f = tf(size);

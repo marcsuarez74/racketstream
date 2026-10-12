@@ -173,9 +173,11 @@ module Pages {
         Ui.rect(dc, 80, 145, 294, 16, Ui.C_LINE);
         if (won > 0) { Ui.rect(dc, 80, 145, 294 * won / n, 16, Sports.color(v.mSport)); }
         Ui.t(dc, won + " / " + n + "  ·  " + (n > 0 ? won * 100 / n : 0) + " %", 227, 192, 40, WHITE, null);
-        Ui.t(dc, "Série en cours", 132, 245, 22, Ui.C_LABEL, null);
+        // Polices larges (fr265…) : libellés courts s'ils ne tiennent pas.
+        var full = Ui.fits(dc, "Meilleure série", 180);
+        Ui.fit(dc, full ? "Série en cours" : "Série", 132, 245, 22, Ui.C_LABEL, null, 180);
         Ui.n(dc, p[2], 132, 285, 52, WHITE, null);
-        Ui.t(dc, "Meilleure série", 322, 245, 22, Ui.C_LABEL, null);
+        Ui.fit(dc, full ? "Meilleure série" : "Record", 322, 245, 22, Ui.C_LABEL, null, 180);
         Ui.n(dc, p[3], 322, 285, 52, WHITE, null);
         Ui.t(dc, "Temps moyen par point", 227, 335, 22, Ui.C_LABEL, null);
         Ui.n(dc, n > 1 ? Ui.fmt(p[4] / 1000) : "-", 227, 372, 40, WHITE, null);
@@ -203,7 +205,12 @@ module Pages {
     // ---- récap de séance (5 pages) ----
 
     function summary(dc as Dc, v) as Void {
-        if (Ui.mSmall) { PagesS.summary(dc, v); return; }
+        // Récap 2/5 en deux colonnes : trop étroit pour les polices larges
+        // (fr265…), version compacte à la place.
+        if (Ui.mSmall || (v.mSumPage == 1 && !Ui.fits(dc, "Meilleure série", 160))) {
+            PagesS.summary(dc, v);
+            return;
+        }
         var pg = v.mSumPage;
         var e = v.mEngine;
         var sp = v.mSport;
@@ -231,8 +238,11 @@ module Pages {
             Ui.t(dc, "Séance", 227, 100, 30, WHITE, null);
             for (var i = 0; i < lines.size(); i += 1) {
                 var y = 148 + i * 50;
-                Ui.t(dc, lines[i][0], 215, y, 26, Ui.C_LABEL, Ui.RIGHT);
-                Ui.t(dc, lines[i][1], 239, y, 32, WHITE, Ui.LEFT);
+                // Demi-corde du cadran à cette hauteur, moins une marge :
+                // les polices larges (fr265…) débordaient du rond.
+                var half = Math.sqrt(227 * 227 - (y - 227) * (y - 227)) - 16;
+                Ui.fit(dc, lines[i][0], 215, y, 26, Ui.C_LABEL, Ui.RIGHT, half - 12);
+                Ui.fit(dc, lines[i][1], 239, y, 32, WHITE, Ui.LEFT, half - 12);
             }
         } else if (pg == 2) {
             hrCurve(dc, v, st, rows);
