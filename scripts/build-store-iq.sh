@@ -50,4 +50,4 @@ if [ -f "$REPO/.secrets/phase-4a.env" ]; then
     echo "Binaires embarqués : $NBIN (familles écran, cf. note en tête)"
 fi
 echo "Prêt à uploader sur https://apps.garmin.com/en-US/developer/upload"
-echo "Dans le wizard : ne cocher QUE epix2 Pro 51mm + Forerunner 55 (RNE validés)."
+echo "Dans le wizard : cocher les montres de <iq:products> du manifest (validées au simulateur le 12/10)."
