@@ -19,11 +19,11 @@ done
 ssh "$HOST" 'set -e
   sudo chown -R root:root /opt/racketstream-api
   sudo chmod -R u=rwX,go=rX /opt/racketstream-api
-  for f in racketstream-api.service racketstream-backup.service racketstream-backup.timer; do
+  for f in racketstream-api.service racketstream-backup.service racketstream-backup.timer racketstream-purge.service racketstream-purge.timer; do
     sudo install -m 644 /opt/racketstream-api/server/deploy/$f /etc/systemd/system/$f
   done
   sudo systemctl daemon-reload
-  sudo systemctl enable --now racketstream-backup.timer >/dev/null
+  sudo systemctl enable --now racketstream-backup.timer racketstream-purge.timer >/dev/null
   sudo systemctl enable racketstream-api >/dev/null 2>&1
   sudo systemctl restart racketstream-api
   for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8790/healthz >/dev/null 2>&1 && break; sleep 0.5; done

@@ -1,7 +1,7 @@
 // Service worker du portail : rend l'app installable et lui permet de s'ouvrir
 // sans réseau. Il ne gère QUE les fichiers du portail : l'overlay (/overlay/,
 // même origine) et l'API (autre origine) passent sans être touchés.
-const CACHE = "rs-portal-v5";
+const CACHE = "rs-portal-v6";
 const SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -18,6 +18,16 @@ const SHELL = [
   "./engine/stats.js",
   "./engine/sync.js",
   "./vendor/qrcode.js",
+  // Police auto-hébergée (pas de requête vers Google) et pages légales.
+  "./fonts/archivo.css",
+  "./fonts/archivo-normal-latin.woff2",
+  "./fonts/archivo-normal-latin-ext.woff2",
+  "./fonts/archivo-italic-latin.woff2",
+  "./fonts/archivo-italic-latin-ext.woff2",
+  "./legal.css",
+  "./mentions-legales.html",
+  "./confidentialite.html",
+  "./cgu.html",
 ];
 
 self.addEventListener("install", (e) => {

@@ -194,7 +194,7 @@ Comme le bandeau du live, un terrain affiche « Fin du set » entre deux sets et
 → Garmin Connect n'envoie les réglages à la montre qu'à la validation du formulaire **et** au redémarrage : re-valide les Réglages (sans rien changer) puis redémarre la montre. Vérifie aussi que la clé fait bien 64 caractères, sans espace.
 
 **Je ne trouve plus ma clé.**
-→ Un canal ne peut pas être recréé (le nom est réservé). Demande une nouvelle clé via la page support — l'ancienne sera invalidée et une nouvelle clé générée pour ton canal.
+→ L'empreinte seule est conservée : personne ne peut retrouver ta clé. Pour un terrain de club, génère une nouvelle clé dans l'onglet Club. Pour un canal perso, écris à l'adresse de contact des [mentions légales](https://racket-stream-portal.marc-suarez.fr/mentions-legales.html) : on supprime le canal et tu peux le recréer avec une nouvelle clé. N'envoie jamais ta clé par e-mail.
 
 **Deux matchs s'affichent en même temps ?**
 → Impossible par design : créer un nouveau match **clôture automatiquement** le précédent de ta montre.
@@ -206,10 +206,13 @@ Comme le bandeau du live, un terrain affiche « Fin du set » entre deux sets et
 
 ## 8. Confidentialité
 
-- **Données stockées** : ton canal, les noms que tu choisis, les scores/événements de match, et l'**empreinte** (hash SHA-256) de ta clé — jamais la clé elle-même
-- **Aucun compte, aucune donnée personnelle** (pas d'email, pas de nom réel requis)
-- **Scores publics par design** : c'est ce qui permet aux viewers de les afficher ; ton canal est consultable par quiconque connaît son nom
-- **Suppression** : demande via la page support — les matchs de ton canal sont supprimés, ta clé révoquée
+Le détail est dans la [politique de confidentialité](https://racket-stream-portal.marc-suarez.fr/confidentialite.html) ; les règles d'usage dans les [conditions d'utilisation](https://racket-stream-portal.marc-suarez.fr/cgu.html).
+
+- **Aucun compte** : pas d'e-mail ni de mot de passe. Le serveur garde ton canal, les noms affichés, les points des matchs et l'**empreinte** (SHA-256) de ta clé — jamais la clé elle-même
+- **Scores publics par design** : c'est ce qui permet aux viewers de les afficher ; ton canal est consultable par quiconque connaît son nom. N'affiche que des noms que les joueurs acceptent de voir publiés (un prénom ou un surnom suffit), et pour un mineur, avec l'accord de ses parents
+- **Conservation** : les matchs sont effacés automatiquement après 12 mois, un canal perso sans match depuis 24 mois aussi
+- **Suppression** : écris à l'adresse de contact des [mentions légales](https://racket-stream-portal.marc-suarez.fr/mentions-legales.html) — ton canal (ou ton club), ses matchs et sa clé sont supprimés
+- **Aucun cookie** sur le portail ; le lecteur Twitch de la page Diffusion n'est chargé que si tu enregistres ta chaîne
 - L'app ne lit ni contacts, ni position, ni santé ; elle n'envoie rien hors de ton action (un point marqué)
 
 ---
